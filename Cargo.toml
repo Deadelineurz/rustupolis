@@ -4,4 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+ansi_term = "0.12.1"
+chrono = "0.4.39"
+lazy_static = "1.5.0"
+log = "0.4.25"
 termion = "4.0.3"
+users = "0.11.0"
