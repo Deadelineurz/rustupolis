@@ -1,17 +1,8 @@
-use std::{env, fs, io};
-use std::fs::OpenOptions;
-use std::io::{stdout, Read, Write};
-use std::os::unix::net::{UnixListener, UnixStream};
-use std::path::{Path, PathBuf};
-use termion::{clear, cursor};
 use rustopolis::logging::get_logger_socket_path;
-
-fn touch(path: &Path) -> io::Result<()> {
-    match OpenOptions::new().create(true).write(true).open(path) {
-        Ok(_) => Ok(()),
-        Err(e) => Err(e),
-    }
-}
+use std::io::{stdout, Read, Write};
+use std::os::unix::net::UnixListener;
+use std::fs;
+use termion::{clear, cursor};
 
 fn main() {
     let p = get_logger_socket_path();
@@ -32,7 +23,7 @@ fn main() {
                 print!("{}", resp);
                 stdout.flush().unwrap()
             }
-            Err(err) => {
+            Err(_) => {
                 break
             }
         }

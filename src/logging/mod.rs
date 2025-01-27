@@ -56,7 +56,7 @@ impl Drop for RemoteLoggerClient {
                     None => {}
                 }
             }
-            Err(err) => {}
+            Err(_) => {}
         }
     }
 }
@@ -117,7 +117,7 @@ impl log::Log for RemoteLoggerClient {
                     None => {}
                 }
             }
-            Err(err) => {}
+            Err(_) => {}
         }
     }
 
