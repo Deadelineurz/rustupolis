@@ -6,10 +6,6 @@ use std::path::{Path, PathBuf};
 use termion::{clear, cursor};
 use rustopolis::logging::get_logger_socket_path;
 
-fn get_path() -> PathBuf {
-    PathBuf::from(format!("{}/rustopolis/logger.socket", env::var("XDG_RUNTIME_DIR").unwrap()).to_string())
-}
-
 fn touch(path: &Path) -> io::Result<()> {
     match OpenOptions::new().create(true).write(true).open(path) {
         Ok(_) => Ok(()),

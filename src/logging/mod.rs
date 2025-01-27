@@ -1,23 +1,25 @@
-use std::cell::{Cell, RefCell};
-use std::os::unix::net::UnixStream;
+use ansi_term::Colour;
+use chrono::Local;
 use log::{Level, Metadata, Record};
 use std::io::Write;
 use std::net::Shutdown;
-use std::ops::Deref;
+use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
-use std::{env, process};
-use std::fmt::format;
 use std::sync::Mutex;
-use std::time::Instant;
-use ansi_term::Colour;
-use chrono::Local;
+use std::{env, process};
 use termion::color;
-use termion::color::{Color, Fg};
+use termion::color::Fg;
 
+#[cfg(not(target_os = "macos"))]
 pub fn get_logger_socket_path() -> PathBuf {
     PathBuf::from(format!("{}/rustopolis/logger.socket", env::var("XDG_RUNTIME_DIR").unwrap_or(
         format!("/run/user/{}", users::get_current_gid())
     )).to_string())
+}
+
+#[cfg(target_os = "macos")]
+pub fn get_logger_socket_path() -> PathBuf {
+    PathBuf::from(format!("/var/run/user/{}/rustopolis/logger.socket", users::get_current_uid()))
 }
 
 pub struct RemoteLoggerClient {
