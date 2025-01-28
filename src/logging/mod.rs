@@ -19,7 +19,7 @@ pub fn get_logger_socket_path() -> PathBuf {
 
 #[cfg(target_os = "macos")]
 pub fn get_logger_socket_path() -> PathBuf {
-    PathBuf::from(format!("/temp/rustopolis/logger.socket"))
+    PathBuf::from(format!("/tmp/rustopolis/logger.socket"))
 }
 
 pub struct RemoteLoggerClient {
