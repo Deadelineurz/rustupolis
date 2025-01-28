@@ -1,12 +1,12 @@
-use rustopolis::terminal::boxes::{draw_box, BoxFill, BoxStyle};
-use rustopolis::terminal::screen::CleanScreen;
+use rustupolis::terminal::boxes::{draw_box, BoxFill, BoxStyle};
+use rustupolis::terminal::screen::CleanScreen;
 use std::error::Error;
 use std::io::{stdout, Stdout};
 use std::thread::sleep;
 use std::time::Duration;
 use termion::color::{Blue, Green, Magenta, Red, Reset};
 use termion::style::Underline;
-use rustopolis::terminal::text::draw_text;
+use rustupolis::terminal::text::draw_text;
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut stdout: Stdout = stdout();

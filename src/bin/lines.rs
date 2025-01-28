@@ -1,8 +1,8 @@
-use rustopolis::terminal::lines::LineDirection::Vertical;
-use rustopolis::terminal::lines::LineFormat::{Dashed, Double, Solid};
-use rustopolis::terminal::lines::LinePosition::{Bottom, Center, Right};
-use rustopolis::terminal::lines::{draw_line, LineStyle};
-use rustopolis::terminal::screen::{set_background, set_color, set_foreground, CleanScreen};
+use rustupolis::terminal::lines::LineDirection::Vertical;
+use rustupolis::terminal::lines::LineFormat::{Dashed, Double, Solid};
+use rustupolis::terminal::lines::LinePosition::{Bottom, Center, Right};
+use rustupolis::terminal::lines::{draw_line, LineStyle};
+use rustupolis::terminal::screen::{set_background, set_color, set_foreground, CleanScreen};
 use std::error::Error;
 use std::io::{stdout, Stdout};
 use std::thread::sleep;
