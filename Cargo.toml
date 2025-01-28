@@ -2,6 +2,9 @@
 name = "rustupolis"
 version = "0.1.0"
 edition = "2021"
+default-run = "rustopolis"
 
 [dependencies]
+ctrlc = "3.4.5"
+lazy_static = "1.5.0"
 termion = "4.0.3"
