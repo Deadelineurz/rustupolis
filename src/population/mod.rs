@@ -18,7 +18,7 @@ pub enum Mood {
 
 pub struct BasePeople {
     pub age: u8,
-    pub peopletype: PeopleTraits,
+    pub peopletype: PeopleDNA,
 }
 
 enum People {
@@ -35,7 +35,7 @@ enum People {
 
 #[repr(u8)]
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum PeopleTraits {
+pub enum PeopleDNA {
     None =              0,
     Irradiated =        1,  // Will live less
     Fragile =           2,  // More likely to catch a desease
@@ -47,7 +47,7 @@ pub enum PeopleTraits {
     HealthyCarrier =    32, // Can NOT die from his own desease, but can spread it
 }
 
-impl BitAnd for PeopleTraits {
+impl BitAnd for PeopleDNA {
     type Output = u8;
 
     fn bitand(self, rhs: Self) -> Self::Output {
@@ -55,27 +55,27 @@ impl BitAnd for PeopleTraits {
     }
 }
 
-impl BitOr for PeopleTraits {
-    type Output = u32;
+impl BitOr for PeopleDNA {
+    type Output = u8;
 
     fn bitor(self, rhs: Self) -> Self::Output {
-        self as u32 | rhs as u32
+        self as u8 | rhs as u8
     }
 }
 
-impl BitXor for PeopleTraits {
-    type Output = u32;
+impl BitXor for PeopleDNA {
+    type Output = u8;
 
     fn bitxor(self, rhs: Self) -> Self::Output {
-        self as u32 ^ rhs as u32
+        self as u8 ^ rhs as u8
     }
 }
 
-impl Not for PeopleTraits {
-    type Output = u32;
+impl Not for PeopleDNA {
+    type Output = u8;
 
     fn not(self) -> Self::Output {
-        !(self as u32)
+        !(self as u8)
     }
 }
 
