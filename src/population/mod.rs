@@ -25,7 +25,7 @@ enum People {
     Alive {
         base: BasePeople,
         mood: Mood,
-        desease: Option<Desease>,
+        disease: Option<Disease>,
     },
     Dead {
         base: BasePeople,
@@ -82,28 +82,28 @@ impl Not for PeopleTraits {
 // _____ Desease _____
 
 #[derive(Debug, Clone, Copy)]
-pub enum DeseaseName {
-    Bacteria, // should probably be real name and not deseases type
+pub enum DiseaseName {
+    Bacteria, // should probably be real name and not diseases type
               //...
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum DeseaseLethality {
+pub enum DiseaseLethality {
     Deadly,
     Moderate,
     Low,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum DeseaseContagionRate {
+pub enum DiseaseContagionRate {
     High,
     Mederate,
     Low,
 }
 
 #[derive(Debug, Clone, Copy)]
-struct Desease {
-    pub name: DeseaseName,
-    pub lethality: DeseaseLethality,
-    pub contagion: DeseaseContagionRate,
+struct Disease {
+    pub name: DiseaseName,
+    pub lethality: DiseaseLethality,
+    pub contagion: DiseaseContagionRate,
 }
