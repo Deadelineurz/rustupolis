@@ -21,7 +21,8 @@ fn main() {
             Ok(mut stream) => {
                 stream.read_to_string(&mut resp).unwrap();
                 print!("{}", resp);
-                stdout.flush().unwrap()
+                stdout.flush().unwrap();
+                resp.clear()
             }
             Err(_) => {
                 break
