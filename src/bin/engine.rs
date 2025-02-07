@@ -1,10 +1,10 @@
 use lazy_static::lazy_static;
 use log::LevelFilter;
-use rustupolis::engine::core::Engine;
-use rustupolis::engine::drawable::Drawable;
-use rustupolis::engine::test::TestDrawable;
-use rustupolis::logging::RemoteLoggerClient;
-use rustupolis::terminal::screen::CleanScreen;
+use rustopolis::engine::core::Engine;
+use rustopolis::engine::drawable::Drawable;
+use rustopolis::engine::test::TestDrawable;
+use rustopolis::logging::RemoteLoggerClient;
+use rustopolis::terminal::screen::CleanScreen;
 use std::io::{stdout, Write};
 use std::ops::Deref;
 use std::thread::sleep;

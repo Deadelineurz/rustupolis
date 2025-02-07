@@ -1,7 +1,7 @@
-use log::{debug, info, trace};
-use termion::cursor;
 use crate::engine::drawable::Drawable;
 use crate::engine::viewport::Viewport;
+use log::{debug, info, trace};
+use termion::cursor;
 
 
 pub struct Engine {

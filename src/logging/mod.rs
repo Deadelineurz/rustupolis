@@ -1,6 +1,6 @@
 use ansi_term::Colour;
 use chrono::Local;
-use log::{Level, Metadata, Record};
+use log::{info, Level, Metadata, Record};
 use std::io::Write;
 use std::net::Shutdown;
 use std::os::unix::net::UnixStream;
@@ -51,7 +51,7 @@ impl Drop for RemoteLoggerClient {
             Ok(mut guard) => {
                 match &mut *guard {
                     Some(stream) => {
-                        stream.shutdown(Shutdown::Both).unwrap()
+                        stream.shutdown(Shutdown::Both).unwrap();
                     }
                     None => {}
                 }

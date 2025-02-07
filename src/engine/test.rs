@@ -6,11 +6,11 @@ pub struct TestDrawable {
 
 impl Drawable for TestDrawable {
     fn x(&self) -> i16 {
-        -5
+        25
     }
 
     fn y(&self) -> i16 {
-        -4
+        12
     }
 
     fn width(&self) -> u8 {
