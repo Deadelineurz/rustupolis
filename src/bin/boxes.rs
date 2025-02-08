@@ -5,7 +5,6 @@ use std::io::{stdout, Stdout};
 use std::thread::sleep;
 use std::time::Duration;
 use termion::color::{Blue, Green, Magenta, Red, Reset};
-use termion::style::Underline;
 use rustupolis::terminal::text::draw_text;
 
 fn main() -> Result<(), Box<dyn Error>> {

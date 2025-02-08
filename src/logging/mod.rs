@@ -1,6 +1,6 @@
 use ansi_term::Colour;
 use chrono::Local;
-use log::{info, Level, Metadata, Record};
+use log::{Level, Metadata, Record};
 use std::io::Write;
 use std::net::Shutdown;
 use std::os::unix::net::UnixStream;

@@ -1,5 +1,5 @@
 use std::io::{Error, Stdout};
-use termion::color::{Bg, Fg, Color, Reset, White};
+use termion::color::{Bg, Fg, Color, Reset};
 use termion::cursor;
 use std::io::Write;
 

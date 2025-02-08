@@ -1,9 +1,7 @@
 use std::io::stdin;
-use std::process::exit;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
-use log::info;
 use termion::event::Key;
 use termion::input::TermRead;
 use crate::engine::core::Engine;

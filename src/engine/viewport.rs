@@ -1,6 +1,6 @@
 use log::trace;
 use termion::terminal_size;
-use crate::engine::drawable::{Drawable, DynDrawable};
+use crate::engine::drawable::{DynDrawable};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Viewport {

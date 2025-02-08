@@ -1,9 +1,8 @@
 use std::io::{stdout, Write};
-use crate::engine::drawable::{Drawable, DynDrawable};
+use crate::engine::drawable::{DynDrawable};
 use crate::engine::viewport::Viewport;
-use log::{debug, info, trace};
+use log::trace;
 use termion::cursor;
-use crate::terminal::boxes::draw_box;
 
 pub struct Engine {
     pub viewport: Viewport,

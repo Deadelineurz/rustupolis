@@ -1,15 +1,13 @@
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use rustupolis::engine::core::Engine;
-use rustupolis::engine::drawable::{Drawable, DynDrawable};
+use rustupolis::engine::drawable::DynDrawable;
 use rustupolis::engine::test::TestDrawable;
 use rustupolis::logging::RemoteLoggerClient;
 use rustupolis::terminal::screen::CleanScreen;
-use std::io::{stdout, Write};
+use std::io::stdout;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
-use std::thread::sleep;
-use std::time::Duration;
 use termion::raw::IntoRawMode;
 use rustupolis::engine::keybinds::KeyBindListener;
 

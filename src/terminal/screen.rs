@@ -1,4 +1,3 @@
-use std::fmt::Display;
 use std::panic;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
