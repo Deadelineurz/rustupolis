@@ -1,5 +1,6 @@
 use crate::engine::drawable::Drawable;
 
+#[derive(Debug)]
 pub struct TestDrawable {
 
 }

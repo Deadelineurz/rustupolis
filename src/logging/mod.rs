@@ -12,14 +12,14 @@ use termion::color::Fg;
 
 #[cfg(not(target_os = "macos"))]
 pub fn get_logger_socket_path() -> PathBuf {
-    PathBuf::from(format!("{}/rustopolis/logger.socket", env::var("XDG_RUNTIME_DIR").unwrap_or(
+    PathBuf::from(format!("{}/rustupolis/logger.socket", env::var("XDG_RUNTIME_DIR").unwrap_or(
         format!("/run/user/{}", users::get_current_gid())
     )).to_string())
 }
 
 #[cfg(target_os = "macos")]
 pub fn get_logger_socket_path() -> PathBuf {
-    PathBuf::from(format!("/tmp/rustopolis/logger.socket"))
+    PathBuf::from(format!("/tmp/rustupolis/logger.socket"))
 }
 
 pub struct RemoteLoggerClient {
@@ -33,7 +33,7 @@ impl RemoteLoggerClient {
 
         match &mut stream {
             Some(s) => {
-                write!(s, "{}Rustopolis connected | PID: {}\n", Fg(color::Reset), process::id())
+                write!(s, "{}Rustupolis connected | PID: {}\n", Fg(color::Reset), process::id())
             }
             _ => {Ok(())}
         }.expect("TODO: panic message");

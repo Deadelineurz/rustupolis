@@ -1,5 +1,9 @@
+use std::fmt::Debug;
+
+pub type DynDrawable = dyn Drawable + Send;
+
 pub trait Drawable
-where Self: Sync {
+where Self: Debug {
     fn x(&self) -> i16;
     fn y(&self) -> i16;
     fn width(&self) -> u8;
@@ -7,7 +11,7 @@ where Self: Sync {
     fn shape(&self) -> String;
 }
 
-impl dyn Drawable {
+impl DynDrawable {
     pub fn right(&self) -> i16 {
         self.x() + (self.width() as i16)
     }

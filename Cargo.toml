@@ -1,8 +1,8 @@
 [package]
-name = "rustopolis"
+name = "rustupolis"
 version = "0.1.0"
 edition = "2021"
-default-run = "rustopolis"
+default-run = "rustupolis"
 
 [dependencies]
 ctrlc = "3.4.5"

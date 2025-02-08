@@ -1,4 +1,4 @@
-use rustopolis::logging::get_logger_socket_path;
+use rustupolis::logging::get_logger_socket_path;
 use std::io::{stdout, Read, Write};
 use std::os::unix::net::UnixListener;
 use std::fs;

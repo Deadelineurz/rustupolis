@@ -1,17 +1,17 @@
 use log::trace;
 use termion::terminal_size;
-use crate::engine::drawable::{Drawable};
+use crate::engine::drawable::{Drawable, DynDrawable};
 
 #[derive(Debug, Copy, Clone)]
 pub struct Viewport {
-    output_x: u16,
-    output_y: u16,
+    pub output_x: u16,
+    pub output_y: u16,
 
     virtual_x: i16,
     virtual_y: i16,
 
-    width: u16,
-    height: u16
+    pub width: u16,
+    pub height: u16
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -27,7 +27,7 @@ pub struct OutputCoordinates {
 
 impl Viewport {
 
-    pub fn is_visible(&self, d: &Box<dyn Drawable>) -> bool {
+    pub fn is_visible(&self, d: &Box<DynDrawable>) -> bool {
         let mut res = true;
         res &= d.right() > self.virtual_x;
 
@@ -40,7 +40,17 @@ impl Viewport {
         res
     }
 
-    pub fn get_output_coordinates(&self, d: &Box<dyn Drawable>) -> OutputCoordinates {
+    pub fn move_x(&mut self, amount: i16) {
+        self.virtual_x += amount;
+        trace!("{:?}", self)
+    }
+
+    pub fn move_y(&mut self, amount: i16) {
+        self.virtual_y += amount;
+        trace!("{:?}", self)
+    }
+
+    pub fn get_output_coordinates(&self, d: &Box<DynDrawable>) -> OutputCoordinates {
         let x = if d.x() < self.virtual_x {
                 0
             } else {
