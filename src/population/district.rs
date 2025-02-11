@@ -21,8 +21,9 @@ pub struct PopulationDistrict {
     /// maximum number of other district this district can be next to.
     pub max_num_neighbors: usize,
     pub neighbors: Vec<usize>,
-
-    pub num_happiness: u16, // use get_percentage
+    
+    /// if you want the real number, you should add half the population
+    pub num_happiness: u16,
     pub num_sick: u16,      // use get_percentage
     pub working_poulation: u16,
 }
@@ -67,7 +68,7 @@ impl PopulationDistrict {
     }
 
     pub fn recalcul_happiness(&mut self) {
-        self.num_happiness = self.num_people as u16 / 2 + Self::get_happiness(&self.peoples);
+        self.num_happiness = Self::get_happiness(&self.peoples);
     }
     /// Will just add the number to the field
     pub fn update_happiness(&mut self, peoples: &Vec<People>) {
@@ -90,8 +91,9 @@ impl PopulationDistrict {
         self.working_poulation += Self::get_working_peoples(peoples);
     }
 
+    /// Give the correct happiness percentage
     pub fn happiness_percentage(&self) -> f32 {
-        (self.num_happiness as f32 / self.num_people as f32).clamp(0f32, 1f32)
+        (((self.num_people / 2) as u16 + self.num_happiness) as f32 / self.num_people as f32).clamp(0f32, 1f32)
     }
 
     pub fn sick_percentage(&self) -> f32 {
@@ -101,7 +103,7 @@ impl PopulationDistrict {
     pub fn add_peoples(&mut self, peoples: &mut Vec<People>) {
         self.num_people += peoples.len();
 
-        self.recalcul_happiness();
+        self.update_happiness(peoples);
         self.update_sickness(peoples);
         self.update_working_population(peoples);
 
