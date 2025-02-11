@@ -1,6 +1,7 @@
 use crate::population::*;
+use strum_macros::EnumString;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString)]
 pub enum DistrictZone {
     Core,
     Residentials,
@@ -10,113 +11,83 @@ pub enum DistrictZone {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PopulationDistrict {
-    peoples: Vec<People>,
-    /// unique ID of the district in a population.
-    id: u8,
+    pub peoples: Vec<People>,
     pub zone_type: DistrictZone,
-    pub num_people: u16,
-    num_happiness: u16, // use get_percentage
-    num_sick: u16,      // use get_percentage
-    pub working_poulation: u16,
+
+    pub num_people: usize,
     /// max number of people before overpopulation.
     pub capacity: u16,
-    adj_lists: Vec<u8>,
+
     /// maximum number of other district this district can be next to.
-    max_num_links: usize,
+    pub max_num_neighbors: usize,
+    pub neighbors: Vec<usize>,
+
+    pub num_happiness: u16, // use get_percentage
+    pub num_sick: u16,      // use get_percentage
+    pub working_poulation: u16,
 }
 
 impl PopulationDistrict {
-    fn update_happiness(&mut self) {
-        for people in &self.peoples {
+
+    fn get_happiness(peoples: &Vec<People>) -> u16 {
+        let mut res = 0;
+        for people in peoples {
             match people {
-                People::Alive { mood, .. } => self.num_happiness += *mood as u16,
-                People::Dead { .. } => self.num_happiness -= 1,
+                People::Alive { mood, .. } => res += *mood as u16,
+                People::Dead { .. } => res -= 1,
             }
         }
+        res
     }
 
-    fn update_sickness(&mut self) {
-        for people in &self.peoples {
+    fn get_sickness(peoples: &Vec<People>) -> u16 {
+        let mut res = 0;
+        for people in peoples {
             match people {
-                People::Alive { .. } => self.num_sick += 1,
+                People::Alive { disease, .. } if {*disease != None} => res += 1,
                 _ => (),
             }
         }
+
+        res
     }
 
-    fn update_working(&mut self) {
-        for people in &self.peoples {
+    fn get_working_peoples(peoples: &Vec<People>) -> u16 {
+        let mut res = 0;
+        for people in peoples {
             match people {
                 People::Alive { base, .. } if base.age > 14 && base.age < 70 => {
-                    self.working_poulation += 1
+                    res += 1
                 }
                 _ => (),
             }
         }
+
+        res
     }
 
-    fn update_links(&mut self, parent_population: &mut Population) {
-        let districts = &mut parent_population.districts;
-
-        if self.adj_lists.len() >= self.max_num_links {
-            return;
-        }
-
-        let self_id = self.id;
-
-        for other in districts {
-            let other_id = other.id;
-
-            if self_id != other_id
-                && !self.adj_lists.contains(&other_id)
-                && other.adj_lists.len() < other.max_num_links
-            {
-                self.adj_lists.push(other_id);
-                other.adj_lists.push(self_id);
-            }
-        }
+    pub fn recalcul_happiness(&mut self) {
+        self.num_happiness = self.num_people as u16 / 2 + Self::get_happiness(&self.peoples);
+    }
+    /// Will just add the number to the field
+    pub fn update_happiness(&mut self, peoples: &Vec<People>) {
+        self.num_happiness += Self::get_happiness(peoples);
     }
 
-    /// Will add the newly created PopulationDistrict to the parent Population and init all the fields.
-    pub fn instantiate(
-        peoples: Vec<People>,
-        zone_type: DistrictZone,
-        parent_population: &mut Population,
-    ) {
-        let capacity = match zone_type {
-            DistrictZone::Core => 50,
-            DistrictZone::Industrials => 75,
-            DistrictZone::Residentials => 100,
-            DistrictZone::Slums => 150,
-        };
+    pub fn recalcul_sickness(&mut self) {
+        self.num_sick = Self::get_sickness(&self.peoples);
+    }
+    /// Will just add the number to the field
+    pub fn update_sickness(&mut self, peoples: &Vec<People>) {
+        self.num_happiness += Self::get_sickness(peoples);
+    }
 
-        let max_num_links = match zone_type {
-            DistrictZone::Core => 4,
-            DistrictZone::Industrials => 2,
-            DistrictZone::Residentials => 3,
-            DistrictZone::Slums => 1,
-        };
-
-        let mut district = PopulationDistrict {
-            num_people: peoples.len() as u16,
-            peoples,
-            zone_type,
-            id: parent_population.num_slice,
-            adj_lists: Vec::new(),
-            num_happiness: 0,
-            num_sick: 0,
-            working_poulation: 0,
-            capacity,
-            max_num_links,
-        };
-
-        district.update_happiness();
-        district.update_sickness();
-        district.update_working();
-        district.update_links(parent_population);
-
-        parent_population.num_slice += 1;
-        parent_population.districts.push(district);
+    pub fn recalcul_working_population(&mut self) {
+        self.working_poulation = Self::get_working_peoples(&self.peoples);
+    }
+    /// Will just add the number to the field
+    pub fn update_working_population(&mut self, peoples: &Vec<People>) {
+        self.working_poulation += Self::get_working_peoples(peoples);
     }
 
     pub fn happiness_percentage(&self) -> f32 {
@@ -125,5 +96,15 @@ impl PopulationDistrict {
 
     pub fn sick_percentage(&self) -> f32 {
         (self.num_sick as f32 / self.num_sick as f32).clamp(0f32, 1f32)
+    }
+
+    pub fn add_peoples(&mut self, peoples: &mut Vec<People>) {
+        self.num_people += peoples.len();
+
+        self.recalcul_happiness();
+        self.update_sickness(peoples);
+        self.update_working_population(peoples);
+
+        self.peoples.append(peoples);
     }
 }
