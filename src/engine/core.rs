@@ -22,7 +22,7 @@ impl Engine {
             trace!("blit at: {:?}", coordinates);
 
             for line in &d.shape().lines().collect::<Vec<&str>>()[coordinates.crop_top..(d.height() as usize - coordinates.crop_bottom)] {
-                print!("{}{}", cursor::Goto(coordinates.x, coordinates.y), &line[coordinates.crop_left..(d.width() as usize - coordinates.crop_right)]);
+                print!("{}{}", cursor::Goto(coordinates.x, coordinates.y), line.chars().collect::<Vec<char>>()[coordinates.crop_left..(d.width() as usize - coordinates.crop_right)].iter().collect::<String>());
                 coordinates.y += 1;
             }
         }

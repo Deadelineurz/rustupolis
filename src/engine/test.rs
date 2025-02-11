@@ -51,6 +51,6 @@ impl Drawable for Test2Drawable {
     }
 
     fn shape(&self) -> String {
-        "bbb\ndef\nghi".to_string()
+        "b²b\nde▆\n█hi".to_string()
     }
 }
