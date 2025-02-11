@@ -1,42 +1,55 @@
 pub mod disease;
+pub mod district;
 pub mod dna;
+pub mod people;
 
-use dna::*;
-use disease::*;
+use district::*;
+use people::*;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CauseOfDeath {
-    OldAge,
-    Murder,
-    Sickness,
-    Radiations,
-    WorkAccident,
-    EatenByMonster,
+#[derive(Debug)]
+pub struct Population {
+    pub num_slice: u8,
+    districts: Vec<PopulationDistrict>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Mood {
-    Zealot, // see the Mayor as their god and so won't notice the state they are in.
-    Happy,
-    Neutral,
-    Unhappy,
-}
+impl Population {
+    /// Will also add an empty Core district.
+    pub fn new() -> Population {
+        let mut pop = Population {
+            num_slice: 0,
+            districts: Vec::new(),
+        };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct BasePeople {
-    pub age: u8,
-    pub peopletype: DNA
-}
+        PopulationDistrict::instantiate(Vec::new(), DistrictZone::Core, &mut pop);
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum People {
-    Alive {
-        base: BasePeople,
-        mood: Mood,
-        disease: Option<Disease>,
-    },
-    Dead {
-        base: BasePeople,
-        cause: CauseOfDeath,
-    },
+        pop
+    }
+
+    pub fn get_district(&self, id: u8) -> &PopulationDistrict {
+        &self.districts[id as usize]
+    }
+
+    pub fn remove_slice_by_id(&mut self, id: u8) {
+        self.districts.remove(id.into());
+        self.num_slice -= 1;
+    }
+
+    /// Be sure that the Population contains at least one district (which *should* be a core district).
+    pub fn get_core_district(&self) -> &PopulationDistrict {
+        match self
+            .districts
+            .iter()
+            .find(|district| district.zone_type == DistrictZone::Core)
+        {
+            Some(x) => x,
+            None => panic!("No core district found!"),
+        }
+    }
+
+    pub fn get_districts_by_type(&self, zone: DistrictZone) -> Vec<&PopulationDistrict> {
+        self.districts
+            .iter()
+            .filter(|district| district.zone_type == zone)
+            .collect() // collect my beloved
+    }
 }
