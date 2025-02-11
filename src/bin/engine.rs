@@ -2,7 +2,7 @@ use lazy_static::lazy_static;
 use log::LevelFilter;
 use rustupolis::engine::core::Engine;
 use rustupolis::engine::drawable::DynDrawable;
-use rustupolis::engine::test::TestDrawable;
+use rustupolis::engine::test::{Test2Drawable, TestDrawable};
 use rustupolis::logging::RemoteLoggerClient;
 use rustupolis::terminal::screen::CleanScreen;
 use std::io::stdout;
@@ -25,10 +25,16 @@ fn main() {
     let mut engine = Engine::default();
 
     let test = TestDrawable{};
+    let test2 = Test2Drawable{xpos:2, ypos:2};
+    let test3 = Test2Drawable{xpos:2, ypos:5};
 
     let t: Box<DynDrawable> = Box::new(test);
+    let t2: Box<DynDrawable> = Box::new(test2);
+    let t3: Box<DynDrawable> = Box::new(test3);
 
     engine.register_drawable(t);
+    engine.register_drawable(t2);
+    engine.register_drawable(t3);
 
     engine.refresh();
 
