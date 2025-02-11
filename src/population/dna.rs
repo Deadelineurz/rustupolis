@@ -2,10 +2,10 @@ use std::fmt;
 use std::ops::{BitAnd, BitOr, BitXor, Not};
 
 use strum::IntoEnumIterator;
-use strum_macros::EnumIter;
+use strum_macros::{EnumCount, EnumIter};
 
 #[repr(u32)]
-#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, EnumIter, EnumCount)]
 pub enum DNAFlags {
     HealthyCarrier = 1 << 0, // can have a disease but cannot die from it
     FastMetabolism = 1 << 1, // more food but age faster
@@ -89,7 +89,11 @@ impl DNA {
         }
     }
 
-    pub fn add(&mut self, flags: DNAFlags) {
+    pub fn add_flag(&mut self, flag: DNAFlags) {
+        self.traits |= flag as u32;
+    }
+
+    pub fn add_flags(&mut self, flags: u32) {
         self.traits |= flags as u32;
     }
 
