@@ -1,22 +1,21 @@
-use rustupolis::population::dna::*;
-use rustupolis::population::people::*;
 use rustupolis::population::*;
-use rustupolis::population::district::*;
 
 fn main() {
-    let kevin = People::Alive {
-        base: BasePeople {
-            age: 30,
-            peopletype: DNA::from_flags(DNAFlags::StrongPhysique | DNAFlags::Aggressive),
-        },
-        mood: Mood::Neutral,
-        disease: None,
-    };
-
-    dbg!(kevin);
-
+    // By default a popluation start with a core district.
     let mut population = Population::new();
+    
+    // add 50 peoples to Core district.
+    population.add_peoples(50, None); 
+    
+    // add 80 people to the slums
+    let slum_id = population.add_district(80, district::DistrictZone::Slums); 
 
-    let _district =
-        PopulationDistrict::instantiate(vec![kevin], DistrictZone::Residentials, &mut population);
+
+    let slums_neighbors = population.get_district_neighbors(slum_id);
+    
+    // When a district is added, links will be automatically added between the new and old districts
+    let core_district = slums_neighbors[0];
+
+    dbg!(core_district.peoples[0]);
+    println!("Core happiness level : {}%", core_district.happiness_percentage() * 100.0);
 }
