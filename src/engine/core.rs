@@ -1,6 +1,5 @@
 use crate::engine::drawable::DynDrawable;
 use crate::engine::viewport::Viewport;
-use ansi_colours::*;
 use ansi_term::Color::Red;
 use log::trace;
 use std::io::{stdout, Write};

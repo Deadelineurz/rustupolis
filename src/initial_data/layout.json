@@ -1,0 +1,50 @@
+{
+  "buildings": [
+    {
+      "name": "QG",
+      "id" : "UUc=",
+      "pos_x" : 2,
+      "pos_y" : 2,
+      "content" : "███████████████\n███████████████\n███████████████\n███████████████\n███████████████"
+    },
+    {
+      "name": "Test2",
+      "id" : "VGVzdDI=",
+      "pos_x" : 20,
+      "pos_y" : 2,
+      "content" : "b²b\n███\n█hi"
+    }
+  ],
+  "roads" : [
+    {
+      "name" : "MainRoad",
+      "id" : "TWFpblJvYWQ=",
+      "start_x" : 40,
+      "start_y" : 2,
+      "horizontal" : true,
+      "width" : 1,
+      "length" : 80,
+      "pavement" : "═"
+    },
+    {
+      "name" : "SecondaryRoad",
+      "id" : "TWFpblJvYWQ=",
+      "start_x" : 40,
+      "start_y" : 2,
+      "horizontal" : false,
+      "width" : 1,
+      "length" : 80,
+      "pavement" : "║"
+    },
+    {
+      "name" : "BooRoad",
+      "id" : "TWFpblJvYWQ=",
+      "start_x" : 120,
+      "start_y" : 2,
+      "horizontal" : false,
+      "width" : 1,
+      "length" : 40,
+      "pavement" : "║"
+    }
+  ]
+}
