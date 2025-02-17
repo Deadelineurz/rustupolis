@@ -5,8 +5,13 @@ pub struct BuildingDrawable {
     pub xpos: i16,
     pub ypos: i16,
     pub color: ansi_term::Color,
-    pub content: String
+    pub content: Option<Vec<String>>,
+    pub width : Option<u8>,
+    pub height : Option<u8>,
+    pub texture : Option<char>,
+    pub b_type : String
 }
+
 
 #[derive(Debug)]
 pub struct RoadDrawable {
@@ -30,28 +35,42 @@ impl Drawable for BuildingDrawable {
     }
 
     fn width(&self) -> u8 {
-        let mut n : u8 = 0;
-        for line in self.content.lines() {
-            if n == 0 {
-                n = line.chars().count() as u8
+        if (&self.b_type == "custom") {
+            let mut n : u8 = 0;
+            let lines = (self.content.as_ref()).unwrap();
+                for line in lines {
+                if n == 0 {
+
+                    n = line.chars().count() as u8
+                }
+                else if (line.chars().count() as u8) != n {
+                    panic!("BuildingDrawable: Invalid line width, all lines need to have the same width")
+                }
             }
-            else if (line.chars().count() as u8) != n {
-                panic!("BuildingDrawable: Invalid line width, all lines need to have the same width")
-            }
+            n
         }
-        n
+        else {
+            self.width.unwrap()
+        }
     }
 
     fn height(&self) -> u8 {
-        let mut n = 0;
-        for _ in self.content.lines() {
-            n+=1;
+        if self.b_type == "custom" {
+            return self.content.as_ref().unwrap().len() as u8
         }
-        n
+        self.height.unwrap()
     }
 
     fn shape(&self) -> String {
-        self.content.to_string()
+        if (self.b_type == "custom") {
+            return self.content.as_ref().unwrap().join("\n");
+        }
+        let mut str: String = "".to_string();
+        for i in 0..self.height.unwrap() {
+            str += &*(self.texture.unwrap().to_string().repeat(self.width.unwrap() as usize));
+            str += "\n";
+        }
+        str
     }
 
     fn color(&self) -> ansi_term::Color {

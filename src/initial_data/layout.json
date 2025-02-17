@@ -1,18 +1,65 @@
 {
   "buildings": [
     {
-      "name": "QG",
+      "name": "HAB2",
       "id" : "UUc=",
-      "pos_x" : 2,
-      "pos_y" : 2,
-      "content" : "███████████████\n███████████████\n███████████████\n███████████████\n███████████████"
+      "pos_x" : 55,
+      "pos_y" : 32,
+      "b_type" : "uniform",
+      "width" : 8,
+      "height" : 27,
+      "texture" : "_",
+      "content" : null
     },
     {
-      "name": "Test2",
-      "id" : "VGVzdDI=",
+      "name": "HAB3",
+      "id" : "UUc=",
+      "pos_x" : 55,
+      "pos_y" : 0,
+      "b_type" : "uniform",
+      "width" : 8,
+      "height" : 30,
+      "texture" : "/",
+      "content" : null
+    },
+    {
+      "name": "USI1",
+      "id" : "UUc=",
+      "pos_x" : 30,
+      "pos_y" : 36,
+      "b_type" : "uniform",
+      "width" : 11,
+      "height" : 13,
+      "texture" : "/",
+      "content" : null
+    },
+    {
+      "name": "USI2",
+      "id" : "UUc=",
+      "pos_x" : 42,
+      "pos_y" : 36,
+      "b_type" : "uniform",
+      "width" : 7,
+      "height" : 13,
+      "texture" : "/",
+      "content" : null
+    },
+    {
+      "name": "QG",
+      "id" : "UUc=",
       "pos_x" : 20,
-      "pos_y" : 2,
-      "content" : "b²b\n███\n█hi"
+      "pos_y" : 0,
+      "b_type" : "custom",
+      "width" : null,
+      "height" : null,
+      "texture" : null,
+      "content" : [
+        "███████████████",
+        "███████████████",
+        "███████████████",
+        "███████████████",
+        "███████████████"
+      ]
     }
   ],
   "roads" : [
@@ -29,11 +76,11 @@
     {
       "name" : "D7",
       "id" : "RDc=",
-      "start_x" : 40,
-      "start_y" : 2,
+      "start_x" : 52,
+      "start_y" : 0,
       "horizontal" : false,
-      "width" : 5,
-      "length" : 80,
+      "width" : 3,
+      "length" : 62,
       "pavement" : "║"
     },
     {

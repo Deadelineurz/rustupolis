@@ -12,7 +12,11 @@ pub struct Building {
     id: String,
     pos_x : i16,
     pos_y : i16,
-    content: String
+    b_type : String,
+    width : Option<u8>,
+    height : Option<u8>,
+    texture : Option<char>,
+    content: Option<Vec<String>>
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -52,7 +56,7 @@ pub fn drawables_from_buildings(buildings: Vec<Building>) -> Vec<BuildingDrawabl
     let mut drawables = vec![];
 
     for building in buildings {
-        let drawable = BuildingDrawable { xpos: building.pos_x, ypos: building.pos_y, color: Blue, content: building.content };
+        let drawable = BuildingDrawable { xpos: building.pos_x, ypos: building.pos_y, color: Blue, content: building.content, texture : building.texture, width : building.width, height: building.height, b_type: building.b_type };
         drawables.push(drawable)
     }
 
