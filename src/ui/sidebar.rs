@@ -126,7 +126,7 @@ impl SideBar {
         y_offset: u16,
     ) -> Result<(), Error> {
         let mut line = String::from_str(&text.to_string()).unwrap();
-        line.push_str(&" ".repeat(self.width as usize - line.len() - 1));
+        self.fill_str(&mut line);
         draw_text(
             stdout,
             &line,
@@ -158,7 +158,12 @@ impl SideBar {
         self.draw_logs(stdout)
     }
 
-    pub fn push_multiline_log(&mut self, log: Vec<Box<dyn Display>>, log_type: LogType, color: LogColor) {
+    pub fn push_multiline_log(
+        &mut self,
+        log: Vec<Box<dyn Display>>,
+        log_type: LogType,
+        color: LogColor,
+    ) {
         self.logs.push((log, log_type, color));
     }
 
@@ -176,7 +181,7 @@ impl SideBar {
     }
 
     /// display custom infos at the top of the sidebar, each display in text is a new line. \
-    /// text should not be larger than `get_text_line_max_len()`. \
+    /// text should not be larger than `get_text_line_max_len()` or it will be truncate. \
     /// **Will update the place of the log separator to be able to draw them properly later!**
     pub fn display_custom_infos(
         &mut self,
@@ -188,7 +193,7 @@ impl SideBar {
 
         for (y_offset, line) in text.iter().enumerate() {
             let mut line = String::from_str(&line.to_string()).unwrap();
-            line.push_str(&" ".repeat(self.width as usize - line.len() - 1));
+            self.fill_str(&mut line);
 
             draw_text(
                 stdout,
@@ -222,7 +227,7 @@ impl SideBar {
         )?;
 
         self.draw_separator(stdout, &"Logs:", 1)?;
-        
+
         self.log_separator_y_pos = SEPARATOR_HEIGHT + 1; // ifk why I have to do this but since it works
         self.draw_logs(stdout)?;
         self.log_separator_y_pos = SEPARATOR_HEIGHT;
@@ -232,11 +237,7 @@ impl SideBar {
 
     pub fn clear_logs(&mut self, stdout: &mut Stdout) -> Result<(), Error> {
         for _ in 0..self.get_max_number_of_logs() {
-            self.push_log(
-                Box::new(""),
-                LogType::None,
-                LogColor::Normal,
-            );
+            self.push_log(Box::new(""), LogType::None, LogColor::Normal);
         }
         self.draw_logs(stdout)?;
         self.logs.clear();
@@ -254,7 +255,7 @@ impl SideBar {
         draw_line(stdout, self.offset + 1, y, self.width - 1, LineStyle::new())?;
 
         let mut title = String::from_str(&title.to_string()).unwrap();
-        title.push_str(&" ".repeat(self.width as usize - title.len() - 1));
+        self.fill_str(&mut title);
 
         draw_text(
             stdout,
@@ -274,6 +275,13 @@ impl SideBar {
         )?;
 
         Ok(())
+    }
+
+    fn fill_str(&self, string: &mut String) {
+        string.truncate(self.get_text_line_max_len() as usize);
+        string.push_str(
+            &" ".repeat((self.width as i16 - string.len() as i16 - 1).clamp(0, 100) as usize),
+        );
     }
 }
 
@@ -297,8 +305,7 @@ impl Display for LogType {
     fn fmt(&self, f: &mut Formatter) -> fmt::Result {
         match self {
             Self::None => write!(f, ""),
-            _ => write!(f, "[{:?}] ", self)
+            _ => write!(f, "[{:?}] ", self),
         }
-        
     }
 }
