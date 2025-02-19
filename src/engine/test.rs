@@ -65,6 +65,46 @@ impl Drawable for BuildingDrawable {
         if (self.b_type == "custom") {
             return self.content.as_ref().unwrap().join("\n");
         }
+        else if (&self.b_type == "empty_space") {
+            if self.width.unwrap() == 1 && self.height.unwrap() == 1{
+                return "▢\n".parse().unwrap();
+            }
+            else if self.height.unwrap() == 1 {
+                let mut str : String = "╞".to_string();
+                str.push_str(&*"═".repeat(self.width.unwrap() as usize - 2));
+                str.push_str("╡\n");
+                return str;
+            }
+            else if self.width.unwrap() == 1 {
+                let mut str : String = "╦\n".to_string();
+                str.push_str(&*"║\n".repeat(self.height.unwrap() as usize -2));
+                str.push_str("╩\n");
+                return str;
+            }
+            else {
+                let in_layers = self.height.unwrap() - 2;
+                let in_columns : u8 = self.width.unwrap() - 2;
+
+                let mut str : String = "╔".to_string();
+
+                //First Layer
+                str.push_str(&*"═".repeat(in_columns as usize));
+                str.push_str("╗\n");
+
+                for i in 0..in_layers {
+                    let mut layer = "║".to_string();
+                    layer.push_str(&*" ".repeat(in_columns as usize));
+                    layer.push_str("║\n");
+                    str.push_str(&*layer);
+                }
+
+                str.push_str("╚");
+                str.push_str(&*"═".repeat(in_columns as usize));
+                str.push_str("╝\n");
+                return str ;
+            }
+
+        }
         let mut str: String = "".to_string();
         for i in 0..self.height.unwrap() {
             str += &*(self.texture.unwrap().to_string().repeat(self.width.unwrap() as usize));

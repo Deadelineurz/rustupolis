@@ -1,6 +1,6 @@
 use std::fs::read_to_string;
 use std::ptr::null;
-use ansi_term::Color::{Blue, Red};
+use ansi_term::Color::{Blue, Green, Red};
 use serde::{Serialize, Deserialize};
 use serde_json::Value;
 use crate::engine::test::{BuildingDrawable, RoadDrawable};
@@ -56,7 +56,7 @@ pub fn drawables_from_buildings(buildings: Vec<Building>) -> Vec<BuildingDrawabl
     let mut drawables = vec![];
 
     for building in buildings {
-        let drawable = BuildingDrawable { xpos: building.pos_x, ypos: building.pos_y, color: Blue, content: building.content, texture : building.texture, width : building.width, height: building.height, b_type: building.b_type };
+        let drawable = BuildingDrawable { xpos: building.pos_x, ypos: building.pos_y, color: if building.b_type == "empty_space" {Green} else { Blue }, content: building.content, texture : building.texture, width : building.width, height: building.height, b_type: building.b_type };
         drawables.push(drawable)
     }
 
