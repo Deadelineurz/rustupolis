@@ -18,7 +18,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     for i in 0..side_bar.get_max_number_of_logs() {
         side_bar.push_log(
-            vec![Box::new("test ".to_string() + &i.to_string())],
+            Box::new("test ".to_string() + &i.to_string()),
             rustupolis::ui::sidebar::LogType::Debug,
             rustupolis::ui::sidebar::LogColor::Normal,
         );
@@ -27,6 +27,8 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         side_bar.draw_logs(&mut stdout)?;
     }
+
+    sleep(Duration::from_secs(1));
 
     side_bar.display_custom_infos(
         &mut stdout,
@@ -41,9 +43,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         ],
     )?;
 
-    sleep(Duration::from_secs(1));
+    sleep(Duration::from_secs(2));
 
-    side_bar.push_log_and_display(
+    side_bar.push_multiline_log_and_display(
         &mut stdout,
         vec![
             Box::new("A problem as occured..."),
@@ -56,15 +58,20 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     side_bar.push_log_and_display(
         &mut stdout,
-        vec![Box::new("or is it ?")],
+        Box::new("or is it ?"),
         LogType::Debug,
         LogColor::Unusual,
     )?;
-    sleep(Duration::from_secs(1));
+    sleep(Duration::from_secs(2));
 
     side_bar.clear_custom_infos(&mut stdout)?;
 
-    sleep(Duration::from_secs(1));
+    sleep(Duration::from_secs(2));
+
+    side_bar.clear_logs(&mut stdout)?;
+
+    sleep(Duration::from_secs(2));
+
 
     Ok(())
 }
