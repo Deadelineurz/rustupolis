@@ -46,10 +46,10 @@ impl KeyBindListener {
                let e = &mut *guard;
 
                match key {
-                   Key::Left => e.viewport.move_x(-4),
-                   Key::Right => e.viewport.move_x(4),
-                   Key::Up => e.viewport.move_y(-4),
-                   Key::Down => e.viewport.move_y(4),
+                   Key::Left => e.viewport.move_x(-1),
+                   Key::Right => e.viewport.move_x(1),
+                   Key::Up => e.viewport.move_y(-1),
+                   Key::Down => e.viewport.move_y(1),
                    _ => {}
                }
 
