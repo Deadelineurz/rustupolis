@@ -2,6 +2,8 @@ use std::io::{Error, Stdout};
 use termion::color::{Bg, Fg, Color, Reset};
 use termion::cursor;
 use std::io::Write;
+use termion::input::MouseTerminal;
+use termion::raw::RawTerminal;
 
 struct CharacterSet {
     pub horizontal: char,
@@ -116,7 +118,7 @@ impl BoxStyle<Reset, Reset> {
     }
 }
 
-pub fn draw_box<C: Color + Copy, D: Color + Copy>(stdout: &mut Stdout, x: u16, y: u16, width: u16, height: u16, style: BoxStyle<C, D>) -> Result<(), Error> {
+pub fn draw_box<C: Color + Copy, D: Color + Copy>(stdout: &MouseTerminal<RawTerminal<Stdout>>, x: u16, y: u16, width: u16, height: u16, style: BoxStyle<C, D>) -> Result<(), Error> {
     let chars = style.format.characters();
 
     if height < 2 {
@@ -129,35 +131,35 @@ pub fn draw_box<C: Color + Copy, D: Color + Copy>(stdout: &mut Stdout, x: u16, y
 
     // Top bar drawing
     match style.fill {
-        BoxFill::None => write!(stdout, "{}", Bg(Reset))?,
-        BoxFill::Color(c) => write!(stdout, "{}", Bg(c))?,
-        BoxFill::Fill(_) => write!(stdout, "{}", Bg(Reset))?
+        BoxFill::None => write!(stdout.lock(), "{}", Bg(Reset))?,
+        BoxFill::Color(c) => write!(stdout.lock(), "{}", Bg(c))?,
+        BoxFill::Fill(_) => write!(stdout.lock(), "{}", Bg(Reset))?
     }
 
-    write!(stdout, "{}{}", Fg(style.lines_color), cursor::Goto(x, y))?;
-    write!(stdout, "{}{}{}", chars.top_left, String::from(chars.horizontal).repeat((width - 2) as usize), chars.top_right)?;
+    write!(stdout.lock(), "{}{}", Fg(style.lines_color), cursor::Goto(x, y))?;
+    write!(stdout.lock(), "{}{}{}", chars.top_left, String::from(chars.horizontal).repeat((width - 2) as usize), chars.top_right)?;
 
     match style.fill {
         BoxFill::None => {
             for ord in (y+1)..(y+height-1) {
-                write!(stdout, "{}{}{}{}", cursor::Goto(x, ord), chars.vertical, cursor::Goto(x+width-1, ord), chars.vertical)?;
+                write!(stdout.lock(), "{}{}{}{}", cursor::Goto(x, ord), chars.vertical, cursor::Goto(x+width-1, ord), chars.vertical)?;
             }
         }
         BoxFill::Color(_) => {
             for ord in (y+1)..(y+height-1) {
-                write!(stdout, "{}{}{}{}", cursor::Goto(x, ord), chars.vertical, String::from(' ').repeat((width-2) as usize), chars.vertical)?;
+                write!(stdout.lock(), "{}{}{}{}", cursor::Goto(x, ord), chars.vertical, String::from(' ').repeat((width-2) as usize), chars.vertical)?;
             }
         }
         BoxFill::Fill(c) => {
             for ord in (y+1)..(y+height-1) {
-                write!(stdout, "{}{}{}{}", cursor::Goto(x, ord), chars.vertical, String::from(c).repeat((width-2) as usize), chars.vertical)?;
+                write!(stdout.lock(), "{}{}{}{}", cursor::Goto(x, ord), chars.vertical, String::from(c).repeat((width-2) as usize), chars.vertical)?;
             }
         }
     }
 
-    write!(stdout, "{}{}{}{}", cursor::Goto(x, y+height-1), chars.bottom_left, String::from(chars.horizontal).repeat((width - 2) as usize), chars.bottom_right)?;
+    write!(stdout.lock(), "{}{}{}{}", cursor::Goto(x, y+height-1), chars.bottom_left, String::from(chars.horizontal).repeat((width - 2) as usize), chars.bottom_right)?;
 
-    stdout.flush()?;
+    stdout.lock().flush()?;
 
     Ok(())
 }

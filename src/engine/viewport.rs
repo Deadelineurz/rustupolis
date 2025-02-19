@@ -50,6 +50,10 @@ impl Viewport {
         trace!("{:?}", self)
     }
 
+    pub fn get_virtual_coordinates(&self, x: u16, y: u16) -> (i16, i16) {
+        ((x-1) as i16 + self.virtual_x, (y-1) as i16 + self.virtual_y)
+    }
+
     pub fn get_output_coordinates(&self, d: &Box<DynDrawable>) -> OutputCoordinates {
         let x = if d.x() < self.virtual_x {
                 0

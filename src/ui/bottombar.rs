@@ -1,11 +1,13 @@
 use super::colors::*;
 use crate::terminal::boxes::*;
 use std::io::{Error, Stdout};
+use termion::input::MouseTerminal;
+use termion::raw::RawTerminal;
 
 const BOTTOMBAR_HEIGHT_PERCENTAGE: f32 = 0.1;
 
 pub fn draw_bottombar(
-    stdout: &mut Stdout,
+    stdout: &MouseTerminal<RawTerminal<Stdout>>,
     terminal_size: (u16, u16),
     side_bar_size: u16,
 ) -> Result<(), Error> {

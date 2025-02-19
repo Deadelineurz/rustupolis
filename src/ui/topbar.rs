@@ -4,6 +4,8 @@ use crate::terminal::{
     lines::{draw_line, LineDirection, LineStyle}, text::draw_text,
 };
 use std::io::{Error, Stdout};
+use termion::input::MouseTerminal;
+use termion::raw::RawTerminal;
 
 const TOPBAR_HEIGHT_PERCENTAGE: f32 = 0.1;
 
@@ -17,7 +19,7 @@ pub struct TopBarInfo {
 }
 
 
-pub fn draw_topbar(stdout: &mut Stdout, terminal_size: (u16, u16), side_bar_size: u16) -> Result<(), Error> {
+pub fn draw_topbar(stdout: &MouseTerminal<RawTerminal<Stdout>>, terminal_size: (u16, u16), side_bar_size: u16) -> Result<(), Error> {
     let date = " Lorem Ipsum ";
 
     let term_width = terminal_size.0;
