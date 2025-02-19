@@ -48,7 +48,7 @@ impl SideBar {
             width,
 
             text_line_max_len: width - BORDER_WIDTH,
-            log_separator_y_pos: SEPARATOR_HEIGHT + 1,
+            log_separator_y_pos: SEPARATOR_HEIGHT,
             logs: Vec::new(),
         }
     }
@@ -134,18 +134,36 @@ impl SideBar {
             self.ter_height - 1 - y_offset,
             match color {
                 LogColor::Normal => UI_WHITE_COLOR,
-                LogColor::Unusual => RUST_COLOR_1,
+                LogColor::Unusual => RUST_COLOR_2,
                 LogColor::Important => Rgb(170, 20, 5),
             },
             UI_BLACK_COLOR,
         )
     }
 
-    pub fn push_log(&mut self, log: Vec<Box<dyn Display>>, log_type: LogType, color: LogColor) {
+    pub fn push_log(&mut self, log: Box<dyn Display>, log_type: LogType, color: LogColor) {
+        self.logs.push((vec![log], log_type, color));
+    }
+
+    /// Will call `draw_logs()`
+    pub fn push_log_and_display(
+        &mut self,
+        stdout: &mut Stdout,
+        log: Box<dyn Display>,
+        log_type: LogType,
+        log_color: LogColor,
+    ) -> Result<(), Error> {
+        self.logs.push((vec![log], log_type, log_color));
+
+        self.draw_logs(stdout)
+    }
+
+    pub fn push_multiline_log(&mut self, log: Vec<Box<dyn Display>>, log_type: LogType, color: LogColor) {
         self.logs.push((log, log_type, color));
     }
 
-    pub fn push_log_and_display(
+    /// Will call `draw_logs()`
+    pub fn push_multiline_log_and_display(
         &mut self,
         stdout: &mut Stdout,
         log: Vec<Box<dyn Display>>,
@@ -190,6 +208,7 @@ impl SideBar {
         Ok(())
     }
 
+    /// Will reset the Logs separator at the top of the sidebar.
     pub fn clear_custom_infos(&mut self, stdout: &mut Stdout) -> Result<(), Error> {
         draw_box(
             stdout,
@@ -202,10 +221,27 @@ impl SideBar {
                 .lines_color(UI_WHITE_COLOR),
         )?;
 
-        self.log_separator_y_pos = SEPARATOR_HEIGHT + 1;
         self.draw_separator(stdout, &"Logs:", 1)?;
+        
+        self.log_separator_y_pos = SEPARATOR_HEIGHT + 1; // ifk why I have to do this but since it works
+        self.draw_logs(stdout)?;
+        self.log_separator_y_pos = SEPARATOR_HEIGHT;
 
-        self.draw_logs(stdout)
+        Ok(())
+    }
+
+    pub fn clear_logs(&mut self, stdout: &mut Stdout) -> Result<(), Error> {
+        for _ in 0..self.get_max_number_of_logs() {
+            self.push_log(
+                Box::new(""),
+                LogType::None,
+                LogColor::Normal,
+            );
+        }
+        self.draw_logs(stdout)?;
+        self.logs.clear();
+
+        Ok(())
     }
 
     /// Draw a simple separator (header + two lines).
