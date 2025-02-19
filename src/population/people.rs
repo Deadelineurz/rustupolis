@@ -57,7 +57,7 @@ impl People {
         People::Alive {
             base: BasePeople {
                 age,
-                dna: DNA::from_flags(dna_traits),
+                dna: DNA::from_flag(dna_traits),
             },
             mood: Mood::Neutral,
             disease: None,

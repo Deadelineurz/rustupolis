@@ -1,5 +1,5 @@
 use std::fmt;
-use std::ops::{BitAnd, BitOr, BitXor, Not};
+use std::ops::{BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not};
 
 use strum::IntoEnumIterator;
 use strum_macros::{EnumCount, EnumIter};
@@ -67,7 +67,7 @@ impl From<DNAFlags> for u32 {
 }
 
 // the wrapper
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct DNA {
     traits: u32,
 }
@@ -77,24 +77,14 @@ impl DNA {
         DNA { traits: 0 }
     }
 
-    pub fn from_flag(flag: DNAFlags) -> Self {
-        DNA {
-            traits: flag as u32,
-        }
-    }
-
-    pub fn from_flags(flags: u32) -> Self {
+    pub fn from_flag(flags: u32) -> Self {
         DNA {
             traits: flags,
         }
     }
 
-    pub fn add_flag(&mut self, flag: DNAFlags) {
+    pub fn add_flag(&mut self, flag: u32) {
         self.traits |= flag as u32;
-    }
-
-    pub fn add_flags(&mut self, flags: u32) {
-        self.traits |= flags as u32;
     }
 
     pub fn remove(&mut self, flags: DNAFlags) {
@@ -103,6 +93,65 @@ impl DNA {
 
     pub fn contains(&self, flags: DNAFlags) -> bool {
         (self.traits & flags as u32) != 0
+    }
+}
+
+impl BitOrAssign for DNA {
+    fn bitor_assign(&mut self, rhs: Self) {
+        self.traits |= rhs.traits
+    }
+}
+
+impl BitAndAssign for DNA {
+    fn bitand_assign(&mut self, rhs: Self) {
+        self.traits &= rhs.traits
+    }
+}
+
+impl BitXorAssign for DNA {
+    fn bitxor_assign(&mut self, rhs: Self) {
+        self.traits ^= rhs.traits
+    }
+}
+
+impl BitAnd for DNA {
+    type Output = Self;
+
+    fn bitand(self, rhs: Self) -> Self::Output {
+        DNA {
+            traits: self.traits & rhs.traits
+        }
+    }
+}
+
+impl BitOr for DNA {
+    type Output = Self;
+
+    fn bitor(self, rhs: Self) -> Self::Output {
+        DNA {
+            traits: self.traits | rhs.traits
+        }
+    }
+    
+}
+
+impl BitXor for DNA {
+    type Output = Self;
+
+    fn bitxor(self, rhs: Self) -> Self::Output {
+        DNA {
+            traits: self.traits ^ rhs.traits
+        }
+    }
+}
+
+impl Not for DNA {
+    type Output = Self;
+
+    fn not(self) -> Self::Output {
+        DNA {
+            traits: !self.traits
+        }
     }
 }
 
