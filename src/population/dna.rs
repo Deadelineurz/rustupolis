@@ -26,6 +26,7 @@ pub enum DNAFlags {
     HeatResistant = 1 << 16,
     Aggressive = 1 << 17,
     Docile = 1 << 18,
+    UnstableDNA = 1 << 19,      // MORE MUTATIONS
 }
 
 impl BitAnd for DNAFlags {
