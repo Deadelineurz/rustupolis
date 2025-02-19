@@ -135,7 +135,7 @@ pub fn draw_box<C: Color + Copy, D: Color + Copy>(stdout: &mut Stdout, x: u16, y
     }
 
     write!(stdout, "{}{}", Fg(style.lines_color), cursor::Goto(x, y))?;
-    write!(stdout, "{}{}{}", chars.top_left, String::from(chars.horizontal).repeat((width - 4) as usize), chars.top_right)?;
+    write!(stdout, "{}{}{}", chars.top_left, String::from(chars.horizontal).repeat((width - 2) as usize), chars.top_right)?;
 
     match style.fill {
         BoxFill::None => {
@@ -145,17 +145,17 @@ pub fn draw_box<C: Color + Copy, D: Color + Copy>(stdout: &mut Stdout, x: u16, y
         }
         BoxFill::Color(_) => {
             for ord in (y+1)..(y+height-1) {
-                write!(stdout, "{}{}{}{}", cursor::Goto(x, ord), chars.vertical, String::from(' ').repeat((width-4) as usize), chars.vertical)?;
+                write!(stdout, "{}{}{}{}", cursor::Goto(x, ord), chars.vertical, String::from(' ').repeat((width-2) as usize), chars.vertical)?;
             }
         }
         BoxFill::Fill(c) => {
             for ord in (y+1)..(y+height-1) {
-                write!(stdout, "{}{}{}{}", cursor::Goto(x, ord), chars.vertical, String::from(c).repeat((width-4) as usize), chars.vertical)?;
+                write!(stdout, "{}{}{}{}", cursor::Goto(x, ord), chars.vertical, String::from(c).repeat((width-2) as usize), chars.vertical)?;
             }
         }
     }
 
-    write!(stdout, "{}{}{}{}", cursor::Goto(x, y+height-1), chars.bottom_left, String::from(chars.horizontal).repeat((width - 4) as usize), chars.bottom_right)?;
+    write!(stdout, "{}{}{}{}", cursor::Goto(x, y+height-1), chars.bottom_left, String::from(chars.horizontal).repeat((width - 2) as usize), chars.bottom_right)?;
 
     stdout.flush()?;
 
