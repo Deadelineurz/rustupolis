@@ -1,9 +1,8 @@
 use crate::engine::drawable::DynDrawable;
 use crate::engine::viewport::Viewport;
-use ansi_term::Color::Red;
+use ansi_term::Color::{Green, Red};
 use log::trace;
 use std::io::{stdout, Write};
-use termion::color::{Black, Blue, Fg, Green, LightBlack};
 use termion::cursor;
 
 pub struct Engine {
@@ -30,15 +29,7 @@ impl Engine {
             for line in &d.shape().lines().collect::<Vec<&str>>()
                 [coordinates.crop_top..(d.height() as usize - coordinates.crop_bottom)]
             {
-                print!(
-                    "{}{}{}",
-                    cursor::Goto(coordinates.x, coordinates.y),
-                    line.chars().collect::<Vec<char>>()
-                        [coordinates.crop_left..(d.width() as usize - coordinates.crop_right)]
-                        .iter()
-                        .collect::<String>(),
-                    d.color().prefix()
-                );
+                print!("{}{}", cursor::Goto(coordinates.x, coordinates.y), d.color().paint(line.chars().collect::<Vec<char>>()[coordinates.crop_left..(d.width() as usize - coordinates.crop_right)].iter().collect::<String>()));
                 coordinates.y += 1;
             }
         }
