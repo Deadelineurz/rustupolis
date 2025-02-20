@@ -34,7 +34,7 @@ impl PopulationDistrict {
         let mut res = 0;
         for people in peoples {
             match people {
-                People::Alive { mood, .. } => res += *mood as u16,
+                People::Alive (AlivePerson { mood, .. }) => res += *mood as u16,
                 People::Dead { .. } => res -= 1,
             }
         }
@@ -45,7 +45,7 @@ impl PopulationDistrict {
         let mut res = 0;
         for people in peoples {
             match people {
-                People::Alive { disease, .. } if {*disease != None} => res += 1,
+                People::Alive (AlivePerson{ disease, .. }) if {*disease != None} => res += 1,
                 _ => (),
             }
         }
@@ -57,7 +57,7 @@ impl PopulationDistrict {
         let mut res = 0;
         for people in peoples {
             match people {
-                People::Alive { base, .. } if base.age > 14 && base.age < 70 => {
+                People::Alive (AlivePerson{ age, .. }) if *age > 14 && *age < 70 => {
                     res += 1
                 }
                 _ => (),
