@@ -34,6 +34,7 @@ pub enum People {
         base: BasePeople,
         mood: Mood,
         disease: Option<Disease>,
+        is_working: bool
     },
     Dead {
         base: BasePeople,
@@ -61,6 +62,7 @@ impl People {
             },
             mood: Mood::Neutral,
             disease: None,
+            is_working: false
         }
     }
 
