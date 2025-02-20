@@ -23,23 +23,25 @@ pub enum Mood {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct BasePeople {
+pub struct AlivePerson {
     pub age: u8,
     pub dna: DNA,
+    pub mood: Mood,
+    pub disease: Option<Disease>,
+    pub is_working: bool,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct DeadPerson {
+    pub age: u8,
+    pub dna: DNA,
+    cause: CauseOfDeath,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum People {
-    Alive {
-        base: BasePeople,
-        mood: Mood,
-        disease: Option<Disease>,
-        is_working: bool
-    },
-    Dead {
-        base: BasePeople,
-        cause: CauseOfDeath,
-    },
+    Alive(AlivePerson),
+    Dead(DeadPerson),
 }
 
 impl People {
@@ -55,19 +57,33 @@ impl People {
             dna_traits |= 2_u32.pow(random_range(0_u32..DNAFlags::COUNT as u32));
         }
 
-        People::Alive {
-            base: BasePeople {
-                age,
-                dna: DNA::from_flag(dna_traits),
-            },
+        People::Alive(AlivePerson {
+            age,
+            dna: DNA::from_flag(dna_traits),
             mood: Mood::Neutral,
             disease: None,
-            is_working: false
+            is_working: false,
+        })
+    }
+
+    fn as_alive(&self) -> Option<&AlivePerson> {
+        if let People::Alive(person) = self {
+            Some(person)
+        } else {
+            None
+        }
+    }
+
+    fn as_dead(&self) -> Option<&DeadPerson> {
+        if let People::Dead(person) = self {
+            Some(person)
+        } else {
+            None
         }
     }
 
     /// Create new (alive) peoples with 1 DNA trait each.
-    pub fn create_random_population(amount : u8) -> Vec<People> {
+    pub fn create_random_population(amount: u8) -> Vec<People> {
         let mut peoples = vec![];
         for _ in 0..amount {
             peoples.push(People::create_random_people(true, 1));
