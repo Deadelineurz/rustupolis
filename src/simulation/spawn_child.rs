@@ -1,31 +1,61 @@
 use crate::population::{
-    disease::{Disease, DiseaseLethality}, district::{DistrictZone, PopulationDistrict}, dna::{DNAFlags, DNA}, people::{Mood, People}
+    disease::{Disease, DiseaseLethality},
+    district::{DistrictZone, PopulationDistrict},
+    dna::{DNAFlags, DNA},
+    people::{AlivePerson, Mood, People},
 };
 
-/// Will panic if you give it a dead person.
-pub fn number_of_children_to_make(people: &People, env: &PopulationDistrict) -> u8 {
-    if let People::Alive { base, mood, disease, is_working } = people {
-        let age = base.age;
+use super::dna_transmission::{mix_dna, mutate_dna};
 
-        let birth_probability = 
-        fertility_from_age(age)
-        * fertility_bonus(base.dna)
-        * mood_bonus(mood)
+const MUTATION_PERCENTAGE: f64 = 0.07;
+const UNSTABLE_DNA_MUTATION_BONUS: f64 = 0.13;
+
+pub fn number_of_children_to_make(people: &AlivePerson, env: &PopulationDistrict) -> u8 {
+    let birth_probability = fertility_from_age(people.age)
+        * fertility_bonus(people.dna)
+        * mood_bonus(&people.mood)
         * happiness_bonus(env.happiness_percentage().into())
         * zone_bonus(&env.zone_type)
-        * sickness_bonus(disease)
-        * work_bonus(is_working, env.working_poulation as f64 / env.num_people as f64);
+        * sickness_bonus(&people.disease)
+        * work_bonus(
+            &people.is_working,
+            env.working_poulation as f64 / env.num_people as f64,
+        );
 
-        let base = birth_probability.floor() as u8;
-        if rand::random::<f64>() < (birth_probability - base as f64) {
-            base + 1
-        } else {
-            base
-        }
+    let base = birth_probability.floor() as u8;
+    if rand::random::<f64>() < (birth_probability - base as f64) {
+        base + 1
+    } else {
+        base
     }
-    else {
-        panic!("Trying to have a dead people make babies")
+}
+
+pub fn spawn_childs(amount: u8, parent1: &AlivePerson, parent2: &AlivePerson) -> Vec<People> {
+    let mut vec = Vec::new();
+    for _ in 0..amount {
+        let mut dna = mix_dna(parent1.dna, parent2.dna);
+
+        let bonus_mutation = match (
+            parent1.dna.contains(DNAFlags::UnstableDNA),
+            parent2.dna.contains(DNAFlags::UnstableDNA),
+        ) {
+            (x, y) if x && y => UNSTABLE_DNA_MUTATION_BONUS * 2.0,
+            (x, y) if x || y => UNSTABLE_DNA_MUTATION_BONUS,
+            _ => 0.0,
+        };
+
+        dna = mutate_dna(dna, MUTATION_PERCENTAGE + bonus_mutation);
+
+        vec.push(People::Alive(AlivePerson {
+            age: 0,
+            dna,
+            mood: parent1.mood.to_average(parent2.mood),
+            disease: None,
+            is_working: false,
+        }));
     }
+
+    vec
 }
 
 fn fertility_bonus(dna: DNA) -> f64 {
@@ -62,7 +92,7 @@ fn mood_bonus(mood: &Mood) -> f64 {
         Mood::Happy => 1.1,
         Mood::Neutral => 1.0,
         Mood::Unhappy => 0.8,
-        Mood::Angry => 0.7
+        Mood::Angry => 0.7,
     }
 }
 
@@ -71,10 +101,9 @@ fn sickness_bonus(disease: &Option<Disease>) -> f64 {
         match disease.lethality {
             DiseaseLethality::Low => 0.9,
             DiseaseLethality::Moderate => 0.6,
-            DiseaseLethality::Deadly => 0.1
+            DiseaseLethality::Deadly => 0.1,
         }
-    }
-    else {
+    } else {
         1.0
     }
 }
