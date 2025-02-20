@@ -13,6 +13,7 @@ pub enum CauseOfDeath {
     EatenByMonster,
 }
 
+#[repr(i8)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Mood {
     Zealot = 2, // see the Mayor as their god and so won't notice the state they are in.
@@ -20,6 +21,19 @@ pub enum Mood {
     Neutral = 0,
     Unhappy = -1,
     Angry = -2,
+}
+
+impl Mood {
+    /// return (mood1 + mood2) / 2 as new mood.
+    pub fn to_average(&self, mood: Mood) -> Self {
+        match (*self as i8 + mood as i8) / 2 {
+            2 => Mood::Zealot,
+            1 => Mood::Happy,
+            -1 => Mood::Unhappy,
+            -2 => Mood::Angry,
+            _ => Mood::Neutral,
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
