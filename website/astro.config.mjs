@@ -7,4 +7,5 @@ export default defineConfig({
         plugins: [tailwindcss()],
     },
     site: 'https://rustupolis.github.io',
+    base : 'rustupolis'
 });
