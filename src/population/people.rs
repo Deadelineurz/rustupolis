@@ -24,7 +24,7 @@ pub enum Mood {
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum WorkDanger {
+pub enum WorkLethality {
     SafeJob,
     MediumRisks,
     HighRisks,
@@ -63,7 +63,7 @@ pub struct AlivePerson {
     pub mood: Mood,
     pub disease: Option<Disease>,
     /// If the work status is `None`, then this person has no job.
-    pub work_status: Option<WorkDanger>,
+    pub work_status: Option<WorkLethality>,
     pub building_uuid: Option<String>,
 }
 
