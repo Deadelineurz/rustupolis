@@ -1,15 +1,15 @@
 use crate::population::{
     disease::{Disease, DiseaseLethality},
-    district::{DistrictZone, PopulationDistrict},
+    district::DistrictZone,
     dna::{DNAFlags, DNA},
     people::{AlivePerson, CauseOfDeath, Mood, WorkLethality},
 };
 
 /// Return a cause of dead if the person should *die*.
-pub fn check_death(people: &AlivePerson, env: &PopulationDistrict) -> Option<CauseOfDeath> {
+pub fn check_death(people: &AlivePerson, district_zone: DistrictZone, district_happiness: f64) -> Option<CauseOfDeath> {
     let work_bonus = work_bonus(&people.work_status);
     let sickness_bonus = sickness_bonus(&people.disease);
-    let zone_bonus = zone_bonus(&env.zone_type);
+    let zone_bonus = zone_bonus(district_zone);
     let homelesness_bonus = homeless_bonus(&people.building_uuid);
     let deathrate_from_age = deathrate_from_age(people.age, people.dna);
 
@@ -21,7 +21,7 @@ pub fn check_death(people: &AlivePerson, env: &PopulationDistrict) -> Option<Cau
     let death_probability = deathrate_from_age
         * dna_bonus(people.dna)
         * mood_bonus(&people.mood)
-        * happiness_bonus(env.happiness_percentage().into())
+        * happiness_bonus(district_happiness)
         * zone_bonus
         * sickness_bonus
         * work_bonus
@@ -65,7 +65,7 @@ fn happiness_bonus(percentage: f64) -> f64 {
     }
 }
 
-fn zone_bonus(district_type: &DistrictZone) -> f64 {
+fn zone_bonus(district_type: DistrictZone) -> f64 {
     match district_type {
         DistrictZone::Slums => 1.5,
         DistrictZone::Industrials => 1.2,
