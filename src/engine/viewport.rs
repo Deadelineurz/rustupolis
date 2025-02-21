@@ -1,6 +1,24 @@
+use ansi_term::Color::Black;
 use log::trace;
+use rand::prelude::IndexedRandom;
 use termion::terminal_size;
 use crate::engine::drawable::{DynDrawable};
+
+pub fn background(output_y: u16, height: u16, width: u16) -> String {
+    let characters = [" "," "," "," "," "," "," "," ", "▖"];
+    let mut rng = rand::thread_rng();
+    let mut output = String::new();
+    for y in output_y..(output_y + height) {
+        let mut layer: String = "".to_string();
+        for _ in 0..width {
+            let random_char = characters.choose(&mut rng).unwrap();
+            layer.push(random_char.parse().unwrap());
+        }
+        layer.push_str("\n");
+        output.push_str(&*layer);
+    }
+    output
+}
 
 #[derive(Debug, Copy, Clone)]
 pub struct Viewport {
@@ -11,7 +29,7 @@ pub struct Viewport {
     virtual_y: i16,
 
     pub width: u16,
-    pub height: u16
+    pub height: u16,
 }
 
 #[derive(Debug, Copy, Clone)]
@@ -103,6 +121,7 @@ impl Viewport {
     pub fn bottom(&self) -> i16 {
         self.virtual_y + self.height as i16
     }
+
 }
 
 impl Default for Viewport {

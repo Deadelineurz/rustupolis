@@ -1,22 +1,32 @@
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use rustupolis::engine::core::Engine;
-use rustupolis::engine::drawable::DynDrawable;
-use rustupolis::engine::test::{Test2Drawable, TestDrawable};
+use rustupolis::engine::keybinds::KeyBindListener;
 use rustupolis::logging::RemoteLoggerClient;
 use rustupolis::terminal::screen::CleanScreen;
 use std::io::stdout;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 use termion::raw::IntoRawMode;
-use rustupolis::engine::keybinds::KeyBindListener;
+use rustupolis::engine::layout::layout_get_buildings;
 
 lazy_static! {
     pub static ref LOGGER: RemoteLoggerClient = RemoteLoggerClient::new();
 }
 
 fn main() {
-    log::set_logger(LOGGER.deref()).map(|()| log::set_max_level(LevelFilter::Trace)).unwrap();
+    log::set_logger(LOGGER.deref())
+        .map(|()| log::set_max_level(LevelFilter::Trace))
+        .unwrap();
+
+    let layout = rustupolis::engine::layout::read_layout();
+
+    let buildings = layout.buildings;
+    let buildings_drawables = rustupolis::engine::layout::drawables_from_buildings(buildings);
+
+    let roads = layout.roads;
+    let roads_drawables = rustupolis::engine::layout::drawables_from_roads(roads);
+
 
     let s = stdout().into_raw_mode().unwrap();
 
@@ -24,19 +34,15 @@ fn main() {
 
     let mut engine = Engine::default();
 
-    let test = TestDrawable{};
-    let test2 = Test2Drawable{xpos:2, ypos:2};
-    let test3 = Test2Drawable{xpos:2, ypos:5};
-
-    let t: Box<DynDrawable> = Box::new(test);
-    let t2: Box<DynDrawable> = Box::new(test2);
-    let t3: Box<DynDrawable> = Box::new(test3);
-
-    engine.register_drawable(t);
-    engine.register_drawable(t2);
-    engine.register_drawable(t3);
+    for drawable in buildings_drawables {
+        engine.register_drawable(Box::new(drawable))
+    }
+    for drawable in roads_drawables {
+        engine.register_drawable(Box::new(drawable))
+    }
 
     engine.refresh();
+
 
     let e = Arc::new(Mutex::new(engine));
 
