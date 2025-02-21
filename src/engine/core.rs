@@ -1,12 +1,14 @@
 use crate::engine::drawable::DynDrawable;
-use crate::engine::viewport::Viewport;
-use ansi_term::Color::{Green, Red};
+use crate::engine::viewport::{background, Viewport};
+use ansi_term::Color::{Black, Green, Red};
 use log::trace;
 use std::io::{stdout, Write};
-use termion::cursor;
+use termion::{cursor, terminal_size};
+use termion::color::LightBlack;
 
 pub struct Engine {
     pub viewport: Viewport,
+    pub background : String,
     drawables: Vec<Box<DynDrawable>>,
 }
 
@@ -37,12 +39,14 @@ impl Engine {
         stdout().flush().unwrap()
     }
 
+
+
     fn clear_viewport(&self) {
         for y in self.viewport.output_y..(self.viewport.output_y + self.viewport.height) {
             print!(
                 "{}{}",
                 cursor::Goto(self.viewport.output_x, y),
-                String::from(" ").repeat(self.viewport.width as usize)
+                Black.paint(self.background.to_string())
             )
         }
     }
@@ -53,6 +57,7 @@ impl From<Viewport> for Engine {
         Engine {
             viewport: value,
             drawables: Vec::new(),
+            background: background(value.output_y, value.height, value.width)
         }
     }
 }
@@ -62,6 +67,10 @@ impl Default for Engine {
         Engine {
             viewport: Viewport::default(),
             drawables: Vec::new(),
+            background: {
+                let (width, height) = terminal_size().unwrap();
+                background(1, height, width)
+            }
         }
     }
 }
