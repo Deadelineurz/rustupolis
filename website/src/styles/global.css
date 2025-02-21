@@ -1,0 +1,21 @@
+@import 'tailwindcss';
+
+@plugin '@tailwindcss/typography';
+
+@theme {
+    --color-bozozo: rgb(255, 255, 255); /* White */
+    --color-sand: rgb(207, 169, 138);
+    --color-light: rgb(205, 212, 165);
+    --color-rust1: rgb(199, 120, 111);
+    --color-rust2: rgb(154, 98, 120);
+    --color-grey: rgb(96, 85, 110);
+    --color-grey-blue: rgb(59, 64, 94);
+    --color-dark: rgb(46, 42, 79);
+    --color-darkest: rgb(33, 29, 56);
+    --color-ui-black: rgb(21, 14, 16);
+    --color-ui-black-light: rgb(39, 39, 57);
+    --color-ui-black-lighter: rgb(57, 56, 73);
+    --color-ui-white: rgb(119, 136, 140);
+    --color-ui-white-dark: rgb(79, 90, 100);
+    --color-ui-white-darker: rgb(59, 65, 82);
+}
