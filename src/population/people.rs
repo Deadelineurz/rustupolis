@@ -29,7 +29,7 @@ pub enum WorkLethality {
     SafeJob,
     MediumRisks,
     HighRisks,
-    ExtremeRisks
+    ExtremeRisks,
 }
 
 pub enum PeopleLegalState {
@@ -54,8 +54,6 @@ impl Mood {
         }
     }
 }
-
-
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AlivePerson {
@@ -90,27 +88,91 @@ pub trait BasePeopleInfo {
 impl BasePeopleInfo for People {
     fn get_age(&self) -> u8 {
         match self {
-            People::Alive( AlivePerson { age, ..}) => *age,
-            People::Dead( DeadPerson { age, ..}) => *age,
+            People::Alive(AlivePerson { age, .. }) => *age,
+            People::Dead(DeadPerson { age, .. }) => *age,
         }
     }
 
     fn get_dna(&self) -> DNA {
         match self {
-            People::Alive( AlivePerson { dna, ..}) => *dna,
-            People::Dead( DeadPerson { dna, ..}) => *dna,
+            People::Alive(AlivePerson { dna, .. }) => *dna,
+            People::Dead(DeadPerson { dna, .. }) => *dna,
         }
     }
 
     fn get_building_uuid(&self) -> Option<&String> {
         match self {
-            People::Alive( AlivePerson { building_uuid, ..}) => building_uuid.as_ref(),
-            People::Dead( DeadPerson { building_uuid, ..}) => building_uuid.as_ref(),
+            People::Alive(AlivePerson { building_uuid, .. }) => building_uuid.as_ref(),
+            People::Dead(DeadPerson { building_uuid, .. }) => building_uuid.as_ref(),
         }
     }
 }
 
 impl People {
+    /// Try cast People into alive
+    pub fn as_alive(&self) -> Option<&AlivePerson> {
+        if let People::Alive(person) = self {
+            Some(person)
+        } else {
+            None
+        }
+    }
+
+    /// Try cast People into dead
+    pub fn as_dead(&self) -> Option<&DeadPerson> {
+        if let People::Dead(person) = self {
+            Some(person)
+        } else {
+            None
+        }
+    }
+
+    /// If the person is an adult/child/baby...
+    pub fn get_legal_state(&self) -> PeopleLegalState {
+        if let People::Alive(AlivePerson { age, .. }) = &self {
+            match age {
+                age if *age < 4 => PeopleLegalState::Baby,
+                age if *age < 18 => PeopleLegalState::Child,
+                age if *age < 64 => PeopleLegalState::Adult,
+                age if *age < 110 => PeopleLegalState::Elder,
+                _ => PeopleLegalState::Anomaly,
+            }
+        } else {
+            PeopleLegalState::Dead
+        }
+    }
+
+    pub fn is_same_building(&self, people: People) -> bool {
+        self.get_building_uuid() == people.get_building_uuid()
+    }
+
+    /// Effectively kill the person.
+    pub fn make_dead(&mut self, cause_of_death: CauseOfDeath) {
+        *self = People::Dead(DeadPerson {
+            age: self.get_age(),
+            dna: self.get_dna(),
+            cause: cause_of_death,
+            building_uuid: self.get_building_uuid().cloned(),
+        })
+    }
+
+    /// A BLOODY MIRACLE! \
+    /// Will not work if the person is still alive
+    pub fn ressurect(&mut self) {
+        if self.as_alive() != None {
+            return;
+        }
+
+        *self = People::Alive(AlivePerson {
+            age: self.get_age(),
+            dna: self.get_dna(),
+            building_uuid: self.get_building_uuid().cloned(),
+            mood: Mood::Neutral,
+            disease: None,
+            work_status: None,
+        })
+    }
+
     /// Create a new alive people, will add a random number of DNA traits
     pub fn create_random_people(working_age: bool, max_dna_traits: u8) -> Self {
         let age = match working_age {
@@ -131,41 +193,6 @@ impl People {
             work_status: None,
             building_uuid: None,
         })
-    }
-
-    pub fn as_alive(&self) -> Option<&AlivePerson> {
-        if let People::Alive(person) = self {
-            Some(person)
-        } else {
-            None
-        }
-    }
-
-    pub fn as_dead(&self) -> Option<&DeadPerson> {
-        if let People::Dead(person) = self {
-            Some(person)
-        } else {
-            None
-        }
-    }
-
-    /// If the person is an adult of a child
-    pub fn get_legal_state(&self) -> PeopleLegalState {
-        if let People::Alive(AlivePerson { age, .. }) = &self {
-            match age {
-                age if *age < 4 => PeopleLegalState::Baby,
-                age if *age < 18 => PeopleLegalState::Child,
-                age if *age < 64 => PeopleLegalState::Adult,
-                age if *age < 110 => PeopleLegalState::Elder,
-                _ => PeopleLegalState::Anomaly,
-            }
-        } else {
-            PeopleLegalState::Dead
-        }
-    }
-
-    pub fn is_same_building(&self, people: People) -> bool {
-        self.get_building_uuid() == people.get_building_uuid()
     }
 
     /// Create new (alive) peoples with 1 DNA trait each.
