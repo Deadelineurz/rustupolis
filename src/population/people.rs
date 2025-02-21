@@ -23,6 +23,14 @@ pub enum Mood {
     Angry = -2,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WorkDanger {
+    SafeJob,
+    MediumRisks,
+    HighRisks,
+    ExtremeRisks
+}
+
 pub enum PeopleLegalState {
     Baby,
     Child,
@@ -46,27 +54,59 @@ impl Mood {
     }
 }
 
+
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AlivePerson {
     pub age: u8,
     pub dna: DNA,
     pub mood: Mood,
     pub disease: Option<Disease>,
-    pub is_working: bool,
+    /// If the work status is `None`, then this person has no job.
+    pub work_status: Option<WorkDanger>,
     pub building_uuid: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DeadPerson {
     pub age: u8,
     pub dna: DNA,
     pub cause: CauseOfDeath,
+    pub building_uuid: Option<String>, // yep, the corpse can still be in the building lol
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum People {
     Alive(AlivePerson),
     Dead(DeadPerson),
+}
+pub trait BasePeopleInfo {
+    fn get_age(&self) -> u8;
+    fn get_dna(&self) -> DNA;
+    fn get_building_uuid(&self) -> Option<&String>;
+}
+
+impl BasePeopleInfo for People {
+    fn get_age(&self) -> u8 {
+        match self {
+            People::Alive( AlivePerson { age, ..}) => *age,
+            People::Dead( DeadPerson { age, ..}) => *age,
+        }
+    }
+
+    fn get_dna(&self) -> DNA {
+        match self {
+            People::Alive( AlivePerson { dna, ..}) => *dna,
+            People::Dead( DeadPerson { dna, ..}) => *dna,
+        }
+    }
+
+    fn get_building_uuid(&self) -> Option<&String> {
+        match self {
+            People::Alive( AlivePerson { building_uuid, ..}) => building_uuid.as_ref(),
+            People::Dead( DeadPerson { building_uuid, ..}) => building_uuid.as_ref(),
+        }
+    }
 }
 
 impl People {
@@ -87,7 +127,7 @@ impl People {
             dna: DNA::from_flag(dna_traits),
             mood: Mood::Neutral,
             disease: None,
-            is_working: false,
+            work_status: None,
             building_uuid: None,
         })
     }
@@ -121,6 +161,10 @@ impl People {
         } else {
             PeopleLegalState::Dead
         }
+    }
+
+    pub fn is_same_building(&self, people: People) -> bool {
+        self.get_building_uuid() == people.get_building_uuid()
     }
 
     /// Create new (alive) peoples with 1 DNA trait each.
