@@ -10,6 +10,7 @@ use super::dna_transmission::{mix_dna, mutate_dna};
 const MUTATION_PERCENTAGE: f64 = 0.07;
 const UNSTABLE_DNA_MUTATION_BONUS: f64 = 0.13;
 
+/// return 0, 1, or 2 childrens to make
 pub fn number_of_children_to_make(people: &AlivePerson, env: &PopulationDistrict) -> u8 {
     let birth_probability = fertility_from_age(people.age)
         * fertility_bonus(people.dna)
@@ -18,7 +19,7 @@ pub fn number_of_children_to_make(people: &AlivePerson, env: &PopulationDistrict
         * zone_bonus(&env.zone_type)
         * sickness_bonus(&people.disease)
         * work_bonus(
-            &people.is_working,
+            &people.work_status.is_some(),
             env.working_poulation as f64 / env.num_people as f64,
         );
 
@@ -51,7 +52,8 @@ pub fn spawn_childs(amount: u8, parent1: &AlivePerson, parent2: &AlivePerson) ->
             dna,
             mood: parent1.mood.to_average(parent2.mood),
             disease: None,
-            is_working: false,
+            work_status: None,
+            building_uuid: parent1.building_uuid.clone()
         }));
     }
 
