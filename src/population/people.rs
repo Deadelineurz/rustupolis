@@ -23,6 +23,16 @@ pub enum Mood {
     Angry = -2,
 }
 
+pub enum PeopleLegalState {
+    Baby,
+    Child,
+    Adult,
+    Elder,
+    Dead,
+    /// this person should not be alive
+    Anomaly,
+}
+
 impl Mood {
     /// return (mood1 + mood2) / 2 as new mood.
     pub fn to_average(&self, mood: Mood) -> Self {
@@ -36,23 +46,24 @@ impl Mood {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AlivePerson {
     pub age: u8,
     pub dna: DNA,
     pub mood: Mood,
     pub disease: Option<Disease>,
     pub is_working: bool,
+    pub building_uuid: Option<String>,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DeadPerson {
     pub age: u8,
     pub dna: DNA,
-    cause: CauseOfDeath,
+    pub cause: CauseOfDeath,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum People {
     Alive(AlivePerson),
     Dead(DeadPerson),
@@ -77,10 +88,11 @@ impl People {
             mood: Mood::Neutral,
             disease: None,
             is_working: false,
+            building_uuid: None,
         })
     }
 
-    fn as_alive(&self) -> Option<&AlivePerson> {
+    pub fn as_alive(&self) -> Option<&AlivePerson> {
         if let People::Alive(person) = self {
             Some(person)
         } else {
@@ -88,11 +100,26 @@ impl People {
         }
     }
 
-    fn as_dead(&self) -> Option<&DeadPerson> {
+    pub fn as_dead(&self) -> Option<&DeadPerson> {
         if let People::Dead(person) = self {
             Some(person)
         } else {
             None
+        }
+    }
+
+    /// If the person is an adult of a child
+    pub fn get_legal_state(&self) -> PeopleLegalState {
+        if let People::Alive(AlivePerson { age, .. }) = &self {
+            match age {
+                age if *age < 4 => PeopleLegalState::Baby,
+                age if *age < 18 => PeopleLegalState::Child,
+                age if *age < 64 => PeopleLegalState::Adult,
+                age if *age < 110 => PeopleLegalState::Elder,
+                _ => PeopleLegalState::Anomaly,
+            }
+        } else {
+            PeopleLegalState::Dead
         }
     }
 
