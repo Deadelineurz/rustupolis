@@ -8,7 +8,7 @@ use people::*;
 
 #[derive(Debug)]
 pub struct Population {
-    pub num_districts: u8,
+    pub num_districts: usize,
     districts: Vec<PopulationDistrict>,
 }
 
@@ -27,12 +27,12 @@ impl Population {
 
     // ----- GET -----
 
-    pub fn get_district(&self, id: usize) -> &PopulationDistrict {
-        &self.districts[id]
+    pub fn get_district(&self, id: usize) -> Option<&PopulationDistrict> {
+        self.districts.get(id)
     }
 
-    pub fn get_district_mut(&mut self, id: usize) -> &mut PopulationDistrict {
-        &mut self.districts[id]
+    pub fn get_district_mut(&mut self, id: usize) -> Option<&mut PopulationDistrict> {
+        self.districts.get_mut(id)
     }
 
     /// Should not panic.
@@ -60,15 +60,16 @@ impl Population {
     }
 
     /// Return all district that connect to this district ID (read-only)
-    pub fn get_district_neighbors(&self, id: usize) -> Vec<&PopulationDistrict> {
-        let mut res = Vec::new();
-        let district = self.get_district(id);
+    pub fn get_district_neighbors(&self, id: usize) -> Option<Vec<&PopulationDistrict>> {
+        let mut res: Vec<&PopulationDistrict> = Vec::new();
+        if let Some(district) = self.get_district(id) {
+            for neighbor_id in &district.neighbors {
+                res.push(self.get_district(*neighbor_id).unwrap());
+            }
 
-        for neighbor_id in &district.neighbors {
-            res.push(self.get_district(*neighbor_id));
+            return Some(res);
         }
-
-        res
+        None
     }
 
     pub fn get_all_districts_by_zone(&self, zone: DistrictZone) -> Vec<&PopulationDistrict> {
@@ -81,8 +82,10 @@ impl Population {
     // ----- ADD -----
 
     pub fn add_district(&mut self, starting_population: u8, district_zone: DistrictZone) -> usize {
-        self.districts
-            .push(Self::setup_district(district_zone, People::create_random_population(starting_population)));
+        self.districts.push(Self::setup_district(
+            district_zone,
+            People::create_random_population(starting_population),
+        ));
 
         let index = self.districts.len() - 1;
         self.auto_link_district(index);
@@ -97,7 +100,10 @@ impl Population {
         }
 
         match target_district {
-            Some(id) => self.get_district_mut(id).add_peoples(&mut vec),
+            Some(id) => self
+                .get_district_mut(id)
+                .unwrap_or_else(|| panic!("Could not find the district to add peoples."))
+                .add_peoples(&mut vec),
             None => self.get_core_district_mut().add_peoples(&mut vec),
         }
     }

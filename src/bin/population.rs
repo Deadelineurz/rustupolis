@@ -12,11 +12,11 @@ fn main() {
     let slum_id = population.add_district(80, DistrictZone::Slums); 
 
 
-    let slums_neighbors = population.get_district_neighbors(slum_id);
+    let slums_neighbors = population.get_district_neighbors(slum_id).unwrap();
     
     // When a district is added, links will be automatically added between the new and old districts
     let core_district = slums_neighbors[0];
 
-    dbg!(core_district.peoples[0]);
+    dbg!(&core_district.peoples[0]);
     println!("Core happiness level : {}%", core_district.happiness_percentage() * 100.0);
 }
