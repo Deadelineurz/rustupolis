@@ -11,6 +11,7 @@ pub enum CauseOfDeath {
     Radiations,
     WorkAccident,
     EatenByMonster,
+    Poverty,
 }
 
 #[repr(i8)]
@@ -72,7 +73,7 @@ pub struct DeadPerson {
     pub age: u8,
     pub dna: DNA,
     pub cause: CauseOfDeath,
-    pub building_uuid: Option<String>, // yep, the corpse can still be in the building lol
+    pub building_uuid: Option<String>, // yep, the corpse can still be in a building lol
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
