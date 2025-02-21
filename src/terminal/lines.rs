@@ -1,7 +1,5 @@
 use std::cmp::PartialEq;
-use std::fmt::Display;
 use std::io::{Error, Stdout, Write};
-use termion::color::{Bg, Color, Fg};
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum LinePosition {
