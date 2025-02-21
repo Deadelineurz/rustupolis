@@ -35,7 +35,7 @@ impl Drawable for BuildingDrawable {
     }
 
     fn width(&self) -> u8 {
-        if (&self.b_type == "custom") {
+        if &self.b_type == "custom" {
             let mut n : u8 = 0;
             let lines = (self.content.as_ref()).unwrap();
                 for line in lines {
@@ -62,10 +62,10 @@ impl Drawable for BuildingDrawable {
     }
 
     fn shape(&self) -> String {
-        if (self.b_type == "custom") {
+        if self.b_type == "custom" {
             return self.content.as_ref().unwrap().join("\n");
         }
-        else if (&self.b_type == "empty_space") {
+        else if &self.b_type == "empty_space" {
             if self.width.unwrap() == 1 && self.height.unwrap() == 1{
                 return "▢\n".parse().unwrap();
             }
@@ -91,7 +91,7 @@ impl Drawable for BuildingDrawable {
                 str.push_str(&*"═".repeat(in_columns as usize));
                 str.push_str("╗\n");
 
-                for i in 0..in_layers {
+                for _ in 0..in_layers {
                     let mut layer = "║".to_string();
                     layer.push_str(&*" ".repeat(in_columns as usize));
                     layer.push_str("║\n");
@@ -106,7 +106,7 @@ impl Drawable for BuildingDrawable {
 
         }
         let mut str: String = "".to_string();
-        for i in 0..self.height.unwrap() {
+        for _ in 0..self.height.unwrap() {
             str += &*(self.texture.unwrap().to_string().repeat(self.width.unwrap() as usize));
             str += "\n";
         }
