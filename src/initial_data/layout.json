@@ -2,7 +2,7 @@
   "buildings": [
     {
       "name": "HAB1",
-      "id" : "UUc=",
+      "id" : "SEFCMQ==",
       "pos_x" : 19,
       "pos_y" : 9,
       "b_type" : "uniform",
@@ -13,7 +13,7 @@
     },
     {
       "name": "HAB2",
-      "id" : "UUc=",
+      "id" : "SEFCMg==",
       "pos_x" : 24,
       "pos_y" : 9,
       "b_type" : "uniform",
@@ -24,7 +24,7 @@
     },
     {
       "name": "HAB3",
-      "id" : "UUc=",
+      "id" : "SEFCMw==",
       "pos_x" : 56,
       "pos_y" : 1,
       "b_type" : "uniform",
@@ -35,7 +35,7 @@
     },
     {
       "name": "HAB4",
-      "id" : "UUc=",
+      "id" : "SEFCNA==",
       "pos_x" : 56,
       "pos_y" : 16,
       "b_type" : "uniform",
@@ -46,7 +46,7 @@
     },
     {
       "name": "TVAGUE1",
-      "id" : "UUc=",
+      "id" : "VFZBR1VFMQ==",
       "pos_x" : 30,
       "pos_y" : 23,
       "b_type" : "empty_space",
@@ -57,7 +57,7 @@
     },
     {
       "name": "TVAGUE2",
-      "id" : "UUc=",
+      "id" : "VFZBR1VFMg==",
       "pos_x" : 30,
       "pos_y" : 9,
       "b_type" : "empty_space",
@@ -68,7 +68,7 @@
     },
     {
       "name": "TVAGUE3",
-      "id" : "UUc=",
+      "id" : "VFZBR1VFMw==",
       "pos_x" : 4,
       "pos_y" : 9,
       "b_type" : "empty_space",
@@ -79,7 +79,7 @@
     },
     {
       "name": "TVAGUE4",
-      "id" : "UUc=",
+      "id" : "VFZBR1VFNA==",
       "pos_x" : 56,
       "pos_y" : 29,
       "b_type" : "empty_space",
@@ -90,7 +90,7 @@
     },
     {
       "name": "TVAGUE5",
-      "id" : "UUc=",
+      "id" : "VFZBR1VFNQ==",
       "pos_x" : 66,
       "pos_y" : 1,
       "b_type" : "empty_space",
@@ -101,7 +101,7 @@
     },
     {
       "name": "TVAGUE6",
-      "id" : "UUc=",
+      "id" : "VFZBR1VFNg==",
       "pos_x" : 66,
       "pos_y" : 16,
       "b_type" : "empty_space",
@@ -111,8 +111,30 @@
       "content" : null
     },
     {
+      "name": "TVAGUE7",
+      "id" : "VFZBR1VFNg==",
+      "pos_x" : 79,
+      "pos_y" : 16,
+      "b_type" : "empty_space",
+      "width" : 22,
+      "height" : 12,
+      "texture" : "█",
+      "content" : null
+    },
+    {
+      "name": "TVAGUE7",
+      "id" : "VFZBR1VFNg==",
+      "pos_x" : 102,
+      "pos_y" : 16,
+      "b_type" : "empty_space",
+      "width" : 21,
+      "height" : 12,
+      "texture" : "█",
+      "content" : null
+    },
+    {
       "name": "USI1",
-      "id" : "UUc=",
+      "id" : "VVNJMQ==",
       "pos_x" : 42,
       "pos_y" : 17,
       "b_type" : "uniform",
@@ -123,7 +145,7 @@
     },
     {
       "name": "USI2",
-      "id" : "UUc=",
+      "id" : "VVNJMg==",
       "pos_x" : 30,
       "pos_y" : 17,
       "b_type" : "uniform",
@@ -152,8 +174,8 @@
   ],
   "roads" : [
     {
-      "name" : "R2",
-      "id" : "TWFpblJvYWQ=",
+      "name" : "R1_HORI",
+      "id" : "UjFfSE9SSQ==",
       "start_x" : 0,
       "start_y" : 28,
       "horizontal" : true,
@@ -162,8 +184,8 @@
       "pavement" : "▓"
     },
     {
-      "name" : "R4",
-      "id" : "TWFpblJvYWQ=",
+      "name" : "R2_HORI",
+      "id" : "UjJfSE9SSQ==",
       "start_x" : 4,
       "start_y" : 8,
       "horizontal" : true,
@@ -172,8 +194,8 @@
       "pavement" : "▓"
     },
     {
-      "name" : "R7",
-      "id" : "TWFpblJvYWQ=",
+      "name" : "R3_HORI",
+      "id" : "UjNfSE9SSQ==",
       "start_x" : 4,
       "start_y" : 13,
       "horizontal" : true,
@@ -182,8 +204,8 @@
       "pavement" : "▓"
     },
     {
-      "name" : "R5",
-      "id" : "TWFpblJvYWQ=",
+      "name" : "R4_HORI",
+      "id" : "UjRfSE9SSQ==",
       "start_x" : 17,
       "start_y" : 8,
       "horizontal" : true,
@@ -193,7 +215,7 @@
     },
     {
       "name" : "R1",
-      "id" : "RDc=",
+      "id" : "UjE=",
       "start_x" : 53,
       "start_y" : 0,
       "horizontal" : false,
@@ -203,7 +225,7 @@
     },
     {
       "name" : "R2",
-      "id" : "RDc=",
+      "id" : "UjI=",
       "start_x" : 75,
       "start_y" : 0,
       "horizontal" : false,
@@ -213,7 +235,7 @@
     },
     {
       "name" : "R3",
-      "id" : "RDc=",
+      "id" : "UjM=",
       "start_x" : 2,
       "start_y" : 0,
       "horizontal" : false,
@@ -222,8 +244,8 @@
       "pavement" : "▓"
     },
     {
-      "name" : "R6",
-      "id" : "RDc=",
+      "name" : "R4",
+      "id" : "UjQ=",
       "start_x" : 28,
       "start_y" : 0,
       "horizontal" : false,
@@ -232,8 +254,8 @@
       "pavement" : "▓"
     },
     {
-      "name" : "R8",
-      "id" : "RDc=",
+      "name" : "R5",
+      "id" : "UjU=",
       "start_x" : 17,
       "start_y" : 9,
       "horizontal" : false,
@@ -242,8 +264,8 @@
       "pavement" : "▓"
     },
     {
-      "name" : "R9",
-      "id" : "RDc=",
+      "name" : "R6",
+      "id" : "UjY=",
       "start_x" : 50,
       "start_y" : 9,
       "horizontal" : false,
@@ -252,14 +274,14 @@
       "pavement" : "▓"
     },
     {
-      "name" : "BooRoad",
-      "id" : "TWFpblJvYWQ=",
-      "start_x" : 120,
-      "start_y" : 2,
+      "name" : "R7",
+      "id" : "Ujc=",
+      "start_x" : 124,
+      "start_y" : 0,
       "horizontal" : false,
       "width" : 1,
-      "length" : 40,
-      "pavement" : "║"
+      "length" : 29,
+      "pavement" : "▓"
     }
   ]
 }
