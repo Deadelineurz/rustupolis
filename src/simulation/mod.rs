@@ -46,11 +46,11 @@ fn update_district_peoples(
 
 /// Will shuffle the district's population because of the parents
 fn update_births(district: &mut PopulationDistrict, rng: &mut ThreadRng) {
-    let childs: Vec<People> = make_pairs(&district.peoples, rng)
+    let mut childs: Vec<People> = make_pairs(&district.peoples, rng)
         .iter()
         .map(|(parent1, parent2)| {
             spawn_childs(
-                number_of_children_to_make(parent1.as_alive().unwrap(), district),
+                number_of_children_to_make(parent1.as_alive().unwrap(), district) as u8,
                 parent1.as_alive().unwrap(),
                 parent2.as_alive().unwrap(),
             )
@@ -58,7 +58,7 @@ fn update_births(district: &mut PopulationDistrict, rng: &mut ThreadRng) {
         .collect::<Vec<_>>()
         .concat();
 
-    district.peoples.extend(childs);
+    district.add_peoples(&mut childs);
 }
 
 fn update_deaths(district: &mut PopulationDistrict) {

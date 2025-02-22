@@ -23,6 +23,7 @@ pub fn number_of_children_to_make(people: &AlivePerson, env: &PopulationDistrict
             env.working_poulation as f64 / env.num_people as f64,
         );
 
+    dbg!(birth_probability);
     let base = birth_probability.floor() as u8;
     if rand::random::<f64>() < (birth_probability - base as f64) {
         base + 1
