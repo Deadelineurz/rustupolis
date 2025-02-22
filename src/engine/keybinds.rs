@@ -12,13 +12,15 @@ use crate::engine::drawable::{Drawable, DynDrawable};
 use crate::engine::test::TestDrawable;
 use crate::ui::sidebar::SideBar;
 
+type Tty = MouseTerminal<RawTerminal<Stdout>>;
+
 pub struct KeyBindListener<'a> {
     engine: Arc<Mutex<Engine<'a>>>,
     pub thread: JoinHandle<()>
 }
 
 impl KeyBindListener<'static> {
-    pub fn new(e: Arc<Mutex<Engine<'static>>>, stdout: &'static MouseTerminal<RawTerminal<Stdout>>) -> Self {
+    pub fn new(e: Arc<Mutex<Engine<'static>>>, stdout: &'static Tty) -> Self {
         let cop = e.clone();
 
         let t = thread::spawn(move || {
