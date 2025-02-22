@@ -21,9 +21,16 @@ import Logs_presentation from "../components/homePage/logs_presentation.astro";
 							The terminal based city planning game
 						</div>
 					</div>
-					<div class="flex justify-center items-center text-white text-8xl w-full h-full" style="font-family: 'Jersey 15', sans-serif">
-						<a class="h-fit bg-sand rounded-xs px-2 hover:bg-sand/80 hover:cursor-pointer" href="/rustupolis/downloads">
-							Play
+					<div class="  flex justify-center items-center text-white text-8xl w-full h-full" style="font-family: 'Jersey 15', sans-serif">
+						<a class="h-fit shadow-2xl shadow-black rounded-xs px-2 hover:bg-sand/80 hover:cursor-pointer" href="/rustupolis/downloads">
+							<h1 class="">
+								Play
+							</h1>
+						</a>
+						<a class="animate-pulse  absolute h-fit bg-sand rounded-xs px-2 hover:bg-sand/80 hover:animate-none hover:cursor-pointer" href="/rustupolis/downloads">
+							<h1 class="text-str">
+								Play
+							</h1>
 						</a>
 					</div>
 				</div>
@@ -31,4 +38,7 @@ import Logs_presentation from "../components/homePage/logs_presentation.astro";
 				<Logs_presentation />
 			</div>
 		</div>
+		<style>
+
+		</style>
 </Layout>
