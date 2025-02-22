@@ -47,11 +47,13 @@ impl<'a> Engine<'a> {
     }
 
     fn clear_viewport(&self) {
+        let bg_lines = self.background.lines().collect::<Vec<&str>>();
+        trace!("{}", bg_lines[0].chars().count());
         for y in self.viewport.output_y..(self.viewport.output_y + self.viewport.height) {
             print!(
                 "{}{}",
                 cursor::Goto(self.viewport.output_x, y),
-                Black.paint(self.background.to_string())
+                Black.paint(bg_lines[(y - self.viewport.output_y) as usize])
             )
         }
 
@@ -59,13 +61,13 @@ impl<'a> Engine<'a> {
     }
 
     pub fn new(viewport: Viewport, stdout: &'a Tty) -> Self {
+        trace!("{:?}", terminal_size());
         Engine{
             viewport,
             stdout,
             drawables: vec![],
             background: {
-                let (width, height) = terminal_size().unwrap();
-                background(1, height, width)
+                background(viewport.output_y, viewport.width, viewport.height)
             }
         }
     }
@@ -78,7 +80,7 @@ impl<'a> From<&'a Tty> for Engine<'a> {
             drawables: Vec::new(),
             background: {
                 let (width, height) = terminal_size().unwrap();
-                background(1, height, width)
+                background(1, width, height)
             },
             stdout: value
         }

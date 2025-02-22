@@ -1,5 +1,5 @@
 use lazy_static::lazy_static;
-use log::LevelFilter;
+use log::{trace, LevelFilter};
 use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::{KeyBindListener, Tty};
 use rustupolis::logging::RemoteLoggerClient;
@@ -9,6 +9,8 @@ use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
+use termion::terminal_size;
+use rustupolis::engine::viewport::Viewport;
 
 lazy_static! {
     pub static ref LOGGER: RemoteLoggerClient = RemoteLoggerClient::new();
@@ -34,7 +36,14 @@ fn main() {
 
     let _clear = CleanScreen::new();
 
-    let mut engine = Engine::from(STDOUT.deref());
+    let mut vp = Viewport::default();
+
+    vp.width = (terminal_size().unwrap().0 as f32 * 0.75) as u16;
+
+    trace!("viewport: {:?}", vp);
+
+    let mut engine = Engine::new(vp, STDOUT.deref());
+
     for drawable in buildings_drawables {
         engine.register_drawable(Box::new(drawable))
     }
