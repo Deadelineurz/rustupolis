@@ -2,6 +2,7 @@ use lazy_static::lazy_static;
 use log::{trace, LevelFilter};
 use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::{KeyBindListener, Tty};
+use rustupolis::engine::layout::Layout;
 use rustupolis::logging::RemoteLoggerClient;
 use rustupolis::terminal::screen::CleanScreen;
 use std::io::stdout;
@@ -25,21 +26,14 @@ fn main() {
         .map(|()| log::set_max_level(LevelFilter::Trace))
         .unwrap();
 
-    let layout = rustupolis::engine::layout::read_layout();
-
-    let buildings = layout.buildings;
-    let buildings_drawables = rustupolis::engine::layout::drawables_from_buildings(buildings);
-
-    let roads = layout.roads;
-    let roads_drawables = rustupolis::engine::layout::drawables_from_roads(roads);
-
+    let layout = Layout::load_default_layout();
+    let buildings_drawables = layout.get_building_drawables();
+    let roads_drawables = layout.get_road_drawables();
 
     let _clear = CleanScreen::new();
 
     let mut vp = Viewport::default();
-
     vp.width = (terminal_size().unwrap().0 as f32 * 0.75) as u16;
-
     trace!("viewport: {:?}", vp);
 
     let mut engine = Engine::new(vp, STDOUT.deref());

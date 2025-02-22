@@ -2,7 +2,7 @@ use crate::logging::RemoteLoggerClient;
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use rustupolis::engine::keybinds::{KeyBindListener, Tty};
-use rustupolis::engine::layout;
+use rustupolis::engine::layout::Layout;
 use rustupolis::terminal::screen::CleanScreen;
 use rustupolis::ui::sidebar::SideBar;
 use std::io::stdout;
@@ -29,10 +29,10 @@ fn main() {
 
     let _clear = CleanScreen::new();
 
-    let layout = layout::read_layout();
+    let layout = Layout::load_default_layout();
 
-    let bdrawables = layout::drawables_from_buildings(layout.buildings);
-    let rdrawables = layout::drawables_from_roads(layout.roads);
+    let bdrawables = layout.get_building_drawables();
+    let rdrawables = layout.get_road_drawables();
 
     let mut vp = Viewport::default();
 
