@@ -16,7 +16,7 @@ impl Population {
     /// Will also add an empty Core district.
     pub fn new() -> Population {
         let mut pop = Population {
-            num_districts: 0,
+            num_districts: 1,
             districts: Vec::new(),
         };
 
@@ -86,6 +86,8 @@ impl Population {
             district_zone,
             People::create_random_population(starting_population),
         ));
+
+        self.num_districts += 1;
 
         let index = self.districts.len() - 1;
         self.auto_link_district(index);
