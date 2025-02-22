@@ -1,36 +1,64 @@
-use std::io::stdin;
+use crate::engine::core::Engine;
+use crate::ui::sidebar::SideBar;
+use log::trace;
+use std::io::{stdin, Stdout};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
-use termion::event::Key;
-use termion::input::TermRead;
-use crate::engine::core::Engine;
+use termion::cursor;
+use termion::event::{Event, Key, MouseEvent};
+use termion::input::{MouseTerminal, TermRead};
+use termion::raw::{RawTerminal};
 
-pub struct KeyBindListener {
-    engine: Arc<Mutex<Engine>>,
+pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
+
+pub struct KeyBindListener<'a> {
+    engine: Arc<Mutex<Engine<'a>>>,
     pub thread: JoinHandle<()>
 }
 
-impl KeyBindListener {
-    pub fn new(e: Arc<Mutex<Engine>>) -> Self {
+impl KeyBindListener<'static> {
+    pub fn new(e: Arc<Mutex<Engine<'static>>>, stdout: &'static Tty) -> Self {
         let cop = e.clone();
 
         let t = thread::spawn(move || {
             let stdin = stdin();
+            let std = stdout;
+            let mut side_bar = SideBar::new();
+            side_bar.draw(std).expect("TODO: panic message");
 
-            for key in stdin.keys() {
-                if key.is_err() {
+            for c in stdin.events() {
+                if c.is_err() {
+                    trace!("event error: {:?}", c.unwrap_err());
                     continue
                 }
 
-                match &key.unwrap() {
-                    Key::Left => Self::offset_viewport(&cop, Key::Left),
-                    Key::Right => Self::offset_viewport(&cop, Key::Right),
-                    Key::Up => Self::offset_viewport(&cop, Key::Up),
-                    Key::Down => Self::offset_viewport(&cop, Key::Down),
-                    Key::Char('q') => break,
+                let event = c.unwrap();
+
+                match &event {
+                    Event::Key(Key::Left) => Self::offset_viewport(&cop, Key::Left),
+                    Event::Key(Key::Right) => Self::offset_viewport(&cop, Key::Right),
+                    Event::Key(Key::Up) => Self::offset_viewport(&cop, Key::Up),
+                    Event::Key(Key::Down) => Self::offset_viewport(&cop, Key::Down),
+                    Event::Key(Key::Char('q')) => break,
+                    Event::Mouse(mouse_event) => {
+                        match mouse_event {
+                            MouseEvent::Press(_, x, y) => {
+                                trace!("Mouse click at x: {} y: {}", x, y);
+                                match &cop.lock() {
+                                    Ok(_guard) => {
+
+                                    }
+                                    _ => ()
+                                }
+                            }
+                            _ => ()
+                        }
+                    }
                     _ => {}
                 };
+
+                print!("{}", cursor::Goto(1, 1));
             }
         });
 

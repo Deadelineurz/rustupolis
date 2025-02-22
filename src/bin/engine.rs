@@ -1,17 +1,21 @@
 use lazy_static::lazy_static;
 use log::LevelFilter;
 use rustupolis::engine::core::Engine;
-use rustupolis::engine::keybinds::KeyBindListener;
+use rustupolis::engine::keybinds::{KeyBindListener, Tty};
 use rustupolis::logging::RemoteLoggerClient;
 use rustupolis::terminal::screen::CleanScreen;
 use std::io::stdout;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
+use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
-use rustupolis::engine::layout::layout_get_buildings;
 
 lazy_static! {
     pub static ref LOGGER: RemoteLoggerClient = RemoteLoggerClient::new();
+}
+
+lazy_static! {
+    pub static ref STDOUT: Tty = MouseTerminal::from(stdout().into_raw_mode().unwrap());
 }
 
 fn main() {
@@ -28,12 +32,9 @@ fn main() {
     let roads_drawables = rustupolis::engine::layout::drawables_from_roads(roads);
 
 
-    let s = stdout().into_raw_mode().unwrap();
-
     let _clear = CleanScreen::new();
 
-    let mut engine = Engine::default();
-
+    let mut engine = Engine::from(STDOUT.deref());
     for drawable in buildings_drawables {
         engine.register_drawable(Box::new(drawable))
     }
@@ -43,12 +44,11 @@ fn main() {
 
     engine.refresh();
 
-
     let e = Arc::new(Mutex::new(engine));
 
     let tosend = e.clone();
 
-    let kb = KeyBindListener::new(tosend);
+    let kb = KeyBindListener::new(tosend, STDOUT.deref());
 
     let _ = kb.thread.join();
 }

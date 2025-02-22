@@ -1,11 +1,12 @@
 use super::colors::*;
+use crate::engine::keybinds::Tty;
 use crate::terminal::boxes::*;
-use std::io::{Error, Stdout};
+use std::io::Error;
 
 const BOTTOMBAR_HEIGHT_PERCENTAGE: f32 = 0.1;
 
 pub fn draw_bottombar(
-    stdout: &mut Stdout,
+    stdout: &Tty,
     terminal_size: (u16, u16),
     side_bar_size: u16,
 ) -> Result<(), Error> {

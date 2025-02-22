@@ -1,10 +1,10 @@
 use std::fmt::Debug;
 
-pub type DynDrawable = dyn Drawable + Send;
+pub type DynDrawable = dyn Drawable;
 
 pub trait Drawable
 where
-    Self: Debug,
+    Self: Debug + Send,
 {
     fn x(&self) -> i16;
     fn y(&self) -> i16;

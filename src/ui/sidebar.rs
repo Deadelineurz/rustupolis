@@ -1,6 +1,7 @@
 use termion::{color::Rgb, terminal_size};
 
 use super::colors::*;
+use crate::engine::keybinds::Tty;
 use crate::terminal::{
     boxes::*,
     lines::{draw_line, LineStyle},
@@ -8,7 +9,7 @@ use crate::terminal::{
 };
 use std::{
     fmt::{self, Display, Formatter},
-    io::{Error, Stdout},
+    io::Error,
     str::FromStr,
 };
 
@@ -74,7 +75,7 @@ impl SideBar {
         self.text_line_max_len = self.width - BORDER_WIDTH;
     }
 
-    pub fn draw(&self, stdout: &mut Stdout) -> Result<(), Error> {
+    pub fn draw(&self, stdout: &Tty) -> Result<(), Error> {
         if self.hide {
             return Result::Ok(());
         }
@@ -94,7 +95,7 @@ impl SideBar {
     }
 
     /// Draw the maximum of log possible to display, last inserted at the bottom.
-    pub fn draw_logs(&self, stdout: &mut Stdout) -> Result<(), Error> {
+    pub fn draw_logs(&self, stdout: &Tty) -> Result<(), Error> {
         let mut count = 0;
         for log in self
             .logs
@@ -120,7 +121,7 @@ impl SideBar {
 
     fn draw_log_line(
         &self,
-        stdout: &mut Stdout,
+        stdout: &Tty,
         text: &dyn Display,
         color: LogColor,
         y_offset: u16,
@@ -148,7 +149,7 @@ impl SideBar {
     /// Will call `draw_logs()`
     pub fn push_log_and_display(
         &mut self,
-        stdout: &mut Stdout,
+        stdout: &Tty,
         log: Box<dyn Display>,
         log_type: LogType,
         log_color: LogColor,
@@ -170,7 +171,7 @@ impl SideBar {
     /// Will call `draw_logs()`
     pub fn push_multiline_log_and_display(
         &mut self,
-        stdout: &mut Stdout,
+        stdout: &Tty,
         log: Vec<Box<dyn Display>>,
         log_type: LogType,
         log_color: LogColor,
@@ -185,7 +186,7 @@ impl SideBar {
     /// **Will update the place of the log separator to be able to draw them properly later!**
     pub fn display_custom_infos(
         &mut self,
-        stdout: &mut Stdout,
+        stdout: &Tty,
         header: &dyn Display,
         text: &[&dyn Display],
     ) -> Result<(), Error> {
@@ -214,7 +215,7 @@ impl SideBar {
     }
 
     /// Will reset the Logs separator at the top of the sidebar.
-    pub fn clear_custom_infos(&mut self, stdout: &mut Stdout) -> Result<(), Error> {
+    pub fn clear_custom_infos(&mut self, stdout: &Tty) -> Result<(), Error> {
         draw_box(
             stdout,
             self.offset,
@@ -235,7 +236,7 @@ impl SideBar {
         Ok(())
     }
 
-    pub fn clear_logs(&mut self, stdout: &mut Stdout) -> Result<(), Error> {
+    pub fn clear_logs(&mut self, stdout: &Tty) -> Result<(), Error> {
         for _ in 0..self.get_max_number_of_logs() {
             self.push_log(Box::new(""), LogType::None, LogColor::Normal);
         }
@@ -248,7 +249,7 @@ impl SideBar {
     /// Draw a simple separator (header + two lines).
     pub fn draw_separator(
         &self,
-        stdout: &mut Stdout,
+        stdout: &Tty,
         title: &dyn Display,
         y: u16,
     ) -> Result<(), Error> {

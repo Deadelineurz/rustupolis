@@ -1,5 +1,6 @@
+use crate::engine::keybinds::Tty;
 use std::cmp::PartialEq;
-use std::io::{Error, Stdout, Write};
+use std::io::{Error, Write};
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub enum LinePosition {
@@ -121,20 +122,20 @@ impl Default for LineStyle {
     }
 }
 
-pub fn draw_line(stdout: &mut Stdout, x: u16, y: u16, length: u16, style: LineStyle) -> Result<(), Error> {
-    write!(stdout, "{}", termion::cursor::Goto(x, y))?;
+pub fn draw_line(stdout: &Tty, x: u16, y: u16, length: u16, style: LineStyle) -> Result<(), Error> {
+    write!(stdout.lock(), "{}", termion::cursor::Goto(x, y))?;
 
     let ch = style.get_char().expect("Error while trying to create char");
 
     if style.direction == LineDirection::Vertical {
         for ord in y..(y + length) {
-            write!(stdout, "{}{ch}", termion::cursor::Goto(x, ord))?;
+            write!(stdout.lock(), "{}{ch}", termion::cursor::Goto(x, ord))?;
         }
     } else {
-        write!(stdout, "{}", String::from(ch).repeat(length as usize))?;
+        write!(stdout.lock(), "{}", String::from(ch).repeat(length as usize))?;
     }
 
 
-    stdout.flush()?;
+    stdout.lock().flush()?;
     Ok(())
 }

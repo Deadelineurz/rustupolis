@@ -1,18 +1,19 @@
 use crate::engine::drawable::DynDrawable;
 use crate::engine::viewport::{background, Viewport};
-use ansi_term::Color::{Black, Green, Red};
+use ansi_term::Color::{Black};
 use log::trace;
-use std::io::{stdout, Write};
+use std::io::{Write};
 use termion::{cursor, terminal_size};
-use termion::color::LightBlack;
+use crate::engine::keybinds::Tty;
 
-pub struct Engine {
+pub struct Engine<'a> {
     pub viewport: Viewport,
     pub background : String,
     drawables: Vec<Box<DynDrawable>>,
+    stdout: &'a Tty
 }
 
-impl Engine {
+impl<'a> Engine<'a> {
     pub fn register_drawable(&mut self, drawable: Box<DynDrawable>) {
         self.drawables.push(drawable)
     }
@@ -31,15 +32,19 @@ impl Engine {
             for line in &d.shape().lines().collect::<Vec<&str>>()
                 [coordinates.crop_top..(d.height() as usize - coordinates.crop_bottom)]
             {
-                print!("{}{}", cursor::Goto(coordinates.x, coordinates.y), d.color().paint(line.chars().collect::<Vec<char>>()[coordinates.crop_left..(d.width() as usize - coordinates.crop_right)].iter().collect::<String>()));
+                let _ = write!(self.stdout.lock(), "{}{}", cursor::Goto(coordinates.x, coordinates.y), d.color().paint(line.chars().collect::<Vec<char>>()[coordinates.crop_left..(d.width() as usize - coordinates.crop_right)].iter().collect::<String>()));
                 coordinates.y += 1;
             }
         }
 
-        stdout().flush().unwrap()
+        self.stdout.lock().flush().unwrap()
     }
 
-
+    pub fn get_drawable_for_coordinates(&self, x: i16, y: i16) -> Option<&Box<DynDrawable>> {
+        self.drawables.iter().find(|it| {
+            it.x() <= x && it.right() > x && it.y() <= y && it.bottom() > y
+        })
+    }
 
     fn clear_viewport(&self) {
         for y in self.viewport.output_y..(self.viewport.output_y + self.viewport.height) {
@@ -49,28 +54,33 @@ impl Engine {
                 Black.paint(self.background.to_string())
             )
         }
-    }
-}
 
-impl From<Viewport> for Engine {
-    fn from(value: Viewport) -> Self {
-        Engine {
-            viewport: value,
-            drawables: Vec::new(),
-            background: background(value.output_y, value.height, value.width)
+        self.stdout.lock().flush().unwrap()
+    }
+
+    pub fn new(viewport: Viewport, stdout: &'a Tty) -> Self {
+        Engine{
+            viewport,
+            stdout,
+            drawables: vec![],
+            background: {
+                let (width, height) = terminal_size().unwrap();
+                background(1, height, width)
+            }
         }
     }
 }
 
-impl Default for Engine {
-    fn default() -> Self {
-        Engine {
+impl<'a> From<&'a Tty> for Engine<'a> {
+    fn from(value: &'a Tty) -> Self {
+        Engine{
             viewport: Viewport::default(),
             drawables: Vec::new(),
             background: {
                 let (width, height) = terminal_size().unwrap();
                 background(1, height, width)
-            }
+            },
+            stdout: value
         }
     }
 }
