@@ -1,12 +1,12 @@
-use std::fmt::Display;
+use std::{fmt::Display, str::FromStr};
 
-use crate::ui::colors::{A_GREY_BLUE_COLOR, A_GREY_COLOR};
+use crate::ui::colors::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumString;
 
 use super::drawable::Drawable;
 
-#[derive(Debug, EnumString)]
+#[derive(Debug, EnumString, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum BuildingType {
     custom,
@@ -173,7 +173,10 @@ impl Drawable for Building {
     }
 
     fn color(&self) -> ansi_term::Color {
-        A_GREY_BLUE_COLOR
+        match &self.b_type {
+            s if BuildingType::from_str(s).unwrap() == BuildingType::empty_space => A_SAND_COLOR,
+            _ => A_RUST_COLOR_1,
+        }
     }
 }
 
