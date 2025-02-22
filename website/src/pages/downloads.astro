@@ -1,0 +1,63 @@
+---
+import Layout from "../layouts/Layout.astro";
+import {getCurrentOs, getLatestRelease} from "../utils/getLatestRelease";
+import linuxLogo from "../assets/linux.png"
+import AppleLogo from "../assets/apple.svg"
+import WindowsLogo from "../assets/windows.png"
+import OsCard from "../components/osCard.astro";
+---
+
+<Layout>
+    <script>
+        import {getCurrentOs, getLatestRelease} from "../utils/getLatestRelease";
+        getLatestRelease().then((d) => {
+            if (d != null) {
+                for (let x of document.getElementsByClassName("linux_download")) {
+                    x.setAttribute("href", d.linux)
+                }
+                for (let x of document.getElementsByClassName("macos_download")) {
+                    x.setAttribute("href", d.mac)
+                }
+                for (let x of document.getElementsByClassName("windows_download")) {
+                    x.setAttribute("href", d.win)
+                }
+            }
+        })
+
+        switch (getCurrentOs(window)) {
+            case "Linux":
+                document.getElementById("linux_detected").style.display = ""
+                break;
+            case "Windows":
+                document.getElementById("windows_detected").style.display = ""
+                break;
+            case "MacOS":
+                document.getElementById("macos_detected").style.display = ""
+                break;
+            default:
+                document.getElementById("detect_os_text").innerText = "No Os Detected"
+        }
+
+
+    </script>
+    <div class="flex flex-col w-full h-full ">
+        <div class="flex flex-col justify-center items-center py-10">
+            <span id="detect_os_text" class="text-7xl" style="font-family: 'Jersey 15', sans-serif">
+                Detected OS
+            </span>
+            <div id=`linux_detected` style="display: none"><OsCard image_src={linuxLogo.src} os_name="Linux" /></div>
+            <div id=`windows_detected` style="display: none"><OsCard image_src={WindowsLogo.src} os_name="Windows" /></div>
+            <div id=`macos_detected` style="display: none"><OsCard image_src={AppleLogo.src} os_name="MacOS" /></div>
+        </div>
+        <div class="bg-ui-black text-white w-full h-full flex flex-col items-center py-5" style="font-family: 'Jersey 15', sans-serif">
+            <span class="text-5xl">
+                Other Platforms
+            </span>
+            <div class="flex flex-row items-end">
+                <OsCard image_src={linuxLogo.src} os_name="Linux" />
+                <OsCard image_src={WindowsLogo.src} os_name="Windows" />
+                <OsCard image_src={AppleLogo.src} os_name="MacOS" />
+            </div>
+        </div>
+    </div>
+</Layout>
