@@ -2,6 +2,7 @@ use crate::engine::core::Engine;
 use crate::ui::sidebar::SideBar;
 use log::trace;
 use std::io::{stdin, Stdout};
+use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
@@ -9,8 +10,17 @@ use termion::cursor;
 use termion::event::{Event, Key, MouseEvent};
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::{RawTerminal};
+use crate::engine::drawable::Drawable;
+use crate::SIDE_BAR;
 
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
+
+pub trait Clickable {
+    fn infos(&self) -> Option<String> {
+        None
+    }
+}
+
 
 pub struct KeyBindListener<'a> {
     engine: Arc<Mutex<Engine<'a>>>,
@@ -46,8 +56,26 @@ impl KeyBindListener<'static> {
                             MouseEvent::Press(_, x, y) => {
                                 trace!("Mouse click at x: {} y: {}", x, y);
                                 match &cop.lock() {
-                                    Ok(_guard) => {
+                                    Ok(engine) => {
+                                        let (virtual_x, virtual_y) = engine.viewport.get_virtual_coordinates(*x, *y);
+                                        let d = engine.get_drawable_for_coordinates(virtual_x, virtual_y);
+                                        if d.is_none() {
+                                            continue
+                                        }
 
+                                        let infos = d.unwrap().infos();
+
+                                        if infos.is_none() {
+                                            continue
+                                        }
+
+                                        match SIDE_BAR.deref().lock() {
+                                            Ok(mut sb) => {
+                                                let s = infos.unwrap();
+                                                let _ = sb.display_custom_infos(stdout, &"Building infos", &[&s]);
+                                            }
+                                            _ => ()
+                                        }
                                     }
                                     _ => ()
                                 }

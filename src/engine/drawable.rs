@@ -1,10 +1,11 @@
 use std::fmt::Debug;
+use crate::engine::keybinds::Clickable;
 
 pub type DynDrawable = dyn Drawable;
 
 pub trait Drawable
 where
-    Self: Debug + Send,
+    Self: Debug + Send + Clickable,
 {
     fn x(&self) -> i16;
     fn y(&self) -> i16;
