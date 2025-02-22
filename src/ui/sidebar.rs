@@ -13,6 +13,8 @@ use std::{
     str::FromStr,
 };
 
+type SyncDisplay = dyn Display + Send;
+
 const DEFAULT_WIDTH_MULTIPLIER: u16 = 4; // one fourth of the screen
 const BORDER_WIDTH: u16 = 2;
 const SEPARATOR_HEIGHT: u16 = 3;
@@ -30,7 +32,7 @@ pub struct SideBar {
     /// the bottom part of the log separator
     log_separator_y_pos: u16,
 
-    logs: Vec<(Vec<Box<dyn Display>>, LogType, LogColor)>,
+    logs: Vec<(Vec<Box<SyncDisplay>>, LogType, LogColor)>,
 }
 
 impl SideBar {
@@ -122,7 +124,7 @@ impl SideBar {
     fn draw_log_line(
         &self,
         stdout: &Tty,
-        text: &dyn Display,
+        text: &SyncDisplay,
         color: LogColor,
         y_offset: u16,
     ) -> Result<(), Error> {
@@ -142,7 +144,7 @@ impl SideBar {
         )
     }
 
-    pub fn push_log(&mut self, log: Box<dyn Display>, log_type: LogType, color: LogColor) {
+    pub fn push_log(&mut self, log: Box<SyncDisplay>, log_type: LogType, color: LogColor) {
         self.logs.push((vec![log], log_type, color));
     }
 
@@ -150,7 +152,7 @@ impl SideBar {
     pub fn push_log_and_display(
         &mut self,
         stdout: &Tty,
-        log: Box<dyn Display>,
+        log: Box<SyncDisplay>,
         log_type: LogType,
         log_color: LogColor,
     ) -> Result<(), Error> {
@@ -161,7 +163,7 @@ impl SideBar {
 
     pub fn push_multiline_log(
         &mut self,
-        log: Vec<Box<dyn Display>>,
+        log: Vec<Box<SyncDisplay>>,
         log_type: LogType,
         color: LogColor,
     ) {
@@ -172,7 +174,7 @@ impl SideBar {
     pub fn push_multiline_log_and_display(
         &mut self,
         stdout: &Tty,
-        log: Vec<Box<dyn Display>>,
+        log: Vec<Box<SyncDisplay>>,
         log_type: LogType,
         log_color: LogColor,
     ) -> Result<(), Error> {
@@ -187,10 +189,10 @@ impl SideBar {
     pub fn display_custom_infos(
         &mut self,
         stdout: &Tty,
-        header: &dyn Display,
-        text: &[&dyn Display],
+        header: &SyncDisplay,
+        text: &[&SyncDisplay],
     ) -> Result<(), Error> {
-        self.draw_separator(stdout, &header, 1)?;
+        self.draw_separator(stdout, header, 1)?;
 
         for (y_offset, line) in text.iter().enumerate() {
             let mut line = String::from_str(&line.to_string()).unwrap();
@@ -247,10 +249,10 @@ impl SideBar {
     }
 
     /// Draw a simple separator (header + two lines).
-    pub fn draw_separator(
+    pub fn draw_separator<'a>(
         &self,
         stdout: &Tty,
-        title: &dyn Display,
+        title: &SyncDisplay,
         y: u16,
     ) -> Result<(), Error> {
         draw_line(stdout, self.offset + 1, y, self.width - 1, LineStyle::new())?;
