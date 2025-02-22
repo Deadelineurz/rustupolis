@@ -1,4 +1,5 @@
 use crate::engine::drawable::Drawable;
+use crate::engine::keybinds::Clickable;
 
 #[derive(Debug)]
 pub struct BuildingDrawable {
@@ -22,6 +23,12 @@ pub struct RoadDrawable {
     pub width: u8,
     pub length: u8,
     pub color: ansi_term::Color,
+}
+
+impl Clickable for BuildingDrawable {
+    fn infos(&self) -> Option<String> {
+        Some(format!("texture: {:?}", self.texture))
+    }
 }
 
 
@@ -169,3 +176,5 @@ impl Drawable for RoadDrawable {
         self.color
     }
 }
+
+impl Clickable for RoadDrawable {}

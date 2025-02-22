@@ -1,25 +1,22 @@
-use crate::logging::RemoteLoggerClient;
 use lazy_static::lazy_static;
 use log::LevelFilter;
+use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::{KeyBindListener, Tty};
 use rustupolis::engine::layout;
+use rustupolis::engine::viewport::Viewport;
+use rustupolis::logging::RemoteLoggerClient;
 use rustupolis::terminal::screen::CleanScreen;
-use rustupolis::ui::sidebar::SideBar;
 use std::io::stdout;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
-use rustupolis::engine::core::Engine;
-use rustupolis::engine::viewport::Viewport;
-
-mod logging;
+use std::io::Write;
 
 lazy_static! {
     pub static ref LOGGER: RemoteLoggerClient = RemoteLoggerClient::new();
     pub static ref STDOUT: Tty = MouseTerminal::from(stdout().into_raw_mode().unwrap());
-    pub static ref SIDE_BAR: Arc<Mutex<SideBar>> = Arc::new(Mutex::new(SideBar::new()));
 }
 
 fn main() {
@@ -57,4 +54,6 @@ fn main() {
     let kb = KeyBindListener::new(kb_engine_ref, STDOUT.deref());
 
     let _ = kb.thread.join();
+
+    drop(_clear);
 }
