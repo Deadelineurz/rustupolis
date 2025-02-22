@@ -35,21 +35,27 @@ import OsCard from "../components/osCard.astro";
                 document.getElementById("macos_detected").style.display = ""
                 break;
             default:
+                document.getElementById("linux_detected").style.display = ""
+                document.getElementById("windows_detected").style.display = ""
+                document.getElementById("macos_detected").style.display = ""
                 document.getElementById("detect_os_text").innerText = "No Os Detected"
+                document.getElementById("other_os").style.display = "none"
         }
 
 
     </script>
-    <div class="flex flex-col w-full h-full ">
-        <div class="flex flex-col justify-center items-center py-10">
+    <div class="flex flex-col w-full h-full text-white">
+        <div class="flex flex-col justify-center items-center py-2">
             <span id="detect_os_text" class="text-7xl" style="font-family: 'Jersey 15', sans-serif">
                 Detected OS
             </span>
-            <div id=`linux_detected` style="display: none"><OsCard image_src={linuxLogo.src} os_name="Linux" /></div>
-            <div id=`windows_detected` style="display: none"><OsCard image_src={WindowsLogo.src} os_name="Windows" /></div>
-            <div id=`macos_detected` style="display: none"><OsCard image_src={AppleLogo.src} os_name="MacOS" /></div>
+            <div class="flex flex-row items-end">
+                <div id=`linux_detected` style="display: none"><OsCard image_src={linuxLogo.src} os_name="Linux" /></div>
+                <div id=`windows_detected` style="display: none"><OsCard image_src={WindowsLogo.src} os_name="Windows" /></div>
+                <div id=`macos_detected` style="display: none"><OsCard image_src={AppleLogo.src} os_name="MacOS" /></div>
+            </div>
         </div>
-        <div class="bg-ui-black text-white w-full h-full flex flex-col items-center py-5" style="font-family: 'Jersey 15', sans-serif">
+        <div id="other_os" class="bg-ui-black text-white w-full h-full flex flex-col items-center py-5" style="font-family: 'Jersey 15', sans-serif">
             <span class="text-5xl">
                 Other Platforms
             </span>
