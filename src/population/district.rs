@@ -57,7 +57,7 @@ impl PopulationDistrict {
         let mut res = 0;
         for people in peoples {
             match people {
-                People::Alive (AlivePerson{ age, .. }) if *age > 14 && *age < 70 => {
+                People::Alive (AlivePerson{ work_status, .. }) if work_status.is_some() => {
                     res += 1
                 }
                 _ => (),
