@@ -4,5 +4,5 @@ const { image_src, os_name } = Astro.props;
 
 <div class={`${os_name.toLowerCase()} flex flex-col items-center p-10 gap-10 justify-evenly"}`}>
     <img src={image_src} width="150px" alt=""/>
-    <a class={`${os_name.toLowerCase()}_download text-black text-lg font-medium bg-white rounded-xs px-5 py-2`}>{`⬇️ Download for ${os_name}`}</a>
+    <a class={`${os_name.toLowerCase()}_download text-black text-lg font-medium bg-white rounded-xs px-5 py-2`}>{`Download for ${os_name}`}</a>
 </div>

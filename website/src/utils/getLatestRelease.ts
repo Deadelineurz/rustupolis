@@ -1,13 +1,10 @@
-import os from 'node:os'
 export const getLatestRelease = async () => {
     let repo_name = "rustupolis";
     let org_name = "deadelineurz";
     let release_platform = {mac: "", win: "", linux: ""}
-    console.log(`https://api.github.com/repos/${org_name}/${repo_name}/releases`)
     const res = await fetch(`https://api.github.com/repos/${org_name}/${repo_name}/releases`)
 
     const json_releases : any[] = await res.json()
-    console.log(json_releases)
 
     if (json_releases.length == 0){
         return null;
@@ -25,37 +22,34 @@ export const getLatestRelease = async () => {
             }
         }
     }
-    console.log(release_platform)
     return release_platform;
 }
 
 export const getCurrentOs = (b_window : any) => {
-    let platform: string = b_window?.navigator.platform;
-    if (!platform){
-        return "NoOs"
-    }
-    let friendly_plat;
-    return "Windows"
-    switch (platform.toString().toUpperCase()) {
-        case 'WIN32':
-            friendly_plat =  'Windows'
-            break;
-        case 'DARWIN':
-            friendly_plat = "MacOS";
-            break;
-        case 'MACINTEL':
-            friendly_plat = "MacOS";
-            break;
-        case 'X11':
-            friendly_plat =  "Linux";
-            break;
-        case 'LINUX':
-            friendly_plat =  "Linux";
-            break;
-        default:
-            friendly_plat =  "NoOs"
-            break;
+    const platform: string = b_window?.navigator?.platform || '';
+    const userAgent: string = b_window?.navigator?.userAgent || '';
 
-}
-return friendly_plat;
+    if (!platform && !userAgent) {
+        return "NoOs";
+    }
+
+    const platformUpper = platform.toUpperCase();
+    const userAgentUpper = userAgent.toUpperCase();
+
+    // Android detection
+    if (userAgentUpper.includes("ANDROID")) {
+        return "Android";
+    }
+    // MacOS detection
+    if (platformUpper === "MACINTEL" || platformUpper === "DARWIN") {
+        return "MacOS";
+    }
+    // Windows detection
+    if (platformUpper === "WIN32") {
+        return "Windows";
+    }
+    // Linux detection
+    if (platformUpper.includes("LINUX")  || platformUpper === "X11") {
+        return "Linux";
+    }
 }
