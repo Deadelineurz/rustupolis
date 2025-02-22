@@ -26,9 +26,9 @@ fn main() {
         .map(|()| log::set_max_level(LevelFilter::Trace))
         .unwrap();
 
-    let layout = Layout::load_default_layout();
-    let buildings_drawables = layout.get_building_drawables();
-    let roads_drawables = layout.get_road_drawables();
+    let layout = Layout::load_core_layout();
+    let buildings_drawables = layout.get_buildings();
+    let roads_drawables = layout.get_roads();
 
     let _clear = CleanScreen::new();
 

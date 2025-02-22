@@ -31,8 +31,8 @@ fn main() {
 
     let layout = Layout::load_default_layout();
 
-    let bdrawables = layout.get_building_drawables();
-    let rdrawables = layout.get_road_drawables();
+    let bdrawables = layout.get_buildings();
+    let rdrawables = layout.get_roads();
 
     let mut vp = Viewport::default();
 
