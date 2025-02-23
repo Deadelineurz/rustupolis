@@ -1,6 +1,9 @@
 use std::{fmt::Display, str::FromStr};
 
-use crate::ui::colors::*;
+use crate::{
+    population::{people::BasePeopleInfo, Population},
+    ui::colors::*,
+};
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumString;
 
@@ -32,6 +35,24 @@ pub struct Building {
     height: Option<u8>,
     texture: Option<char>,
     content: Option<Vec<String>>,
+}
+
+impl Building {
+    pub fn get_num_people_in_building(&self, population: Population) -> usize {
+        population
+            .get_district(self.district_id)
+            .unwrap()
+            .peoples
+            .iter()
+            .filter(|people| {
+                if let Some(uuid) = people.get_building_uuid() {
+                    *uuid == self.id
+                } else {
+                    false
+                }
+            })
+            .count()
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
