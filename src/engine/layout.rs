@@ -53,6 +53,14 @@ impl Building {
             })
             .count()
     }
+
+    pub fn get_building_uuid(&self) -> String {
+        self.id.clone()
+    }
+
+    pub fn get_district_id(&self) -> usize {
+        self.district_id
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -101,6 +109,15 @@ impl Layout {
     /// Clone the vec
     pub fn get_buildings(&self) -> Vec<Building> {
         self.buildings.iter().map(|b| b.clone()).collect()
+    }
+
+    /// Clone the vec
+    pub fn get_buildings_mut(&mut self) -> Vec<&mut Building> {
+        self.buildings.iter_mut().collect()
+    }
+
+    pub fn get_buildings_district_mut(&mut self, district_id: usize) -> Vec<&mut Building> {
+        self.buildings.iter_mut().filter(|b| b.district_id == district_id).collect()
     }
 
     /// Clone the vec
