@@ -57,7 +57,7 @@ impl PopulationDistrict {
         let mut res = 0;
         for people in peoples {
             match people {
-                People::Alive (AlivePerson{ age, .. }) if *age > 14 && *age < 70 => {
+                People::Alive (AlivePerson{ work_status, .. }) if work_status.is_some() => {
                     res += 1
                 }
                 _ => (),
@@ -65,6 +65,10 @@ impl PopulationDistrict {
         }
 
         res
+    }
+
+    pub fn get_population_number_by(&self, find_by: PeopleLegalState) -> usize {
+        self.peoples.iter().filter(|p| p.get_legal_state() == find_by).count()
     }
 
     pub fn recalcul_happiness(&mut self) {
