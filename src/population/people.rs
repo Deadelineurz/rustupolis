@@ -1,3 +1,4 @@
+use crate::engine::layout::Building;
 use crate::population::disease::*;
 use crate::population::dna::*;
 use rand::random_range;
@@ -32,6 +33,7 @@ pub enum WorkLethality {
     ExtremeRisks,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum PeopleLegalState {
     Baby,
     Child,
@@ -64,6 +66,7 @@ pub struct AlivePerson {
     /// If the work status is `None`, then this person has no job.
     pub work_status: Option<WorkLethality>,
     pub building_uuid: Option<String>,
+    pub is_witness: bool
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -72,6 +75,7 @@ pub struct DeadPerson {
     pub dna: DNA,
     pub cause: CauseOfDeath,
     pub building_uuid: Option<String>, // yep, the corpse can still be in a building lol
+    pub is_witness: bool
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -83,6 +87,7 @@ pub trait BasePeopleInfo {
     fn get_age(&self) -> u8;
     fn get_dna(&self) -> DNA;
     fn get_building_uuid(&self) -> Option<&String>;
+    fn is_witness(&self) -> bool;
 }
 
 impl BasePeopleInfo for People {
@@ -106,11 +111,26 @@ impl BasePeopleInfo for People {
             People::Dead(DeadPerson { building_uuid, .. }) => building_uuid.as_ref(),
         }
     }
+
+    fn is_witness(&self) -> bool {
+        match self {
+            People::Alive(AlivePerson { is_witness, .. }) => *is_witness,
+            People::Dead(DeadPerson { is_witness, .. }) => *is_witness,
+        }
+    }
 }
 
 impl People {
     /// Try cast People into alive
     pub fn as_alive(&self) -> Option<&AlivePerson> {
+        if let People::Alive(person) = self {
+            Some(person)
+        } else {
+            None
+        }
+    }
+
+    pub fn as_alive_mut(&mut self) -> Option<&mut AlivePerson> {
         if let People::Alive(person) = self {
             Some(person)
         } else {
@@ -153,6 +173,7 @@ impl People {
             dna: self.get_dna(),
             cause: cause_of_death,
             building_uuid: self.get_building_uuid().cloned(),
+            is_witness: false
         })
     }
 
@@ -170,13 +191,14 @@ impl People {
             mood: Mood::Neutral,
             disease: None,
             work_status: None,
+            is_witness: false
         })
     }
 
     /// Create a new alive people, will add a random number of DNA traits
     pub fn create_random_people(working_age: bool, max_dna_traits: u8) -> Self {
         let age = match working_age {
-            true => 18 + rand::random_range(0..=17),
+            true => 18 + rand::random_range(0..=32),
             false => rand::random_range(0..18),
         };
 
@@ -192,8 +214,23 @@ impl People {
             disease: None,
             work_status: None,
             building_uuid: None,
+            is_witness: false
         })
     }
+
+        /// Create a new alive people, which history will be logged
+        pub fn create_witness(age: u8, dna_traits: u32, starting_building: Option<Building>) -> Self {
+
+            People::Alive(AlivePerson {
+                age,
+                dna: DNA::from_flag(dna_traits),
+                mood: Mood::Neutral,
+                disease: None,
+                work_status: None,
+                building_uuid: if let Some(building) = starting_building { Some(building.get_building_uuid()) } else { None },
+                is_witness: true
+            })
+        }
 
     /// Create new (alive) peoples with 1 DNA trait each.
     pub fn create_random_population(amount: u8) -> Vec<People> {
