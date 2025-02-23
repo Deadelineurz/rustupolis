@@ -1,11 +1,33 @@
 use std::{fmt::Display, str::FromStr};
-
+use std::ops::Deref;
+use std::sync::Mutex;
+use lazy_static::lazy_static;
 use crate::ui::colors::*;
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumString;
-
+use crate::ENGINE;
+use crate::engine::core::Engine;
+use crate::engine::keybinds::Clickable;
 use super::drawable::Drawable;
 
+lazy_static! {
+    pub static ref LAYOUT: Mutex<Layout> = Mutex::new(Layout {
+        buildings: Vec::new(),
+        roads: Vec::new(),
+    });
+
+}
+
+pub fn get_layout() -> Arc<Mutex<Layout>> {
+    dbg!("getted lyaout");
+    let mut lock = LAYOUT.try_lock();
+    if let Ok( mutex) = lock {
+        return mutex;
+    } else {
+        panic!("try_lock failed");
+    }
+
+}
 #[derive(Debug, EnumString, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
 pub enum BuildingType {
@@ -22,16 +44,18 @@ impl Display for BuildingType {
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Building {
-    name: String,
-    id: String,
-    district_id: usize,
-    pos_x: i16,
-    pos_y: i16,
-    b_type: String,
-    width: Option<u8>,
-    height: Option<u8>,
-    texture: Option<char>,
-    content: Option<Vec<String>>,
+    pub name: String,
+    pub id: String,
+    pub district_id: usize,
+    pub pos_x: i16,
+    pub pos_y: i16,
+    pub b_type: String,
+    pub width: Option<u8>,
+    pub height: Option<u8>,
+    pub texture: Option<char>,
+    pub content: Option<Vec<String>>,
+    pub engine: Arc<Mutex<Engine>>,
+    pub layout: Arc<Mutex<Layout>>
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -46,49 +70,86 @@ pub struct Road {
     pavement: char,
 }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Layout {
     pub buildings: Vec<Building>,
     pub roads: Vec<Road>,
+    pub engine: Arc<Mutex<Engine>>
 }
 
 impl Layout {
-    pub fn load_default_layout() -> Self {
+    pub fn new(engine: Arc<Mutex<Engine>>) -> Self {
+    }
+
+    pub fn load_default_layout() {
         let layout = include_str!("../initial_data/layout.json");
 
         let layout_obj: Layout = serde_json::from_str(layout).unwrap();
-
-        layout_obj
+        let mut global_layout = get_layout();
+        *global_layout = layout_obj;
     }
 
-    pub fn load_core_layout() -> Self {
+    pub fn load_core_layout() {
         let layout = include_str!("../initial_data/starting_core.json");
 
         let layout_obj: Layout = serde_json::from_str(layout).unwrap();
 
-        layout_obj
+        let mut global_layout = get_layout();
+        *global_layout = layout_obj;
     }
 
     pub fn add_building(&mut self, building: Building) {
-        self.buildings.push(building);
+        let mut layout = LAYOUT.lock().unwrap();
+        layout.buildings.push(building);
     }
 
-    pub fn add_road(&mut self, road: Road) {
-        self.roads.push(road);
+    pub fn add_road(road: Road) {
+        let mut layout = LAYOUT.lock().unwrap();
+        layout.roads.push(road);
     }
 
     /// Clone the vec
     pub fn get_buildings(&self) -> Vec<Building> {
-        self.buildings.iter().map(|b| b.clone()).collect()
+        let layout = LAYOUT.lock().unwrap();
+        layout.buildings.iter().map(|b| b.clone()).collect()
     }
 
     /// Clone the vec
     pub fn get_roads(&self) -> Vec<Road> {
-        self.roads.iter().map(|r| r.clone()).collect()
+        let layout = LAYOUT.lock().unwrap();
+        layout.roads.iter().map(|r| r.clone()).collect()
     }
 }
 
+
+impl Clickable for Building {
+    fn infos(&self) -> Option<String> {
+        let mut layout = get_layout();
+        let mut build = layout.buildings[0].clone();
+        build.pos_x += 30;
+        build.name = "aaa".to_string();
+
+        layout.buildings.push(build);
+        dbg!("aaaaaaa");
+
+        dbg!(layout.buildings.last());
+        match ENGINE.deref().lock() {
+            Ok(guard) => {
+                guard.register_drawable(Box::new(build))
+            }
+            _ => {}
+        }
+
+        Option::from(self.name.to_string())
+    }
+}
+impl Clickable for Road {
+    fn infos(&self) -> Option<String> {
+        Option::from(self.name.to_string())
+    }
+}
 impl Drawable for Building {
+
     fn x(&self) -> i16 {
         self.pos_x
     }

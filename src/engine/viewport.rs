@@ -45,6 +45,21 @@ pub struct OutputCoordinates {
 
 impl Viewport {
 
+    pub fn from_ratio(x_ratio: f32, y_ratio: f32) -> Self {
+        let (x_size, y_size) = terminal_size().unwrap();
+        let width = (x_size as f32 * x_ratio) as u16;
+        let height = (y_size as f32 * y_ratio) as u16;
+
+        Viewport{
+            output_x: 1,
+            output_y: 1,
+            virtual_x: 0,
+            virtual_y: 0,
+            width,
+            height,
+        }
+    }
+
     pub fn is_visible(&self, d: &Box<DynDrawable>) -> bool {
         let mut res = true;
         res &= d.right() > self.virtual_x;
