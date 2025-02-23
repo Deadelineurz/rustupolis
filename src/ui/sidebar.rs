@@ -103,12 +103,16 @@ impl SideBar {
             .logs
             .iter()
             .rev()
-            .take(self.get_max_number_of_logs() as usize)
+            // .take(self.get_max_number_of_logs() as usize)
         {
             for line in log.0.iter().skip(1).rev() {
                 self.draw_log_line(stdout, &line.to_string(), log.2, count)?;
 
                 count += 1;
+
+                if count >= self.get_max_number_of_logs() {
+                    return Ok(());
+                }
             }
 
             let mut header: String = String::from_str(&log.1.to_string()).unwrap();
@@ -116,6 +120,10 @@ impl SideBar {
             self.draw_log_line(stdout, &header, log.2, count)?;
 
             count += 1;
+
+            if count >= self.get_max_number_of_logs() {
+                return Ok(());
+            }
         }
 
         Ok(())
