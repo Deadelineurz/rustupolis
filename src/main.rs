@@ -142,7 +142,7 @@ fn main() {
             Some((SIDE_BAR.deref(), STDOUT.deref())),
         );
 
-        sleep(Duration::from_millis(100));
+        sleep(Duration::from_millis(3600));
 
         let peoples = POPULATION.lock().unwrap().get_core_district().num_people;
         let deads = POPULATION
