@@ -108,7 +108,7 @@ fn update_births(
 
 fn update_deaths(district: &mut PopulationDistrict, debug: &Option<(&'static Arc<Mutex<SideBar>>, &'static Tty)>) {
     let zone = district.zone_type.clone();
-    let happiness: f64 = district.happiness_percentage().into();
+    let happiness: f64 = district.get_happiness_percentage().into();
 
     let bef = district.get_population_number_by(PeopleLegalState::Dead);
 

@@ -15,7 +15,7 @@ pub fn number_of_children_to_make(people: &AlivePerson, env: &PopulationDistrict
     let birth_probability = fertility_from_age(people.age)
         * fertility_bonus(people.dna)
         * mood_bonus(&people.mood)
-        * happiness_bonus(env.happiness_percentage().into())
+        * happiness_bonus(env.get_happiness_percentage().into())
         * zone_bonus(&env.zone_type)
         * sickness_bonus(&people.disease)
         * work_bonus(

@@ -21,86 +21,53 @@ pub struct PopulationDistrict {
     /// maximum number of other district this district can be next to.
     pub max_num_neighbors: usize,
     pub neighbors: Vec<usize>,
-    
-    /// if you want the real number, you should add half the population
+
+    /// Use get_percentage instead
     pub num_happiness: u16,
-    pub num_sick: u16,      // use get_percentage
+    /// Use get_percentage instead
+    pub num_sick: u16, // use 
     pub working_poulation: u16,
 }
 
 impl PopulationDistrict {
-
-    fn get_happiness(peoples: &Vec<People>) -> u16 {
-        let mut res = 0;
-        for people in peoples {
-            match people {
-                People::Alive (AlivePerson { mood, .. }) => res += *mood as u16,
-                People::Dead { .. } => res -= 1,
-            }
-        }
-        res
-    }
-
-    fn get_sickness(peoples: &Vec<People>) -> u16 {
-        let mut res = 0;
-        for people in peoples {
-            match people {
-                People::Alive (AlivePerson{ disease, .. }) if {*disease != None} => res += 1,
-                _ => (),
-            }
-        }
-
-        res
-    }
-
-    fn get_working_peoples(peoples: &Vec<People>) -> u16 {
-        let mut res = 0;
-        for people in peoples {
-            match people {
-                People::Alive (AlivePerson{ work_status, .. }) if work_status.is_some() => {
-                    res += 1
-                }
-                _ => (),
-            }
-        }
-
-        res
-    }
-
     pub fn get_population_number_by(&self, find_by: PeopleLegalState) -> usize {
-        self.peoples.iter().filter(|p| p.get_legal_state() == find_by).count()
+        self.peoples
+            .iter()
+            .filter(|p| p.get_legal_state() == find_by)
+            .count()
     }
 
     pub fn recalcul_happiness(&mut self) {
-        self.num_happiness = Self::get_happiness(&self.peoples);
+        self.num_happiness = Self::aux_happiness(&self.peoples);
     }
     /// Will just add the number to the field
     pub fn update_happiness(&mut self, peoples: &Vec<People>) {
-        self.num_happiness += Self::get_happiness(peoples);
+        self.num_happiness += Self::aux_happiness(peoples);
     }
 
     pub fn recalcul_sickness(&mut self) {
-        self.num_sick = Self::get_sickness(&self.peoples);
+        self.num_sick = Self::aux_sickness(&self.peoples);
     }
     /// Will just add the number to the field
     pub fn update_sickness(&mut self, peoples: &Vec<People>) {
-        self.num_happiness += Self::get_sickness(peoples);
+        self.num_happiness += Self::aux_sickness(peoples);
     }
 
     pub fn recalcul_working_population(&mut self) {
-        self.working_poulation = Self::get_working_peoples(&self.peoples);
+        self.working_poulation = Self::aux_working_peoples(&self.peoples);
     }
     /// Will just add the number to the field
     pub fn update_working_population(&mut self, peoples: &Vec<People>) {
-        self.working_poulation += Self::get_working_peoples(peoples);
+        self.working_poulation += Self::aux_working_peoples(peoples);
     }
 
     /// Give the correct happiness percentage
-    pub fn happiness_percentage(&self) -> f32 {
-        (((self.num_people / 2) as u16 + self.num_happiness) as f32 / self.num_people as f32).clamp(0f32, 1f32)
+    pub fn get_happiness_percentage(&self) -> f32 {
+        (((self.num_people / 2) as u16 + self.num_happiness) as f32 / self.num_people as f32)
+            .clamp(0f32, 1f32)
     }
 
-    pub fn sick_percentage(&self) -> f32 {
+    pub fn get_sick_percentage(&self) -> f32 {
         (self.num_sick as f32 / self.num_sick as f32).clamp(0f32, 1f32)
     }
 
@@ -112,5 +79,40 @@ impl PopulationDistrict {
         self.update_working_population(peoples);
 
         self.peoples.append(peoples);
+    }
+
+    fn aux_happiness(peoples: &Vec<People>) -> u16 {
+        let mut res = 0;
+        for people in peoples {
+            match people {
+                People::Alive(AlivePerson { mood, .. }) => res += *mood as u16,
+                People::Dead { .. } => res -= 1,
+            }
+        }
+        res
+    }
+
+    fn aux_sickness(peoples: &Vec<People>) -> u16 {
+        let mut res = 0;
+        for people in peoples {
+            match people {
+                People::Alive(AlivePerson { disease, .. }) if { *disease != None } => res += 1,
+                _ => (),
+            }
+        }
+
+        res
+    }
+
+    fn aux_working_peoples(peoples: &Vec<People>) -> u16 {
+        let mut res = 0;
+        for people in peoples {
+            match people {
+                People::Alive(AlivePerson { work_status, .. }) if work_status.is_some() => res += 1,
+                _ => (),
+            }
+        }
+
+        res
     }
 }
