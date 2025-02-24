@@ -4,28 +4,25 @@ use log::LevelFilter;
 use rand::rng;
 use rand::seq::SliceRandom;
 use rustupolis::engine::core::Engine;
-use rustupolis::engine::keybinds::{KeyBindListener, Tty};
+use rustupolis::engine::keybinds::KeyBindListener;
 use rustupolis::engine::layout::Layout;
 use rustupolis::engine::viewport::Viewport;
 use rustupolis::simulation::update_population;
 use rustupolis::terminal::screen::CleanScreen;
 use rustupolis::ui::sidebar::{LogColor, LogType};
-use rustupolis::{POPULATION, SIDE_BAR};
+use rustupolis::{POPULATION, SIDE_BAR, STDOUT};
 use std::fmt::Display;
-use std::io::stdout;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 use std::thread::sleep;
 use std::time::Duration;
-use termion::input::MouseTerminal;
-use termion::raw::IntoRawMode;
 use termion::terminal_size;
 
 mod logging;
 
 lazy_static! {
     pub static ref LOGGER: RemoteLoggerClient = RemoteLoggerClient::new();
-    pub static ref STDOUT: Tty = MouseTerminal::from(stdout().into_raw_mode().unwrap());
+
 }
 
 fn main() {
