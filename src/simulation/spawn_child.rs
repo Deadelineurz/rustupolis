@@ -22,8 +22,6 @@ pub fn number_of_children_to_make(people: &AlivePerson, env: &PopulationDistrict
             &people.work_status.is_some(),
             env.working_poulation as f64 / env.num_people as f64,
         );
-
-    dbg!(birth_probability);
     let base = birth_probability.floor() as u8;
     if rand::random::<f64>() < (birth_probability - base as f64) {
         base + 1
@@ -54,7 +52,8 @@ pub fn spawn_childs(amount: u8, parent1: &AlivePerson, parent2: &AlivePerson) ->
             mood: parent1.mood.to_average(parent2.mood),
             disease: None,
             work_status: None,
-            building_uuid: parent1.building_uuid.clone()
+            building_uuid: parent1.building_uuid.clone(),
+            is_witness: false
         }));
     }
 
@@ -73,7 +72,7 @@ fn fertility_bonus(dna: DNA) -> f64 {
 
 /// Simple bell curve centred arround 30 years
 fn fertility_from_age(age: u8) -> f64 {
-    f64::exp((-(age as f64 - 30.0) as f64 / 10.0).powf(2.0))
+    f64::exp(-((age as f64 - 30.0) as f64 / 10.0).powf(2.0))
 }
 
 fn happiness_bonus(percentage: f64) -> f64 {

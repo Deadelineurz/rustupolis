@@ -1,23 +1,33 @@
 use lazy_static::lazy_static;
 use log::LevelFilter;
+use rand::rng;
+use rand::seq::SliceRandom;
 use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::{KeyBindListener, Tty};
 use rustupolis::engine::layout::Layout;
-use rustupolis::engine::layout;
 use rustupolis::engine::viewport::Viewport;
 use rustupolis::logging::RemoteLoggerClient;
+use rustupolis::population::Population;
+use rustupolis::simulation::update_population;
 use rustupolis::terminal::screen::CleanScreen;
+use rustupolis::ui::sidebar::{LogColor, LogType, SideBar};
+use std::fmt::Display;
 use std::io::stdout;
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
+use std::thread::sleep;
+use std::time::Duration;
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
-use std::io::Write;
+
+mod logging;
 
 lazy_static! {
     pub static ref LOGGER: RemoteLoggerClient = RemoteLoggerClient::new();
     pub static ref STDOUT: Tty = MouseTerminal::from(stdout().into_raw_mode().unwrap());
+    pub static ref SIDE_BAR: Arc<Mutex<SideBar>> = Arc::new(Mutex::new(SideBar::new()));
+    pub static ref POPULATION: Arc<Mutex<Population>> = Arc::new(Mutex::new(Population::new()));
 }
 
 fn main() {
@@ -53,6 +63,150 @@ fn main() {
     let kb_engine_ref = e.clone();
 
     let kb = KeyBindListener::new(kb_engine_ref, STDOUT.deref());
+
+    SIDE_BAR.lock().unwrap().draw(STDOUT.deref()).unwrap();
+
+    // bien bien dégeu mais au moins on a une démo sympa
+
+    let mut witness_dead = false;
+    let mut rng = rng();
+
+    for _ in 0..3 {
+        SIDE_BAR
+            .lock()
+            .unwrap()
+            .push_log_and_display(
+                STDOUT.deref(),
+                Box::new("..."),
+                LogType::Debug,
+                LogColor::Normal,
+            )
+            .unwrap();
+
+        sleep(Duration::from_millis(400));
+    }
+
+    SIDE_BAR
+        .lock()
+        .unwrap()
+        .push_log_and_display(
+            STDOUT.deref(),
+            Box::new("Begin..."),
+            LogType::Debug,
+            LogColor::Unusual,
+        )
+        .unwrap();
+
+    sleep(Duration::from_secs(1));
+
+    SIDE_BAR
+        .lock()
+        .unwrap()
+        .push_log_and_display(
+            STDOUT.deref(),
+            Box::new("Generating starting population..."),
+            LogType::Debug,
+            LogColor::Normal,
+        )
+        .unwrap();
+
+    sleep(Duration::from_secs(1));
+
+    SIDE_BAR
+        .lock()
+        .unwrap()
+        .push_log_and_display(
+            STDOUT.deref(),
+            Box::new("Adding 80 people into city..."),
+            LogType::Debug,
+            LogColor::Normal,
+        )
+        .unwrap();
+
+    POPULATION.lock().unwrap().add_peoples(80, None);
+
+    for i in 0..100 {
+        SIDE_BAR
+            .lock()
+            .unwrap()
+            .push_log_and_display(
+                STDOUT.deref(),
+                Box::new(format!("_____YEAR {i}_____")),
+                LogType::Debug,
+                LogColor::Normal,
+            )
+            .unwrap();
+
+        update_population(
+            &mut POPULATION.lock().unwrap(),
+            Some((SIDE_BAR.deref(), STDOUT.deref())),
+        );
+
+        sleep(Duration::from_millis(100));
+
+        let peoples = POPULATION.lock().unwrap().get_core_district().num_people;
+        let deads = POPULATION
+            .lock()
+            .unwrap()
+            .get_core_district()
+            .get_population_number_by(rustupolis::population::people::PeopleLegalState::Dead);
+
+        SIDE_BAR
+            .lock()
+            .unwrap()
+            .push_log_and_display(
+                STDOUT.deref(),
+                Box::new(format!("New population : {}", peoples - deads)),
+                LogType::Debug,
+                LogColor::Unusual,
+            )
+            .unwrap();
+
+        sleep(Duration::from_millis(500));
+
+        if i % 10 == 0 {
+            SIDE_BAR
+                .lock()
+                .unwrap()
+                .push_log_and_display(
+                    STDOUT.deref(),
+                    Box::new("Displaying a random population member:"),
+                    LogType::Debug,
+                    LogColor::Unusual,
+                )
+                .unwrap();
+
+            if witness_dead {
+                witness_dead = false;
+                POPULATION.lock().unwrap().get_core_district_mut().peoples.shuffle(&mut rng);
+            }
+
+            let people = POPULATION.lock().unwrap().get_core_district().peoples[0].clone();
+
+            if people.as_alive() == None {
+                witness_dead = true;
+            }
+
+            let debug: String = format!("{:#?}", people);
+            let lines = debug
+                .lines()
+                .map(|s| Box::new(s.to_string()) as Box<dyn Display + Send + 'static>)
+                .collect();
+
+            SIDE_BAR
+                .lock()
+                .unwrap()
+                .push_multiline_log_and_display(
+                    STDOUT.deref(),
+                    lines,
+                    LogType::None,
+                    LogColor::Normal,
+                )
+                .unwrap();
+
+                sleep(Duration::from_secs(1));
+        }
+    }
 
     let _ = kb.thread.join();
 

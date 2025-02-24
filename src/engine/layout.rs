@@ -1,6 +1,9 @@
 use std::{fmt::Display, str::FromStr};
 
-use crate::ui::colors::*;
+use crate::{
+    population::{people::BasePeopleInfo, Population},
+    ui::colors::*,
+};
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumString;
 
@@ -32,6 +35,32 @@ pub struct Building {
     height: Option<u8>,
     texture: Option<char>,
     content: Option<Vec<String>>,
+}
+
+impl Building {
+    pub fn get_num_people_in_building(&self, population: Population) -> usize {
+        population
+            .get_district(self.district_id)
+            .unwrap()
+            .peoples
+            .iter()
+            .filter(|people| {
+                if let Some(uuid) = people.get_building_uuid() {
+                    *uuid == self.id
+                } else {
+                    false
+                }
+            })
+            .count()
+    }
+
+    pub fn get_building_uuid(&self) -> String {
+        self.id.clone()
+    }
+
+    pub fn get_district_id(&self) -> usize {
+        self.district_id
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -80,6 +109,15 @@ impl Layout {
     /// Clone the vec
     pub fn get_buildings(&self) -> Vec<Building> {
         self.buildings.iter().map(|b| b.clone()).collect()
+    }
+
+    /// Clone the vec
+    pub fn get_buildings_mut(&mut self) -> Vec<&mut Building> {
+        self.buildings.iter_mut().collect()
+    }
+
+    pub fn get_buildings_district_mut(&mut self, district_id: usize) -> Vec<&mut Building> {
+        self.buildings.iter_mut().filter(|b| b.district_id == district_id).collect()
     }
 
     /// Clone the vec

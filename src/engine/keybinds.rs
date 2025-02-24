@@ -34,8 +34,8 @@ impl KeyBindListener<'static> {
         let t = thread::spawn(move || {
             let stdin = stdin();
             let std = stdout;
-            let mut side_bar = SideBar::new();
-            side_bar.draw(std).expect("TODO: panic message");
+            // let mut side_bar = SideBar::new();
+            // side_bar.draw(std).expect("TODO: panic message");
 
             for c in stdin.events() {
                 if c.is_err() {

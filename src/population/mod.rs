@@ -6,6 +6,8 @@ pub mod people;
 use district::*;
 use people::*;
 
+use crate::engine::layout::{Building, Layout};
+
 #[derive(Debug)]
 pub struct Population {
     pub num_districts: usize,
@@ -108,6 +110,10 @@ impl Population {
                 .add_peoples(&mut vec),
             None => self.get_core_district_mut().add_peoples(&mut vec),
         }
+    }
+
+    pub fn get_core_buildings_mut(&self, layout: &'static mut Layout) -> Vec<&mut Building> {
+        layout.get_buildings_district_mut(0)
     }
 
     // ----- LINKING -----

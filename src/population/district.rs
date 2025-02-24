@@ -67,6 +67,10 @@ impl PopulationDistrict {
         res
     }
 
+    pub fn get_population_number_by(&self, find_by: PeopleLegalState) -> usize {
+        self.peoples.iter().filter(|p| p.get_legal_state() == find_by).count()
+    }
+
     pub fn recalcul_happiness(&mut self) {
         self.num_happiness = Self::get_happiness(&self.peoples);
     }

@@ -6,7 +6,11 @@ use crate::population::{
 };
 
 /// Return a cause of dead if the person should *die*.
-pub fn check_death(people: &AlivePerson, district_zone: DistrictZone, district_happiness: f64) -> Option<CauseOfDeath> {
+pub fn check_death(
+    people: &AlivePerson,
+    district_zone: DistrictZone,
+    district_happiness: f64,
+) -> Option<CauseOfDeath> {
     let work_bonus = work_bonus(&people.work_status);
     let sickness_bonus = sickness_bonus(&people.disease);
     let zone_bonus = zone_bonus(district_zone);
@@ -15,7 +19,10 @@ pub fn check_death(people: &AlivePerson, district_zone: DistrictZone, district_h
 
     let cause_of_death = f64::max(
         f64::max(work_bonus, homelesness_bonus),
-        f64::max(f64::max(homelesness_bonus, zone_bonus), deathrate_from_age * 2.0),
+        f64::max(
+            f64::max(homelesness_bonus, zone_bonus),
+            deathrate_from_age * 2.0,
+        ),
     );
 
     let death_probability = deathrate_from_age
@@ -27,24 +34,24 @@ pub fn check_death(people: &AlivePerson, district_zone: DistrictZone, district_h
         * work_bonus
         * homelesness_bonus;
 
-    if rand::random::<f64>() < death_probability {
+    let dice = rand::random::<f64>();
+    if dice < death_probability {
         return match cause_of_death {
             x if x == sickness_bonus => Some(CauseOfDeath::Sickness),
             x if x == homelesness_bonus || x == zone_bonus => Some(CauseOfDeath::Poverty),
             x if x == work_bonus => Some(CauseOfDeath::WorkAccident),
             _ => Some(CauseOfDeath::OldAge),
-     }
+        };
     }
 
     None
-    
 }
 
 /// Simple bell curve centred arround 70 years
 fn deathrate_from_age(age: u8, dna: DNA) -> f64 {
     f64::exp(
-        (-(age as f64
-            - (80.0
+        -((age as f64
+            - (60.0
                 - if dna.contains(DNAFlags::ShortLifespan) {
                     25.0
                 } else {
