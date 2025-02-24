@@ -133,8 +133,7 @@ fn main() {
             .unwrap();
 
         update_population(
-            &mut POPULATION.lock().unwrap(),
-            Some((SIDE_BAR.deref(), STDOUT.deref())),
+            &mut POPULATION.lock().unwrap(), true
         );
 
         sleep(Duration::from_millis(3600));

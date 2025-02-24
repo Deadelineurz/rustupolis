@@ -16,7 +16,7 @@ fn main() {
 
         println!("Before = {}\n", population.get_core_district().num_people);
 
-        update_population(&mut population, None);
+        update_population(&mut population, false);
 
         println!("After = {}\n", population.get_core_district().num_people);
     }

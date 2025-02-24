@@ -1,20 +1,17 @@
-use std::{
-    collections::HashMap,
-    sync::{Arc, Mutex},
-};
+use std::collections::HashMap;
 
 use deaths::check_death;
 use rand::{rng, rngs::ThreadRng, seq::SliceRandom};
 use spawn_child::{number_of_children_to_make, spawn_childs};
 
 use crate::{
-    engine::{keybinds::Tty, layout::Building},
+    engine::layout::Building,
     population::{
         district::PopulationDistrict,
         people::{BasePeopleInfo, People, PeopleLegalState},
         Population,
     },
-    ui::sidebar::{LogColor, LogType, SideBar},
+    ui::sidebar::{LogColor, LogType}, SIDE_BAR, STDOUT,
 };
 
 pub mod deaths;
@@ -22,13 +19,13 @@ pub mod dna_transmission;
 pub mod spawn_child;
 
 /// Kinda expensive, will do a DFS on the districts then shuffle the population to make babies.
-pub fn update_population(population: &mut Population, debug: Option<(&'static Arc<Mutex<SideBar>>, &'static Tty)>) {
+pub fn update_population(population: &mut Population, debug: bool) {
     let order = population.num_districts;
     let mut marks: Vec<bool> = vec![false; order];
 
     let mut rng = rng();
 
-    update_district_peoples(0, population, &mut marks, &mut rng, &debug);
+    update_district_peoples(0, population, &mut marks, &mut rng, debug);
 }
 
 fn update_district_peoples(
@@ -36,7 +33,7 @@ fn update_district_peoples(
     population: &mut Population,
     marked: &mut Vec<bool>,
     rng: &mut ThreadRng,
-    debug: &Option<(&'static Arc<Mutex<SideBar>>, &'static Tty)>
+    debug: bool
 ) {
     if !marked[district_id] {
         marked[district_id] = true;
@@ -49,9 +46,9 @@ fn update_district_peoples(
             .filter_map(|p| p.as_alive_mut())
             .for_each(|alive| alive.age += 1);
 
-            if let Some((sidebar, stdout)) = debug {
-                sidebar.lock().unwrap().push_log_and_display(
-                    &stdout,
+            if debug {
+                SIDE_BAR.lock().unwrap().push_log_and_display(
+                    &STDOUT,
                     Box::new("One year has passed..."),
                     LogType::City,
                     LogColor::Normal,
@@ -71,7 +68,7 @@ fn update_district_peoples(
 fn update_births(
     district: &mut PopulationDistrict,
     rng: &mut ThreadRng,
-    debug: &Option<(&'static Arc<Mutex<SideBar>>, &'static Tty)>
+    debug: bool
 ) {
     let mut childs: Vec<People> = make_pairs(
         district
@@ -92,9 +89,9 @@ fn update_births(
     .collect::<Vec<_>>()
     .concat();
 
-    if let Some((sidebar, stdout)) = debug {
-        sidebar.lock().unwrap().push_log_and_display(
-            &stdout,
+    if debug {
+        SIDE_BAR.lock().unwrap().push_log_and_display(
+            &STDOUT,
             Box::new(format!("Births: {}", childs.len())),
             LogType::City,
             LogColor::Normal,
@@ -106,7 +103,7 @@ fn update_births(
 
 
 
-fn update_deaths(district: &mut PopulationDistrict, debug: &Option<(&'static Arc<Mutex<SideBar>>, &'static Tty)>) {
+fn update_deaths(district: &mut PopulationDistrict, debug: bool) {
     let zone = district.zone_type.clone();
     let happiness: f64 = district.get_happiness_percentage().into();
 
@@ -122,9 +119,9 @@ fn update_deaths(district: &mut PopulationDistrict, debug: &Option<(&'static Arc
             }
         });
 
-    if let Some((sidebar, stdout)) = debug {
-        sidebar.lock().unwrap().push_log_and_display(
-            &stdout,
+    if debug {
+        SIDE_BAR.lock().unwrap().push_log_and_display(
+            &STDOUT,
             Box::new(format!("Deaths {}", district.get_population_number_by(PeopleLegalState::Dead) - bef)),
             LogType::City,
             LogColor::Normal,
