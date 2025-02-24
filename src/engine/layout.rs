@@ -1,8 +1,8 @@
 use std::{fmt::Display, str::FromStr};
 
 use crate::{
-    population::{people::BasePeopleInfo, Population},
-    ui::colors::*,
+    population::people::BasePeopleInfo,
+    ui::colors::*, POPULATION,
 };
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumString;
@@ -23,6 +23,8 @@ impl Display for BuildingType {
     }
 }
 
+// ----- BUILDINGS -----
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Building {
     name: String,
@@ -38,8 +40,8 @@ pub struct Building {
 }
 
 impl Building {
-    pub fn get_num_people_in_building(&self, population: Population) -> usize {
-        population
+    pub fn get_num_people_in_building(&self) -> usize {
+        POPULATION.lock().unwrap()
             .get_district(self.district_id)
             .unwrap()
             .peoples
@@ -63,73 +65,14 @@ impl Building {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct Road {
-    name: String,
-    id: String,
-    start_x: i16,
-    start_y: i16,
-    horizontal: bool,
-    width: u8,
-    length: u8,
-    pavement: char,
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct Layout {
-    pub buildings: Vec<Building>,
-    pub roads: Vec<Road>,
-}
-
-impl Layout {
-    pub fn load_default_layout() -> Self {
-        let layout = include_str!("../initial_data/layout.json");
-
-        let layout_obj: Layout = serde_json::from_str(layout).unwrap();
-
-        layout_obj
-    }
-
-    pub fn load_core_layout() -> Self {
-        let layout = include_str!("../initial_data/starting_core.json");
-
-        let layout_obj: Layout = serde_json::from_str(layout).unwrap();
-
-        layout_obj
-    }
-
-    pub fn add_building(&mut self, building: Building) {
-        self.buildings.push(building);
-    }
-
-    pub fn add_road(&mut self, road: Road) {
-        self.roads.push(road);
-    }
-
-    /// Clone the vec
-    pub fn get_buildings(&self) -> Vec<Building> {
-        self.buildings.iter().map(|b| b.clone()).collect()
-    }
-
-    /// Clone the vec
-    pub fn get_buildings_mut(&mut self) -> Vec<&mut Building> {
-        self.buildings.iter_mut().collect()
-    }
-
-    pub fn get_buildings_district_mut(&mut self, district_id: usize) -> Vec<&mut Building> {
-        self.buildings.iter_mut().filter(|b| b.district_id == district_id).collect()
-    }
-
-    /// Clone the vec
-    pub fn get_roads(&self) -> Vec<Road> {
-        self.roads.iter().map(|r| r.clone()).collect()
-    }
-}
-
-
 impl Clickable for Building {
-    fn infos(&self) -> Option<String> {
-        Some(self.name.clone())
+    fn infos(&self) -> Option<Vec<String>> {
+        Some(vec![
+            String::from(format!("Name: {}", self.name)),
+            String::from(format!("Position: {}, {}", self.pos_x, self.pos_y)),
+            String::from(format!("Population: {}", self.get_num_people_in_building())),   
+            String::from(format!(" ")), // act as a newline
+        ])
     }
 }
 
@@ -225,9 +168,28 @@ impl Drawable for Building {
     }
 }
 
+// ----- ROADS -----
+
+#[derive(Serialize, Deserialize, Debug, Clone)]
+pub struct Road {
+    name: String,
+    id: String,
+    start_x: i16,
+    start_y: i16,
+    horizontal: bool,
+    width: u8,
+    length: u8,
+    pavement: char,
+}
+
 impl Clickable for Road {
-    fn infos(&self) -> Option<String> {
-        Some(self.name.clone())
+    fn infos(&self) -> Option<Vec<String>> {
+        Some(vec![
+            String::from(format!("Name: {}", self.name)),
+            String::from(format!("Position: {}, {}", self.start_x, self.start_y)),
+            String::from(format!("Length: {}", self.length)),   
+            String::from(format!(" ")), // act as a newline
+        ])
     }
 }
 
@@ -277,5 +239,59 @@ impl Drawable for Road {
 
     fn color(&self) -> ansi_term::Color {
         A_GREY_COLOR
+    }
+}
+
+
+// ----- LAYOUT -----
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Layout {
+    pub buildings: Vec<Building>,
+    pub roads: Vec<Road>,
+}
+
+impl Layout {
+    pub fn load_default_layout() -> Self {
+        let layout = include_str!("../initial_data/layout.json");
+
+        let layout_obj: Layout = serde_json::from_str(layout).unwrap();
+
+        layout_obj
+    }
+
+    pub fn load_core_layout() -> Self {
+        let layout = include_str!("../initial_data/starting_core.json");
+
+        let layout_obj: Layout = serde_json::from_str(layout).unwrap();
+
+        layout_obj
+    }
+
+    pub fn add_building(&mut self, building: Building) {
+        self.buildings.push(building);
+    }
+
+    pub fn add_road(&mut self, road: Road) {
+        self.roads.push(road);
+    }
+
+    /// Clone the vec
+    pub fn get_buildings(&self) -> Vec<Building> {
+        self.buildings.iter().map(|b| b.clone()).collect()
+    }
+
+    /// Clone the vec
+    pub fn get_buildings_mut(&mut self) -> Vec<&mut Building> {
+        self.buildings.iter_mut().collect()
+    }
+
+    pub fn get_buildings_district_mut(&mut self, district_id: usize) -> Vec<&mut Building> {
+        self.buildings.iter_mut().filter(|b| b.district_id == district_id).collect()
+    }
+
+    /// Clone the vec
+    pub fn get_roads(&self) -> Vec<Road> {
+        self.roads.iter().map(|r| r.clone()).collect()
     }
 }
