@@ -1,0 +1,68 @@
+{
+    "buildings": [
+        {
+            "name": "QG",
+            "id": "UUc=",
+            "district_id": 0,
+            "pos_x": 20,
+            "pos_y": 20,
+            "b_type": "custom",
+            "width": null,
+            "height": null,
+            "texture": null,
+            "content": [
+                "██████████████",
+                "██████████████",
+                "██████QG██████",
+                "██████████████",
+                "██████████████"
+            ]
+        }
+    ],
+    "roads": [
+        {
+            "name": "R1_HORI",
+            "id": "1",
+            "district_id": 0,
+            "start_x": 10,
+            "start_y": 25,
+            "horizontal": true,
+            "width": 1,
+            "length": 33,
+            "pavement": "▓"
+        },
+        {
+            "name": "R1_HORI",
+            "id": "2",
+            "district_id": 0,
+            "start_x": 10,
+            "start_y": 19,
+            "horizontal": true,
+            "width": 1,
+            "length": 33,
+            "pavement": "▓"
+        },
+        {
+            "name": "R1_HORI",
+            "id": "3",
+            "district_id": 0,
+            "start_x": 19,
+            "start_y": 15,
+            "horizontal": false,
+            "width": 2,
+            "length": 15,
+            "pavement": "▓"
+        },
+        {
+            "name": "R1_HORI",
+            "id": "4",
+            "district_id": 0,
+            "start_x": 33,
+            "start_y": 15,
+            "horizontal": false,
+            "width": 2,
+            "length": 15,
+            "pavement": "▓"
+        }
+    ]
+}

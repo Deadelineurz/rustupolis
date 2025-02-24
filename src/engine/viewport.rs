@@ -1,21 +1,21 @@
-use ansi_term::Color::Black;
 use log::trace;
 use rand::prelude::IndexedRandom;
 use termion::terminal_size;
 use crate::engine::drawable::{DynDrawable};
 
-pub fn background(output_y: u16, height: u16, width: u16) -> String {
+pub fn background(output_y: u16, width: u16, height: u16) -> String {
+    trace!("width is {}", width);
     let characters = [" "," "," "," "," "," "," "," ", "▖"];
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut output = String::new();
-    for y in output_y..(output_y + height) {
-        let mut layer: String = "".to_string();
+    for _ in output_y..(output_y + height) {
+        let mut layer: String = String::new();
         for _ in 0..width {
             let random_char = characters.choose(&mut rng).unwrap();
             layer.push(random_char.parse().unwrap());
         }
         layer.push_str("\n");
-        output.push_str(&*layer);
+        output.push_str(&layer);
     }
     output
 }
@@ -66,6 +66,10 @@ impl Viewport {
     pub fn move_y(&mut self, amount: i16) {
         self.virtual_y += amount;
         trace!("{:?}", self)
+    }
+
+    pub fn get_virtual_coordinates(&self, x: u16, y: u16) -> (i16, i16) {
+        ((x-1) as i16 + self.virtual_x, (y-1) as i16 + self.virtual_y)
     }
 
     pub fn get_output_coordinates(&self, d: &Box<DynDrawable>) -> OutputCoordinates {
