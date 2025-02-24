@@ -1,10 +1,11 @@
 use crate::engine::drawable::DynDrawable;
 use crate::engine::viewport::{background, Viewport};
-use ansi_term::Color::{Black};
+use ansi_term::Color::{Black, Green};
 use log::trace;
 use std::io::{Write};
 use termion::{cursor, terminal_size};
 use crate::engine::keybinds::Tty;
+use crate::ui::colors::{A_UI_BLACK_LIGHTER_COLOR, A_UI_BLACK_LIGHT_COLOR};
 
 pub struct Engine<'a> {
     pub viewport: Viewport,
@@ -53,7 +54,7 @@ impl<'a> Engine<'a> {
             print!(
                 "{}{}",
                 cursor::Goto(self.viewport.output_x, y),
-                Black.paint(bg_lines[(y - self.viewport.output_y) as usize])
+                A_UI_BLACK_LIGHT_COLOR.paint(bg_lines[(y - self.viewport.output_y) as usize])
             )
         }
 
