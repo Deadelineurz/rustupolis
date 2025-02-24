@@ -185,6 +185,131 @@
         "███████████████",
         "███████████████"
       ]
+    },
+    {
+      "name": "Marché",
+      "id": "UUc=",
+      "district_id": 0,
+      "pos_x": 78,
+      "pos_y": 1,
+      "b_type": "custom",
+      "width": null,
+      "height": null,
+      "texture": null,
+      "content": [
+        "█████████░█████████░████████░█████████░███████",
+        "█████████░█████████░████████░█████████░███████",
+        "█████████░█████████░█Marché█░█████████░███████",
+        "█████████░█████████░████████░█████████░███████",
+        "█████████░█████████░████████░█████████░███████"
+      ]
+    },
+    {
+      "name": "HAB_FULL",
+      "id": "UUc=",
+      "district_id": 0,
+      "pos_x": 78,
+      "pos_y": 37,
+      "b_type": "custom",
+      "width": null,
+      "height": null,
+      "texture": null,
+      "content": [
+        "████████████▓████████████▓████████████▓█████████████",
+        "████████████▓████████████▓████████████▓█████████████",
+        "████████████▓████████████▓████████████▓█████████████",
+        "████████████▓████████████▓████████████▓█████████████",
+        "████████████▓████████████▓████████████▓█████████████"
+      ]
+    },
+    {
+      "name": "TAG",
+      "id": "UUc=",
+      "district_id": 0,
+      "pos_x": 79,
+      "pos_y": 30,
+      "b_type": "custom",
+      "width": null,
+      "height": null,
+      "texture": null,
+      "content": [
+        " ____ ___ ____ _____ _____ _____ ___ _   ___ _____ ",
+        "| __ | | |  __|_   _|  |  |  _  |   | | |   |   __|",
+        "|   -| | |__  | | | |  |  |   __| | | |_|- -|__   |",
+        "|__|_|___|____| |_| |_____|__|  |___|___|___|_____|"
+      ]
+    },
+    {
+      "name": "HAB5",
+      "id": "SEFCNQ==",
+      "district_id": 1,
+      "pos_x": 132,
+      "pos_y": 1,
+      "b_type": "uniform",
+      "width": 6,
+      "height": 19,
+      "texture": "█",
+      "content": null
+    },
+    {
+      "name": "HAB6",
+      "id": "SEFCNg==",
+      "district_id": 1,
+      "pos_x": 143,
+      "pos_y": 1,
+      "b_type": "uniform",
+      "width": 6,
+      "height": 19,
+      "texture": "█",
+      "content": null
+    },
+    {
+      "name": "TVAGUE8",
+      "id": "VFZBR1VFOA==",
+      "district_id": 1,
+      "pos_x": 150,
+      "pos_y": 10,
+      "b_type": "empty_space",
+      "width": 10,
+      "height": 10,
+      "texture": null,
+      "content": null
+    },
+    {
+      "name": "TVAGUE9",
+      "id": "VFZBR1VFOA==",
+      "district_id": 1,
+      "pos_x": 150,
+      "pos_y": 1,
+      "b_type": "empty_space",
+      "width": 10,
+      "height": 9,
+      "texture": null,
+      "content": null
+    },
+    {
+      "name": "USI3",
+      "id": "VVNJMw==",
+      "district_id": 1,
+      "pos_x": 130,
+      "pos_y": 22,
+      "b_type": "uniform",
+      "width": 10,
+      "height": 13,
+      "texture": "/",
+      "content": null
+    },
+    {
+      "name": "USI4",
+      "id": "VVNJNA==",
+      "district_id": 1,
+      "pos_x": 150,
+      "pos_y": 22,
+      "b_type": "uniform",
+      "width": 10,
+      "height": 13,
+      "texture": "\\",
+      "content": null
     }
   ],
   "roads": [
@@ -196,7 +321,7 @@
       "start_y": 28,
       "horizontal": true,
       "width": 1,
-      "length": 125,
+      "length": 130,
       "pavement": "▓"
     },
     {
@@ -306,6 +431,72 @@
       "horizontal": false,
       "width": 1,
       "length": 29,
+      "pavement": "▓"
+    },
+    {
+      "name": "R8_HORI",
+      "id": "UjhfSE9SSQ==",
+      "district_id": 1,
+      "start_x": 130,
+      "start_y": 20,
+      "horizontal": true,
+      "width": 1,
+      "length": 30,
+      "pavement": "▓"
+    },
+    {
+      "name": "R9_HORI",
+      "id": "UjlfSE9SSQ==",
+      "district_id": 1,
+      "start_x": 130,
+      "start_y": 35,
+      "horizontal": true,
+      "width": 1,
+      "length": 30,
+      "pavement": "▄"
+    },
+    {
+      "name": "R10",
+      "id": "UjEw",
+      "district_id": 1,
+      "start_x": 130,
+      "start_y": 0,
+      "horizontal": false,
+      "width": 2,
+      "length": 45,
+      "pavement": "▓"
+    },
+    {
+      "name": "R11",
+      "id": "UjEx",
+      "district_id": 1,
+      "start_x": 160,
+      "start_y": 0,
+      "horizontal": false,
+      "width": 2,
+      "length": 45,
+      "pavement": "▓"
+    },
+    {
+      "name": "R12_HORI",
+      "id": "UjEx",
+      "district_id": 1,
+      "start_x": 0,
+      "start_y": 42,
+      "horizontal": true,
+      "width": 1,
+      "length": 160,
+      "pavement": "▓"
+    },
+    {
+      "name": "R13_HORI",
+      "id": "UjEx",
+      "district_id": 1,
+      "start_x": 0,
+      "start_y": 0,
+      "horizontal": true,
+      "width": 1,
+      "length": 160,
       "pavement": "▓"
     }
   ]
