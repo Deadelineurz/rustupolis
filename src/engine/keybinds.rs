@@ -1,6 +1,7 @@
 use crate::engine::core::Engine;
 use crate::SIDE_BAR;
 use log::trace;
+use std::fmt::Display;
 use std::io::{stdin, Stdout};
 use std::ops::Deref;
 use std::process::exit;
@@ -15,7 +16,7 @@ use termion::raw::RawTerminal;
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 
 pub trait Clickable {
-    fn infos(&self) -> Option<String> {
+    fn infos(&self) -> Option<Vec<String>> {
         None
     }
 }
@@ -72,7 +73,10 @@ impl KeyBindListener<'static> {
                                             let _ = sb.display_custom_infos(
                                                 stdout,
                                                 &"Building infos",
-                                                &[&s],
+                                                s.iter()
+                                                    .map(|s| s as &(dyn Display + Send))
+                                                    .collect::<Vec<&(dyn Display + Send)>>()
+                                                    .as_slice(),
                                             );
                                         }
                                         _ => (),
