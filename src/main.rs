@@ -112,13 +112,11 @@ fn main() {
         .unwrap()
         .push_log_and_display(
             STDOUT.deref(),
-            Box::new("Adding 80 people into city..."),
+            Box::new("Adding 100 people into city..."),
             LogType::Debug,
             LogColor::Normal,
         )
         .unwrap();
-
-    POPULATION.lock().unwrap().add_peoples(80, None);
 
     for i in 0..100 {
         SIDE_BAR

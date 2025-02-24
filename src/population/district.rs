@@ -1,4 +1,5 @@
-use crate::population::*;
+use crate::{population::*, LAYOUT};
+use rand::{rng, seq::IndexedRandom};
 use strum_macros::EnumString;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, EnumString)]
@@ -26,7 +27,7 @@ pub struct PopulationDistrict {
     /// Use get_percentage instead
     pub num_happiness: u16,
     /// Use get_percentage instead
-    pub num_sick: u16, // use 
+    pub num_sick: u16, // use
     pub working_poulation: u16,
 }
 
@@ -80,6 +81,23 @@ impl PopulationDistrict {
         self.update_working_population(peoples);
 
         self.peoples.append(peoples);
+    }
+
+    pub fn update_building_occupation(&mut self) {
+        let mut binding = LAYOUT.lock().unwrap();
+        let buildings = binding.get_buildings_district_mut(self.id);
+
+        let mut rng = rng();
+        for people in self
+            .peoples
+            .iter_mut()
+            .filter(|people| people.get_legal_state() != PeopleLegalState::Child)
+        {
+            if let Some(people) = people.as_alive_mut() {
+                people.building_uuid =
+                    Some(buildings.choose(&mut rng).unwrap().get_building_uuid());
+            }
+        }
     }
 
     // ----- not public -----
