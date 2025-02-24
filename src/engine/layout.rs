@@ -7,7 +7,7 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use strum_macros::EnumString;
 
-use super::drawable::Drawable;
+use super::{drawable::Drawable, keybinds::Clickable};
 
 #[derive(Debug, EnumString, PartialEq, Eq)]
 #[allow(non_camel_case_types)]
@@ -126,6 +126,13 @@ impl Layout {
     }
 }
 
+
+impl Clickable for Building {
+    fn infos(&self) -> Option<String> {
+        Some(self.name.clone())
+    }
+}
+
 impl Drawable for Building {
     fn x(&self) -> i16 {
         self.pos_x
@@ -215,6 +222,12 @@ impl Drawable for Building {
             s if BuildingType::from_str(s).unwrap() == BuildingType::empty_space => A_SAND_COLOR,
             _ => A_RUST_COLOR_1,
         }
+    }
+}
+
+impl Clickable for Road {
+    fn infos(&self) -> Option<String> {
+        Some(self.name.clone())
     }
 }
 
