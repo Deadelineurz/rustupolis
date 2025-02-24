@@ -3,6 +3,7 @@ use crate::ui::sidebar::SideBar;
 use log::trace;
 use std::io::{stdin, Stdout};
 use std::ops::Deref;
+use std::process::exit;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread::JoinHandle;
@@ -50,7 +51,7 @@ impl KeyBindListener<'static> {
                     Event::Key(Key::Right) => Self::offset_viewport(&cop, Key::Right),
                     Event::Key(Key::Up) => Self::offset_viewport(&cop, Key::Up),
                     Event::Key(Key::Down) => Self::offset_viewport(&cop, Key::Down),
-                    Event::Key(Key::Char('q')) => break,
+                    Event::Key(Key::Char('q')) => exit(0),
                     Event::Mouse(mouse_event) => {
                         match mouse_event {
                             MouseEvent::Press(_, x, y) => {
