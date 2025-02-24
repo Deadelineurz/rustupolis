@@ -281,7 +281,6 @@ impl Layout {
         self.buildings.iter().map(|b| b.clone()).collect()
     }
 
-    /// Clone the vec
     pub fn get_buildings_mut(&mut self) -> Vec<&mut Building> {
         self.buildings.iter_mut().collect()
     }
