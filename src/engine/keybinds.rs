@@ -1,5 +1,5 @@
 use crate::engine::core::Engine;
-use crate::ui::sidebar::SideBar;
+use crate::SIDE_BAR;
 use log::trace;
 use std::io::{stdin, Stdout};
 use std::ops::Deref;
@@ -10,9 +10,7 @@ use std::thread::JoinHandle;
 use termion::cursor;
 use termion::event::{Event, Key, MouseEvent};
 use termion::input::{MouseTerminal, TermRead};
-use termion::raw::{RawTerminal};
-use crate::engine::drawable::Drawable;
-use crate::SIDE_BAR;
+use termion::raw::RawTerminal;
 
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 
@@ -22,10 +20,9 @@ pub trait Clickable {
     }
 }
 
-
 pub struct KeyBindListener<'a> {
-    engine: Arc<Mutex<Engine<'a>>>,
-    pub thread: JoinHandle<()>
+    _engine: Arc<Mutex<Engine<'a>>>,
+    pub thread: JoinHandle<()>,
 }
 
 impl KeyBindListener<'static> {
@@ -34,14 +31,12 @@ impl KeyBindListener<'static> {
 
         let t = thread::spawn(move || {
             let stdin = stdin();
-            let std = stdout;
-            // let mut side_bar = SideBar::new();
-            // side_bar.draw(std).expect("TODO: panic message");
+            let _std = stdout;
 
             for c in stdin.events() {
                 if c.is_err() {
                     trace!("event error: {:?}", c.unwrap_err());
-                    continue
+                    continue;
                 }
 
                 let event = c.unwrap();
@@ -52,38 +47,42 @@ impl KeyBindListener<'static> {
                     Event::Key(Key::Up) => Self::offset_viewport(&cop, Key::Up),
                     Event::Key(Key::Down) => Self::offset_viewport(&cop, Key::Down),
                     Event::Key(Key::Char('q')) => exit(0),
-                    Event::Mouse(mouse_event) => {
-                        match mouse_event {
-                            MouseEvent::Press(_, x, y) => {
-                                trace!("Mouse click at x: {} y: {}", x, y);
-                                match &cop.lock() {
-                                    Ok(engine) => {
-                                        let (virtual_x, virtual_y) = engine.viewport.get_virtual_coordinates(*x, *y);
-                                        let d = engine.get_drawable_for_coordinates(virtual_x, virtual_y);
-                                        if d.is_none() {
-                                            continue
-                                        }
-
-                                        let infos = d.unwrap().infos();
-
-                                        if infos.is_none() {
-                                            continue
-                                        }
-
-                                        match SIDE_BAR.deref().lock() {
-                                            Ok(mut sb) => {
-                                                let s = infos.unwrap();
-                                                let _ = sb.display_custom_infos(stdout, &"Building infos", &[&s]);
-                                            }
-                                            _ => ()
-                                        }
+                    Event::Mouse(mouse_event) => match mouse_event {
+                        MouseEvent::Press(_, x, y) => {
+                            trace!("Mouse click at x: {} y: {}", x, y);
+                            match &cop.lock() {
+                                Ok(engine) => {
+                                    let (virtual_x, virtual_y) =
+                                        engine.viewport.get_virtual_coordinates(*x, *y);
+                                    let d =
+                                        engine.get_drawable_for_coordinates(virtual_x, virtual_y);
+                                    if d.is_none() {
+                                        continue;
                                     }
-                                    _ => ()
+
+                                    let infos = d.unwrap().infos();
+
+                                    if infos.is_none() {
+                                        continue;
+                                    }
+
+                                    match SIDE_BAR.deref().lock() {
+                                        Ok(mut sb) => {
+                                            let s = infos.unwrap();
+                                            let _ = sb.display_custom_infos(
+                                                stdout,
+                                                &"Building infos",
+                                                &[&s],
+                                            );
+                                        }
+                                        _ => (),
+                                    }
                                 }
+                                _ => (),
                             }
-                            _ => ()
                         }
-                    }
+                        _ => (),
+                    },
                     _ => {}
                 };
 
@@ -91,28 +90,28 @@ impl KeyBindListener<'static> {
             }
         });
 
-        KeyBindListener{
-            engine: e,
-            thread: t
+        KeyBindListener {
+            _engine: e,
+            thread: t,
         }
     }
 
-   fn offset_viewport(e: &Arc<Mutex<Engine>>, key: Key) {
-       match e.lock() {
-           Ok(mut guard) => {
-               let e = &mut *guard;
+    fn offset_viewport(e: &Arc<Mutex<Engine>>, key: Key) {
+        match e.lock() {
+            Ok(mut guard) => {
+                let e = &mut *guard;
 
-               match key {
-                   Key::Left => e.viewport.move_x(-4),
-                   Key::Right => e.viewport.move_x(4),
-                   Key::Up => e.viewport.move_y(-4),
-                   Key::Down => e.viewport.move_y(4),
-                   _ => {}
-               }
+                match key {
+                    Key::Left => e.viewport.move_x(-4),
+                    Key::Right => e.viewport.move_x(4),
+                    Key::Up => e.viewport.move_y(-4),
+                    Key::Down => e.viewport.move_y(4),
+                    _ => {}
+                }
 
-               e.refresh()
-           }
-           Err(_) => {}
-       }
-   }
+                e.refresh()
+            }
+            Err(_) => {}
+        }
+    }
 }
