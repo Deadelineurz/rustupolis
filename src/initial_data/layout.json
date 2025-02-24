@@ -242,7 +242,7 @@
     {
       "name": "HAB5",
       "id": "SEFCNQ==",
-      "district_id": 1,
+      "district_id": 0,
       "pos_x": 132,
       "pos_y": 1,
       "b_type": "uniform",
@@ -254,7 +254,7 @@
     {
       "name": "HAB6",
       "id": "SEFCNg==",
-      "district_id": 1,
+      "district_id": 0,
       "pos_x": 143,
       "pos_y": 1,
       "b_type": "uniform",
@@ -266,7 +266,7 @@
     {
       "name": "TVAGUE8",
       "id": "VFZBR1VFOA==",
-      "district_id": 1,
+      "district_id": 0,
       "pos_x": 150,
       "pos_y": 10,
       "b_type": "empty_space",
@@ -278,7 +278,7 @@
     {
       "name": "TVAGUE9",
       "id": "VFZBR1VFOA==",
-      "district_id": 1,
+    "district_id": 0,
       "pos_x": 150,
       "pos_y": 1,
       "b_type": "empty_space",
@@ -290,7 +290,7 @@
     {
       "name": "USI3",
       "id": "VVNJMw==",
-      "district_id": 1,
+      "district_id": 0,
       "pos_x": 130,
       "pos_y": 22,
       "b_type": "uniform",
@@ -302,7 +302,7 @@
     {
       "name": "USI4",
       "id": "VVNJNA==",
-      "district_id": 1,
+      "district_id": 0,
       "pos_x": 150,
       "pos_y": 22,
       "b_type": "uniform",
@@ -436,7 +436,7 @@
     {
       "name": "R8_HORI",
       "id": "UjhfSE9SSQ==",
-      "district_id": 1,
+      "district_id": 0,
       "start_x": 130,
       "start_y": 20,
       "horizontal": true,
@@ -447,7 +447,7 @@
     {
       "name": "R9_HORI",
       "id": "UjlfSE9SSQ==",
-      "district_id": 1,
+      "district_id": 0,
       "start_x": 130,
       "start_y": 35,
       "horizontal": true,
@@ -458,7 +458,7 @@
     {
       "name": "R10",
       "id": "UjEw",
-      "district_id": 1,
+      "district_id": 0,
       "start_x": 130,
       "start_y": 0,
       "horizontal": false,
@@ -469,7 +469,7 @@
     {
       "name": "R11",
       "id": "UjEx",
-      "district_id": 1,
+      "district_id": 0,
       "start_x": 160,
       "start_y": 0,
       "horizontal": false,
@@ -480,7 +480,7 @@
     {
       "name": "R12_HORI",
       "id": "UjEx",
-      "district_id": 1,
+      "district_id": 0,
       "start_x": 0,
       "start_y": 42,
       "horizontal": true,
@@ -491,7 +491,7 @@
     {
       "name": "R13_HORI",
       "id": "UjEx",
-      "district_id": 1,
+      "district_id": 0,
       "start_x": 0,
       "start_y": 0,
       "horizontal": true,
