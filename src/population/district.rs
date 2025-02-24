@@ -11,6 +11,7 @@ pub enum DistrictZone {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PopulationDistrict {
+    pub id: usize,
     pub peoples: Vec<People>,
     pub zone_type: DistrictZone,
 
@@ -80,6 +81,8 @@ impl PopulationDistrict {
 
         self.peoples.append(peoples);
     }
+
+    // ----- not public -----
 
     fn aux_happiness(peoples: &Vec<People>) -> u16 {
         let mut res = 0;

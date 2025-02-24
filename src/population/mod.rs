@@ -18,7 +18,7 @@ impl Population {
     /// Will also add an empty Core district.
     pub fn new() -> Population {
         let mut pop = Population {
-            num_districts: 1,
+            num_districts: 0,
             districts: Vec::new(),
         };
 
@@ -84,7 +84,7 @@ impl Population {
     // ----- ADD -----
 
     pub fn add_district(&mut self, starting_population: u8, district_zone: DistrictZone) -> usize {
-        self.districts.push(Self::setup_district(
+        self.districts.push(self.setup_district(
             district_zone,
             People::create_random_population(starting_population),
         ));
@@ -151,7 +151,7 @@ impl Population {
         }
     }
 
-    fn setup_district(district_zone: DistrictZone, peoples: Vec<People>) -> PopulationDistrict {
+    fn setup_district(&self, district_zone: DistrictZone, peoples: Vec<People>) -> PopulationDistrict {
         let capacity = match district_zone {
             DistrictZone::Core => 50,
             DistrictZone::Industrials => 75,
@@ -167,6 +167,7 @@ impl Population {
         };
 
         let mut district = PopulationDistrict {
+            id: self.num_districts,
             num_people: peoples.len(),
             peoples,
             zone_type: district_zone,
