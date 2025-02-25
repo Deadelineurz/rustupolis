@@ -1,13 +1,15 @@
 ---
 
-import Layout from "../layouts/Layout.astro";---
+import Layout from "../layouts/Layout.astro";
+import Footer from "../components/Footer.astro";
+---
 
 <Layout>
-    <div class="text-white h-full w-full text-9xl flex flex-col   justify-center items-center">
-        <div class="py-20">
+    <div class="text-white h-full w-full  flex flex-col   justify-center items-center">
+        <div class="py-20 text-9xl">
             The team
         </div>
-        <div class="flex flex-row justify-center w-full h-full gap-20">
+        <div class="flex flex-row justify-center w-full h-full gap-20 text-9xl">
             <a class="flex flex-col text-center text-2xl bg-sand rounded-lg h-fit w-fit cursor-pointer" href="https://github.com/cryoxe" target="_blank" referrerpolicy="no-referrer">
                 <img class="block w-fit rounded-t-lg" src="https://avatars.githubusercontent.com/u/71180076?s=70&v=4" alt="" style="width: 200px; "/>
                 <div>
@@ -36,5 +38,6 @@ import Layout from "../layouts/Layout.astro";---
             </a>
 
         </div>
+        <Footer />
     </div>
 </Layout>

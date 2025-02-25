@@ -2,7 +2,7 @@
 	import "../styles/global.css";
 	import '@fontsource/jersey-15';
 	import '@fontsource/vt323';
-	import background from '../assets/layout_img.png';
+	import background from '../assets/new_layout_img.png';
 
 
 	---
@@ -12,51 +12,70 @@
 		<head>
 			<meta charset="UTF-8" />
 			<meta name="viewport" content="width=device-width" />
-			<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+			<link rel="icon" type="image/svg+xml" href="/rustupolis/rustupolis_logo.ico" />
 			<meta name="generator" content={Astro.generator} />
 			<meta name="google-site-verification" content="sUN4561F06Moay0xIJjQcjb8RHbZ7sErzoVTJ2rEp68" />
+			<meta name="description" content="RustuPolis is a city-building simulation game developed in Rust. Build, manage, and grow your post-apocalyptic city in a terminal-based environment.">
+			<meta name="keywords" content="RustuPolis, city-building, simulation, Rust, terminal game, post-apocalyptic, game development">
+			<meta name="author" content="RustuPolis Team">
+
+			<!-- Open Graph Meta Tags (for social networks) -->
+			<meta property="og:title" content="RustuPolis - Build Your Post-Apocalyptic City">
+			<meta property="og:description" content="RustuPolis is a city-building simulation game developed in Rust. Build, manage, and grow your post-apocalyptic city in a terminal-based environment.">
+			<meta property="og:image" content="https://deadelineurz.github.io/rustupolis/social-preview-2.png">
+			<meta property="og:url" content="https://deadelineurz.github.io/rustupolis/">
+			<meta property="og:type" content="website">
+
+			<!-- Twitter Meta Tags -->
+			<meta name="twitter:card" content="summary_large_image">
+			<meta name="twitter:title" content="RustuPolis - Build Your Post-Apocalyptic City">
+			<meta name="twitter:description" content="RustuPolis is a city-building simulation game developed in Rust. Build, manage, and grow your post-apocalyptic city in a terminal-based environment.">
+			<meta name="twitter:image" content="https://deadelineurz.github.io/rustupolis/social-preview-2.png">
+			<meta name="twitter:site" content="@RustuPolis">
 			<title>RustuPolis - Home</title>
 		</head>
 		<body class="w-full select-none bg-ui-black" style=`font-family: 'VT323', 'JetBrains Mono',sans-serif;`>
 		<div class="z-[-1] fixed h-[100%] w-[110%] block" style=`font-family: 'VT323', 'JetBrains Mono',sans-serif;background-image: url(${background.src}); background-size: cover; filter: blur(10px)`>
 			a
 		</div>
-			<div class="relative min-h-[13%] w-full flex flex-row gap-20 justify-center items-center shadow-gray-900 shadow-2xl bg-ui-black text-sand text-wrap text-xs">
+			<div class="relative min-h-[13%] w-full flex flex-row justify-around text-start items-center shadow-gray-900 shadow-2xl bg-ui-black text-sand text-wrap text-xs">
 				<a href="/rustupolis/downloads">
 					<pre class="hover:opacity-50 cursor-pointer text-[7px]">
-	 _____                      _                 _
-	|  __ \                    | |               | |
-	| |  | | _____      ___ __ | | ___   __ _  __| |
-	| |  | |/ _ \ \ /\ / / '_ \| |/ _ \ / _` |/ _` |
-	| |__| | (_) \ V  V /| | | | | (_) | (_| | (_| |
-	|_____/ \___/ \_/\_/ |_| |_|_|\___/ \__,_|\__,_|
+ _____                      _                 _
+|  __ \                    | |               | |
+| |  | | _____      ___ __ | | ___   __ _  __| |
+| |  | |/ _ \ \ /\ / / '_ \| |/ _ \ / _` |/ _` |
+| |__| | (_) \ V  V /| | | | | (_) | (_| | (_| |
+|_____/ \___/ \_/\_/ |_| |_|_|\___/ \__,_|\__,_|
 
 				</pre>
 				</a>
 				<a href="/rustupolis/">
 				<pre>
-	 _____           _         _____      _ _
-	|  __ \         | |       |  __ \    | (_)
-	| |__) |   _ ___| |_ _   _| |__) |__ | |_ ___
-	|  _  / | | / __| __| | | |  ___/ _ \| | / __|
-	| | \ \ |_| \__ \ |_| |_| | |  | (_) | | \__ \
-	|_|  \_\__,_|___/\__|\__,_|_|   \___/|_|_|___/
+ _____           _         _____      _ _
+|  __ \         | |       |  __ \    | (_)
+| |__) |   _ ___| |_ _   _| |__) |__ | |_ ___
+|  _  / | | / __| __| | | |  ___/ _ \| | / __|
+| | \ \ |_| \__ \ |_| |_| | |  | (_) | | \__ \
+|_|  \_\__,_|___/\__|\__,_|_|   \___/|_|_|___/
 				</pre>
 				</a>
 				<a href="/rustupolis/team">
 				<pre class="hover:opacity-50 cursor-pointer text-[7px]">
-	 _______
-	|__   __|
-	   | | ___  __ _ _ __ ___
-	   | |/ _ \/ _` | '_ ` _ \
-	   | |  __/ (_| | | | | | |
-	   |_|\___|\__,_|_| |_| |_|
+ _______
+|__   __|
+   | | ___  __ _ _ __ ___
+   | |/ _ \/ _` | '_ ` _ \
+   | |  __/ (_| | | | | | |
+   |_|\___|\__,_|_| |_| |_|
 				</pre>
 				</a>
 			</div>
-			<div class="h-[87%]">
+			<div class="h-[100%] flex flex-col">
 				<slot />
 			</div>
+
+
 		</body>
 	</html>
 

@@ -22,7 +22,6 @@ mod logging;
 
 lazy_static! {
     pub static ref LOGGER: RemoteLoggerClient = RemoteLoggerClient::new();
-
 }
 
 fn main() {
@@ -130,9 +129,7 @@ fn main() {
             )
             .unwrap();
 
-        update_population(
-            &mut POPULATION.lock().unwrap(), true
-        );
+        update_population(&mut POPULATION.lock().unwrap(), true);
 
         sleep(Duration::from_millis(3600));
 
@@ -170,7 +167,12 @@ fn main() {
 
             if witness_dead {
                 witness_dead = false;
-                POPULATION.lock().unwrap().get_core_district_mut().peoples.shuffle(&mut rng);
+                POPULATION
+                    .lock()
+                    .unwrap()
+                    .get_core_district_mut()
+                    .peoples
+                    .shuffle(&mut rng);
             }
 
             let people = POPULATION.lock().unwrap().get_core_district().peoples[0].clone();
@@ -196,7 +198,7 @@ fn main() {
                 )
                 .unwrap();
 
-                sleep(Duration::from_secs(2));
+            sleep(Duration::from_secs(2));
         }
     }
 

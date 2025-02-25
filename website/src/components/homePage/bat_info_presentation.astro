@@ -1,8 +1,14 @@
 ---
-import log_image from "../../assets/bat_info_image.png"
+import log_image from "../../assets/new_bldg_info.png"
 ---
 
 <div id="logs" class="w-full h-full pb-12 bg-sand/80 flex flex-row justify-between px-20 py-5" style="font-family: 'Jersey 15', sans-serif">
-    <span class="text-bozozo text-6xl">Each building is unique</span>
+    <div class="flex flex-col w-1/3">
+        <span class="text-bozozo text-6xl">Each building is unique</span>
+        <span class="text-white opacity-75 text-4xl">
+        Each building on the layout features different characteristics, such as size, name, utility and district.
+
+    </span>
+    </div>
     <img class="shadow-lg shadow-black" src={log_image.src} width="400" height="100"  alt="Logs"/>
 </div>
