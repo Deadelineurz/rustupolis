@@ -1,20 +1,19 @@
-use std::{fmt::Display, str::FromStr};
-
 use crate::{
     population::people::BasePeopleInfo,
     ui::colors::*, POPULATION,
 };
 use serde::{Deserialize, Serialize};
-use strum_macros::EnumString;
+use std::cmp::PartialEq;
+use std::{fmt::Display, str::FromStr};
 
 use super::{drawable::Drawable, keybinds::Clickable};
 
-#[derive(Debug, EnumString, PartialEq, Eq)]
-#[allow(non_camel_case_types)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
 pub enum BuildingType {
-    custom,
-    uniform,
-    empty_space,
+    Custom,
+    Uniform,
+    EmptySpace,
 }
 
 impl Display for BuildingType {
@@ -32,7 +31,7 @@ pub struct Building {
     district_id: usize,
     pos_x: i16,
     pos_y: i16,
-    b_type: String,
+    b_type: BuildingType,
     width: Option<u8>,
     height: Option<u8>,
     texture: Option<char>,
@@ -70,8 +69,8 @@ impl Clickable for Building {
         Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.pos_x, self.pos_y)),
-            String::from(format!("Population: {}", self.get_num_people_in_building())),   
-            String::from(format!(" ")), // act as a newline
+            String::from(format!("Population: {}", self.get_num_people_in_building())),
+            String::from(" ".to_string()), // act as a newline
         ])
     }
 }
@@ -86,7 +85,7 @@ impl Drawable for Building {
     }
 
     fn width(&self) -> u8 {
-        if &self.b_type == "custom" {
+        if self.b_type == BuildingType::Custom {
             let mut n: u8 = 0;
             let lines = (self.content.as_ref()).unwrap();
             for line in lines {
@@ -103,16 +102,16 @@ impl Drawable for Building {
     }
 
     fn height(&self) -> u8 {
-        if self.b_type == BuildingType::custom.to_string() {
+        if self.b_type == BuildingType::Custom {
             return self.content.as_ref().unwrap().len() as u8;
         }
         self.height.unwrap()
     }
 
     fn shape(&self) -> String {
-        if self.b_type == BuildingType::custom.to_string() {
+        if self.b_type == BuildingType::Custom {
             return self.content.as_ref().unwrap().join("\n");
-        } else if self.b_type == BuildingType::empty_space.to_string() {
+        } else if self.b_type == BuildingType::EmptySpace {
             if self.width.unwrap() == 1 && self.height.unwrap() == 1 {
                 return "▢\n".parse().unwrap();
             } else if self.height.unwrap() == 1 {
@@ -162,7 +161,7 @@ impl Drawable for Building {
 
     fn color(&self) -> ansi_term::Color {
         match &self.b_type {
-            s if BuildingType::from_str(s).unwrap() == BuildingType::empty_space => A_SAND_COLOR,
+            s if s == &BuildingType::EmptySpace => A_SAND_COLOR,
             _ => A_RUST_COLOR_1,
         }
     }
