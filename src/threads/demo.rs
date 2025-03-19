@@ -4,10 +4,10 @@ use std::time::Duration;
 use rand::prelude::SliceRandom;
 use rand::rng;
 use crate::engine::core::{Engine, LockableEngine};
-use crate::POPULATION;
+use crate::{send_to_side_bar_auto, POPULATION};
 use crate::simulation::update_population;
 use crate::ui::sidebar::{LogColor, LogType, SyncDisplay};
-use crate::utils::unwrap_sidebar;
+use crate::utils::send_to_side_bar;
 
 pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: LockableEngine) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
@@ -15,45 +15,39 @@ pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockable
         let mut witness_dead = false;
         let mut rng = rng();
 
-        for _ in 0..3 {
-            unwrap_sidebar(&engine, |s| {
-                s.push_log_and_display(Box::new("..."),
-                                       LogType::Debug,
-                                       LogColor::Normal)
-            });
+        /*for _ in 0..3 {
+            send_to_side_bar(&engine, (Box::new("..."),
+                                      LogType::Debug,
+                                      LogColor::Normal));
 
             sleep(Duration::from_millis(400));
-        }
+        }*/
 
-        unwrap_sidebar(&engine, |s| {
-            s.push_log_and_display(Box::new("Begin..."),
-                                   LogType::Debug,
-                                   LogColor::Unusual)
-        });
-
-        sleep(Duration::from_secs(1));
-
-        unwrap_sidebar(&engine, |s| {
-            s.push_log_and_display(Box::new("Generating starting population..."),
-                                   LogType::Debug,
-                                   LogColor::Normal)
-        });
+        send_to_side_bar_auto!(&engine,
+            "Begin...",
+            LogType::Debug,
+            LogColor::Unusual);
 
         sleep(Duration::from_secs(1));
 
-        unwrap_sidebar(&engine, |s| {
-            s.push_log_and_display(Box::new("Adding 100 people into city..."),
-                                   LogType::Debug,
-                                   LogColor::Normal)
-        });
+        send_to_side_bar_auto!(&engine,
+            "Generating starting population...",
+            LogType::Debug,
+            LogColor::Normal);
+
+
+        sleep(Duration::from_secs(1));
+
+        send_to_side_bar_auto!(&engine,
+            "Adding 100 people into city...",
+            LogType::Debug, LogColor::Normal);
 
         for i in 0..100 {
 
-            unwrap_sidebar(&engine, |s| {
-                s.push_log_and_display(Box::new(format!("_____YEAR {i}_____")),
-                                       LogType::Debug,
-                                       LogColor::Normal)
-            });
+            send_to_side_bar_auto!(&engine,
+                format!("_____YEAR {i}_____"),
+                LogType::Debug,
+                LogColor::Normal);
 
             update_population(&engine, &mut POPULATION.lock().unwrap(), true);
 
@@ -66,20 +60,12 @@ pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockable
                 .get_core_district()
                 .get_population_number_by(crate::population::people::PeopleLegalState::Dead);
 
-            unwrap_sidebar(&engine, |s| {
-                s.push_log_and_display(Box::new(format!("New population : {}", peoples - deads)),
-                                       LogType::Debug,
-                                       LogColor::Unusual)
-            });
+            send_to_side_bar_auto!(&engine, format!("New population : {}", peoples - deads), LogType::Debug, LogColor::Unusual);
 
             sleep(Duration::from_millis(500));
 
             if i % 10 == 0 {
-                unwrap_sidebar(&engine, |s| {
-                    s.push_log_and_display(Box::new("Displaying a random population member:"),
-                                           LogType::Debug,
-                                           LogColor::Unusual)
-                });
+                send_to_side_bar_auto!(&engine, "Displaying a random population member:", LogType::Debug, LogColor::Unusual);
 
                 if witness_dead {
                     witness_dead = false;
@@ -103,11 +89,7 @@ pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockable
                     .map(|s| Box::new(s.to_string()) as Box<SyncDisplay>)
                     .collect();
 
-                unwrap_sidebar(&engine, |s| {
-                    s.push_multiline_log_and_display(lines,
-                                                     LogType::None,
-                                                     LogColor::Normal)
-                });
+                send_to_side_bar(&engine, (lines, LogType::None, LogColor::Normal));
 
                 sleep(Duration::from_secs(2));
             }

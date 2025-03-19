@@ -5,16 +5,18 @@ use crate::ui::colors::A_UI_BLACK_LIGHT_COLOR;
 use log::trace;
 use std::io::Write;
 use std::sync::{Arc, RwLock};
+use std::sync::mpsc::Sender;
 use termion::{cursor, terminal_size};
+use crate::threads::sidebar::SideBarMessage;
 use crate::ui::sidebar::SideBar;
 
 pub type LockableEngine = Arc<RwLock<Engine>>;
 
 pub struct Engine {
     pub viewport: Viewport,
+    pub side_bar_tx: Sender<SideBarMessage>,
     pub background: String,
     pub stdout: Arc<Tty>,
-    pub sidebar: SideBar,
     drawables: Vec<Box<DynDrawable>>,
 }
 
@@ -75,12 +77,12 @@ impl Engine {
         self.stdout.lock().flush().unwrap()
     }
 
-    pub fn new(viewport: Viewport, stdout: Arc<Tty>) -> Self {
+    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>) -> Self {
         trace!("{:?}", terminal_size());
         Engine {
             viewport,
-            sidebar: SideBar::new(stdout.clone()),
             stdout,
+            side_bar_tx: chan,
             drawables: vec![],
             background: { background(viewport.output_y, viewport.width, viewport.height) },
         }

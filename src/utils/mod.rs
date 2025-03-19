@@ -1,12 +1,19 @@
-use std::io::Error;
+use std::sync::mpsc::Sender;
 use crate::engine::core::LockableEngine;
-use crate::ui::sidebar::SideBar;
+use crate::threads::sidebar::SideBarMessage;
 
-pub fn unwrap_sidebar<F>(engine: &LockableEngine, action: F)
-where F: FnOnce(&mut SideBar) -> Result<(), Error> {
-    match engine.write() {
-        Ok(ref mut e) => {
-            let _ = action(&mut e.sidebar);
+#[macro_export]
+macro_rules! send_to_side_bar_auto {
+    ($engine:expr, $($arg:expr)+, $log_type: expr, $log_color: expr) => {
+        crate::utils::send_to_side_bar($engine, ((vec![std::boxed::Box::new($($arg),+)]), $log_type, $log_color))
+    };
+}
+
+#[inline]
+pub fn send_to_side_bar(engine: &LockableEngine, msg: SideBarMessage) {
+    match engine.read() {
+        Ok(x) => {
+            let _ = x.side_bar_tx.send(msg);
         }
 
         _ => {}
