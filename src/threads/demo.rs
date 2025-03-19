@@ -14,7 +14,6 @@ pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockable
         let engine = engine;
         let mut witness_dead = false;
         let mut rng = rng();
-
         /*for _ in 0..3 {
             send_to_side_bar(&engine, (Box::new("..."),
                                       LogType::Debug,
@@ -31,16 +30,9 @@ pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockable
         sleep(Duration::from_secs(1));
 
         send_to_side_bar_auto!(&engine,
-            "Generating starting population...",
+            "Generating starting population..." | "Adding 100 people into city...",
             LogType::Debug,
             LogColor::Normal);
-
-
-        sleep(Duration::from_secs(1));
-
-        send_to_side_bar_auto!(&engine,
-            "Adding 100 people into city...",
-            LogType::Debug, LogColor::Normal);
 
         for i in 0..100 {
 
