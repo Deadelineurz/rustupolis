@@ -1,4 +1,6 @@
 # Rustupolis
+Vous pouvez lancer la dernière version du projet en vous connectant à `ssh -p 2223 rustupolis@rustupolis.owochle.app`
+
 # Pour chaque district
 ## 1. Mise à jour de la population
 ### a. Création d'enfant
