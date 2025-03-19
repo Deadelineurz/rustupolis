@@ -4,16 +4,21 @@ use crate::engine::viewport::{background, Viewport};
 use crate::ui::colors::A_UI_BLACK_LIGHT_COLOR;
 use log::trace;
 use std::io::Write;
+use std::sync::{Arc, RwLock};
 use termion::{cursor, terminal_size};
+use crate::ui::sidebar::SideBar;
 
-pub struct Engine<'a> {
+pub type LockableEngine = Arc<RwLock<Engine>>;
+
+pub struct Engine {
     pub viewport: Viewport,
     pub background: String,
+    pub stdout: Arc<Tty>,
+    pub sidebar: Option<SideBar>,
     drawables: Vec<Box<DynDrawable>>,
-    stdout: &'a Tty,
 }
 
-impl<'a> Engine<'a> {
+impl Engine {
     pub fn register_drawable(&mut self, drawable: Box<DynDrawable>) {
         self.drawables.push(drawable)
     }
@@ -70,27 +75,14 @@ impl<'a> Engine<'a> {
         self.stdout.lock().flush().unwrap()
     }
 
-    pub fn new(viewport: Viewport, stdout: &'a Tty) -> Self {
+    pub fn new(viewport: Viewport, stdout: Arc<Tty>) -> Self {
         trace!("{:?}", terminal_size());
         Engine {
             viewport,
             stdout,
+            sidebar: None,
             drawables: vec![],
             background: { background(viewport.output_y, viewport.width, viewport.height) },
-        }
-    }
-}
-
-impl<'a> From<&'a Tty> for Engine<'a> {
-    fn from(value: &'a Tty) -> Self {
-        Engine {
-            viewport: Viewport::default(),
-            drawables: Vec::new(),
-            background: {
-                let (width, height) = terminal_size().unwrap();
-                background(1, width, height)
-            },
-            stdout: value,
         }
     }
 }

@@ -12,14 +12,17 @@ use std::{
     io::Error,
     str::FromStr,
 };
+use std::ops::Deref;
+use std::sync::Arc;
 
-type SyncDisplay = dyn Display + Send;
+pub type SyncDisplay = dyn Display + Send + Sync;
 
 const DEFAULT_WIDTH_MULTIPLIER: u16 = 4; // one fourth of the screen
 const BORDER_WIDTH: u16 = 2;
 const SEPARATOR_HEIGHT: u16 = 3;
 
 pub struct SideBar {
+    stdout: Arc<Tty>,
     hide: bool,
     ter_width: u16,
     ter_height: u16,
@@ -37,12 +40,13 @@ pub struct SideBar {
 
 impl SideBar {
     /// Will get the terminal size
-    pub fn new() -> Self {
+    pub fn new(stdout: Arc<Tty>) -> Self {
         let (x, y) = terminal_size().unwrap();
         let width = x / DEFAULT_WIDTH_MULTIPLIER;
         let offset = x - width;
 
         SideBar {
+            stdout,
             hide: false,
             ter_width: x,
             ter_height: y,
@@ -93,11 +97,11 @@ impl SideBar {
                 .lines_color(UI_WHITE_COLOR),
         )?;
 
-        self.draw_separator(stdout, &"Logs:", 1)
+        self.draw_separator(&"Logs:", 1)
     }
 
     /// Draw the maximum of log possible to display, last inserted at the bottom.
-    pub fn draw_logs(&self, stdout: &Tty) -> Result<(), Error> {
+    pub fn draw_logs(&self) -> Result<(), Error> {
         let mut count = 0;
         for log in self
             .logs
@@ -106,7 +110,7 @@ impl SideBar {
             // .take(self.get_max_number_of_logs() as usize)
         {
             for line in log.0.iter().skip(1).rev() {
-                self.draw_log_line(stdout, &line.to_string(), log.2, count)?;
+                self.draw_log_line(&line.to_string(), log.2, count)?;
 
                 count += 1;
 
@@ -117,7 +121,7 @@ impl SideBar {
 
             let mut header: String = String::from_str(&log.1.to_string()).unwrap();
             header.push_str(&log.0[0].to_string());
-            self.draw_log_line(stdout, &header, log.2, count)?;
+            self.draw_log_line(&header, log.2, count)?;
 
             count += 1;
 
@@ -131,7 +135,6 @@ impl SideBar {
 
     fn draw_log_line(
         &self,
-        stdout: &Tty,
         text: &SyncDisplay,
         color: LogColor,
         y_offset: u16,
@@ -139,7 +142,7 @@ impl SideBar {
         let mut line = String::from_str(&text.to_string()).unwrap();
         self.fill_str(&mut line);
         draw_text(
-            stdout,
+            self.stdout.deref(),
             &line,
             self.offset + 1,
             self.ter_height - 1 - y_offset,
@@ -159,14 +162,13 @@ impl SideBar {
     /// Will call `draw_logs()`
     pub fn push_log_and_display(
         &mut self,
-        stdout: &Tty,
         log: Box<SyncDisplay>,
         log_type: LogType,
         log_color: LogColor,
     ) -> Result<(), Error> {
         self.logs.push((vec![log], log_type, log_color));
 
-        self.draw_logs(stdout)
+        self.draw_logs()
     }
 
     pub fn push_multiline_log(
@@ -181,14 +183,13 @@ impl SideBar {
     /// Will call `draw_logs()`
     pub fn push_multiline_log_and_display(
         &mut self,
-        stdout: &Tty,
         log: Vec<Box<SyncDisplay>>,
         log_type: LogType,
         log_color: LogColor,
     ) -> Result<(), Error> {
         self.logs.push((log, log_type, log_color));
 
-        self.draw_logs(stdout)
+        self.draw_logs()
     }
 
     /// display custom infos at the top of the sidebar, each display in text is a new line. \
@@ -196,18 +197,17 @@ impl SideBar {
     /// **Will update the place of the log separator to be able to draw them properly later!**
     pub fn display_custom_infos(
         &mut self,
-        stdout: &Tty,
         header: &SyncDisplay,
         text: &[&SyncDisplay],
     ) -> Result<(), Error> {
-        self.draw_separator(stdout, header, 1)?;
+        self.draw_separator(header, 1)?;
 
         for (y_offset, line) in text.iter().enumerate() {
             let mut line = String::from_str(&line.to_string()).unwrap();
             self.fill_str(&mut line);
 
             draw_text(
-                stdout,
+                self.stdout.deref(),
                 &line,
                 self.offset + 1,
                 SEPARATOR_HEIGHT + y_offset as u16 + 1,
@@ -217,7 +217,7 @@ impl SideBar {
         }
 
         let pos = SEPARATOR_HEIGHT + text.len() as u16 + 1;
-        self.draw_separator(stdout, &"LOGS:", pos)?;
+        self.draw_separator(&"LOGS:", pos)?;
 
         self.log_separator_y_pos = pos + SEPARATOR_HEIGHT;
 
@@ -225,9 +225,9 @@ impl SideBar {
     }
 
     /// Will reset the Logs separator at the top of the sidebar.
-    pub fn clear_custom_infos(&mut self, stdout: &Tty) -> Result<(), Error> {
+    pub fn clear_custom_infos(&mut self) -> Result<(), Error> {
         draw_box(
-            stdout,
+            self.stdout.deref(),
             self.offset,
             1,
             self.width + 1,
@@ -237,39 +237,38 @@ impl SideBar {
                 .lines_color(UI_WHITE_COLOR),
         )?;
 
-        self.draw_separator(stdout, &"Logs:", 1)?;
+        self.draw_separator(&"Logs:", 1)?;
 
         self.log_separator_y_pos = SEPARATOR_HEIGHT + 1; // ifk why I have to do this but since it works
-        self.draw_logs(stdout)?;
+        self.draw_logs()?;
         self.log_separator_y_pos = SEPARATOR_HEIGHT;
 
         Ok(())
     }
 
-    pub fn clear_logs(&mut self, stdout: &Tty) -> Result<(), Error> {
+    pub fn clear_logs(&mut self) -> Result<(), Error> {
         for _ in 0..self.get_max_number_of_logs() {
             self.push_log(Box::new(""), LogType::None, LogColor::Normal);
         }
-        self.draw_logs(stdout)?;
+        self.draw_logs()?;
         self.logs.clear();
 
         Ok(())
     }
 
     /// Draw a simple separator (header + two lines).
-    pub fn draw_separator<'a>(
+    pub fn draw_separator(
         &self,
-        stdout: &Tty,
         title: &SyncDisplay,
         y: u16,
     ) -> Result<(), Error> {
-        draw_line(stdout, self.offset + 1, y, self.width - 1, LineStyle::new())?;
+        draw_line(self.stdout.deref(), self.offset + 1, y, self.width - 1, LineStyle::new())?;
 
         let mut title = String::from_str(&title.to_string()).unwrap();
         self.fill_str(&mut title);
 
         draw_text(
-            stdout,
+            self.stdout.deref(),
             &title,
             self.offset + 1,
             y + 1,
@@ -278,7 +277,7 @@ impl SideBar {
         )?;
 
         draw_line(
-            stdout,
+            self.stdout.deref(),
             self.offset + 1,
             y + 2,
             self.width - 1,
