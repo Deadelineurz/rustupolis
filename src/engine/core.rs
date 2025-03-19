@@ -14,7 +14,7 @@ pub struct Engine {
     pub viewport: Viewport,
     pub background: String,
     pub stdout: Arc<Tty>,
-    pub sidebar: Option<SideBar>,
+    pub sidebar: SideBar,
     drawables: Vec<Box<DynDrawable>>,
 }
 
@@ -79,8 +79,8 @@ impl Engine {
         trace!("{:?}", terminal_size());
         Engine {
             viewport,
+            sidebar: SideBar::new(stdout.clone()),
             stdout,
-            sidebar: None,
             drawables: vec![],
             background: { background(viewport.output_y, viewport.width, viewport.height) },
         }

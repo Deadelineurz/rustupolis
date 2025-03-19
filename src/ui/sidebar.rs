@@ -81,13 +81,13 @@ impl SideBar {
         self.text_line_max_len = self.width - BORDER_WIDTH;
     }
 
-    pub fn draw(&self, stdout: &Tty) -> Result<(), Error> {
+    pub fn draw(&self) -> Result<(), Error> {
         if self.hide {
             return Result::Ok(());
         }
 
         draw_box(
-            stdout,
+            self.stdout.deref(),
             self.offset,
             1,
             self.width + 1,

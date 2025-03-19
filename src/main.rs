@@ -45,7 +45,7 @@ fn main() {
 
     let mut engine = Engine::new(vp, stdout.clone());
 
-    engine.sidebar = Some(SideBar::new(stdout.clone()));
+    let _ = engine.sidebar.draw();
 
     for d in bdrawables {
         engine.register_drawable(Box::new(d));

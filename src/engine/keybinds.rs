@@ -13,6 +13,7 @@ use termion::cursor;
 use termion::event::{Event, Key, MouseEvent};
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::RawTerminal;
+use crate::utils::unwrap_sidebar;
 
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 
@@ -67,19 +68,14 @@ impl<'scope> KeyBindListener<'scope> {
                                         continue;
                                     }
 
-                                    match engine.sidebar {
-                                        Some(ref mut sb) => {
-                                            let s = infos.unwrap();
-                                            let _ = sb.display_custom_infos(
-                                                &"Building infos",
-                                                s.iter()
-                                                    .map(|s| s as &SyncDisplay)
-                                                    .collect::<Vec<&SyncDisplay>>()
-                                                    .as_slice(),
-                                            );
-                                        }
-                                        _ => (),
-                                    }
+                                    let s = infos.unwrap();
+                                    let _ = engine.sidebar.display_custom_infos(
+                                        &"Building infos",
+                                        s.iter()
+                                            .map(|s| s as &SyncDisplay)
+                                            .collect::<Vec<&SyncDisplay>>()
+                                            .as_slice(),
+                                    );
                                 }
                                 _ => (),
                             }

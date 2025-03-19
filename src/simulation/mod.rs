@@ -14,7 +14,7 @@ use crate::{
     ui::sidebar::{LogColor, LogType},
 };
 use crate::engine::core::{Engine, LockableEngine};
-use crate::engine::keybinds::Tty;
+use crate::utils::unwrap_sidebar;
 
 pub mod deaths;
 pub mod dna_transmission;
@@ -50,17 +50,11 @@ fn update_district_peoples(
             .for_each(|alive| alive.age += 1);
 
             if debug {
-                match engine.write() {
-                    Ok(mut x) => {
-                        if let Some(ref mut bar) = &mut x.sidebar {
-                            bar.push_log_and_display(Box::new("One year has passed..."),
-                                                     LogType::City,
-                                                     LogColor::Normal).unwrap_or_default()
-                        }
-                    }
-
-                    _ => {}
-                }
+                unwrap_sidebar(&engine, |s| {
+                    s.push_log_and_display(Box::new("One year has passed..."),
+                                           LogType::City,
+                                           LogColor::Normal)
+                })
             }
 
         update_births(engine, district, rng, debug);
@@ -99,17 +93,11 @@ fn update_births(
     .concat();
 
     if debug {
-        match engine.write() {
-            Ok(mut x) => {
-                if let Some(ref mut bar) = &mut x.sidebar {
-                    bar.push_log_and_display(Box::new(format!("Births: {}", childs.len())),
-                                           LogType::City,
-                                           LogColor::Normal).unwrap_or_default()
-                }
-            }
-
-            _ => {}
-        }
+        unwrap_sidebar(&engine, |s| {
+            s.push_log_and_display(Box::new(format!("Births: {}", childs.len())),
+                                   LogType::City,
+                                   LogColor::Normal)
+        });
     }
 
     district.add_peoples(&mut childs);
@@ -134,17 +122,11 @@ fn update_deaths(engine: &LockableEngine, district: &mut PopulationDistrict, deb
         });
 
     if debug {
-        match engine.write() {
-            Ok(mut x) => {
-                if let Some(ref mut bar) = &mut x.sidebar {
-                    bar.push_log_and_display(Box::new(format!("Deaths {}", district.get_population_number_by(PeopleLegalState::Dead) - bef)),
-                                             LogType::City,
-                                             LogColor::Normal).unwrap_or_default()
-                }
-            }
-
-            _ => {}
-        }
+        unwrap_sidebar(&engine, |s| {
+            s.push_log_and_display(Box::new(format!("Deaths {}", district.get_population_number_by(PeopleLegalState::Dead) - bef)),
+                                   LogType::City,
+                                   LogColor::Normal)
+        });
     }
 }
 
