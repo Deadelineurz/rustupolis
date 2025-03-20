@@ -20,3 +20,4 @@ Cargo.lock
 
 node_modules
 .astro
+.DS_Store
