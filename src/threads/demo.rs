@@ -30,7 +30,7 @@ pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockable
         sleep(Duration::from_secs(1));
 
         send_to_side_bar_auto!(&engine,
-            "Generating starting population..." | "Adding 100 people into city...",
+            "Generating starting population..." ; "Adding 100 people into city...",
             LogType::Debug,
             LogColor::Normal);
 
