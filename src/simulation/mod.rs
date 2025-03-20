@@ -4,17 +4,13 @@ use deaths::check_death;
 use rand::{rng, rngs::ThreadRng, seq::SliceRandom};
 use spawn_child::{number_of_children_to_make, spawn_childs};
 
-use crate::{
-    engine::layout::Building,
-    population::{
-        district::PopulationDistrict,
-        people::{BasePeopleInfo, People, PeopleLegalState},
-        Population,
-    },
-    ui::sidebar::{LogColor, LogType},
-};
+use crate::{engine::layout::Building, population::{
+    district::PopulationDistrict,
+    people::{BasePeopleInfo, People, PeopleLegalState},
+    Population,
+}, send_to_side_bar_auto, ui::sidebar::{LogColor, LogType}};
 use crate::engine::core::{Engine, LockableEngine};
-use crate::utils::unwrap_sidebar;
+use crate::utils::send_to_side_bar;
 
 pub mod deaths;
 pub mod dna_transmission;
@@ -50,11 +46,7 @@ fn update_district_peoples(
             .for_each(|alive| alive.age += 1);
 
             if debug {
-                unwrap_sidebar(&engine, |s| {
-                    s.push_log_and_display(Box::new("One year has passed..."),
-                                           LogType::City,
-                                           LogColor::Normal)
-                })
+                send_to_side_bar_auto!(engine, "One year has passed", LogType::City, LogColor::Normal);
             }
 
         update_births(engine, district, rng, debug);
@@ -93,11 +85,7 @@ fn update_births(
     .concat();
 
     if debug {
-        unwrap_sidebar(&engine, |s| {
-            s.push_log_and_display(Box::new(format!("Births: {}", childs.len())),
-                                   LogType::City,
-                                   LogColor::Normal)
-        });
+        send_to_side_bar_auto!(engine, format!("Births: {}", childs.len()), LogType::City, LogColor::Normal);
     }
 
     district.add_peoples(&mut childs);
@@ -122,11 +110,10 @@ fn update_deaths(engine: &LockableEngine, district: &mut PopulationDistrict, deb
         });
 
     if debug {
-        unwrap_sidebar(&engine, |s| {
-            s.push_log_and_display(Box::new(format!("Deaths {}", district.get_population_number_by(PeopleLegalState::Dead) - bef)),
-                                   LogType::City,
-                                   LogColor::Normal)
-        });
+        send_to_side_bar_auto!(engine,
+            format!("Deaths {}", district.get_population_number_by(PeopleLegalState::Dead) - bef),
+            LogType::City,
+            LogColor::Normal);
     }
 }
 
