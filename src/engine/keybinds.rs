@@ -1,17 +1,19 @@
 use crate::engine::core::Engine;
-use crate::SIDE_BAR;
+use crate::ui::sidebar::SyncDisplay;
 use log::trace;
 use std::fmt::Display;
-use std::io::{stdin, Stdout};
+use std::io::{stdin, stdout, Stdout};
 use std::ops::Deref;
 use std::process::exit;
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Condvar, Mutex, RwLock};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
-use std::thread::JoinHandle;
+use std::thread::{JoinHandle, Scope, ScopedJoinHandle};
 use termion::cursor;
 use termion::event::{Event, Key, MouseEvent};
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::RawTerminal;
+use crate::utils::interruptible_sleep::InterruptibleSleep;
 
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 
@@ -21,18 +23,22 @@ pub trait Clickable {
     }
 }
 
-pub struct KeyBindListener<'a> {
-    _engine: Arc<Mutex<Engine<'a>>>,
-    pub thread: JoinHandle<()>,
+pub struct KeyBindListener<'scope> {
+    pub thread: ScopedJoinHandle<'scope, ()>,
+    pub stop_var: Arc<InterruptibleSleep>
 }
 
-impl KeyBindListener<'static> {
-    pub fn new(e: Arc<Mutex<Engine<'static>>>, stdout: &'static Tty) -> Self {
-        let cop = e.clone();
+pub static RUNNING: AtomicBool = AtomicBool::new(true);
 
-        let t = thread::spawn(move || {
+impl<'scope> KeyBindListener<'scope> {
+    pub fn new<'env>(s: &'scope Scope<'scope, 'env>, e: Arc<RwLock<Engine>> ) -> Self {
+        let arc = Arc::new(InterruptibleSleep::new());
+        let sent = arc.clone();
+
+        let t = s.spawn(move || {
+            let cop = e;
             let stdin = stdin();
-            let _std = stdout;
+            let stop_var = sent;
 
             for c in stdin.events() {
                 if c.is_err() {
@@ -47,12 +53,12 @@ impl KeyBindListener<'static> {
                     Event::Key(Key::Right) => Self::offset_viewport(&cop, Key::Right),
                     Event::Key(Key::Up) => Self::offset_viewport(&cop, Key::Up),
                     Event::Key(Key::Down) => Self::offset_viewport(&cop, Key::Down),
-                    Event::Key(Key::Char('q')) => exit(0),
+                    Event::Key(Key::Char('q')) => break,
                     Event::Mouse(mouse_event) => match mouse_event {
                         MouseEvent::Press(_, x, y) => {
                             trace!("Mouse click at x: {} y: {}", x, y);
-                            match &cop.lock() {
-                                Ok(engine) => {
+                            match cop.write() {
+                                Ok(ref mut engine) => {
                                     let (virtual_x, virtual_y) =
                                         engine.viewport.get_virtual_coordinates(*x, *y);
                                     let d =
@@ -67,20 +73,14 @@ impl KeyBindListener<'static> {
                                         continue;
                                     }
 
-                                    match SIDE_BAR.deref().lock() {
-                                        Ok(mut sb) => {
-                                            let s = infos.unwrap();
-                                            let _ = sb.display_custom_infos(
-                                                stdout,
-                                                &"Building infos",
-                                                s.iter()
-                                                    .map(|s| s as &(dyn Display + Send))
-                                                    .collect::<Vec<&(dyn Display + Send)>>()
-                                                    .as_slice(),
-                                            );
-                                        }
-                                        _ => (),
-                                    }
+                                    let s = infos.unwrap();
+                                    /*let _ = engine.sidebar.display_custom_infos(
+                                        &"Building infos",
+                                        s.iter()
+                                            .map(|s| s as &SyncDisplay)
+                                            .collect::<Vec<&SyncDisplay>>()
+                                            .as_slice(),
+                                    );*/
                                 }
                                 _ => (),
                             }
@@ -92,16 +92,19 @@ impl KeyBindListener<'static> {
 
                 print!("{}", cursor::Goto(1, 1));
             }
+
+            stop_var.stop();
+            RUNNING.store(false, Ordering::SeqCst)
         });
 
         KeyBindListener {
-            _engine: e,
             thread: t,
+            stop_var: arc
         }
     }
 
-    fn offset_viewport(e: &Arc<Mutex<Engine>>, key: Key) {
-        match e.lock() {
+    fn offset_viewport(e: &Arc<RwLock<Engine>>, key: Key) {
+        match e.write() {
             Ok(mut guard) => {
                 let e = &mut *guard;
 

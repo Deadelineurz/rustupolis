@@ -5,7 +5,7 @@ pub type DynDrawable = dyn Drawable;
 
 pub trait Drawable
 where
-    Self: Debug + Send + Clickable,
+    Self: Debug + Sync + Send + Clickable,
 {
     fn x(&self) -> i16;
     fn y(&self) -> i16;

@@ -1,34 +1,33 @@
 use std::collections::HashMap;
-
+use std::sync::{Arc, RwLock};
 use deaths::check_death;
 use rand::{rng, rngs::ThreadRng, seq::SliceRandom};
 use spawn_child::{number_of_children_to_make, spawn_childs};
 
-use crate::{
-    engine::layout::Building,
-    population::{
-        district::PopulationDistrict,
-        people::{BasePeopleInfo, People, PeopleLegalState},
-        Population,
-    },
-    ui::sidebar::{LogColor, LogType}, SIDE_BAR, STDOUT,
-};
+use crate::{engine::layout::Building, population::{
+    district::PopulationDistrict,
+    people::{BasePeopleInfo, People, PeopleLegalState},
+    Population,
+}, send_to_side_bar_auto, ui::sidebar::{LogColor, LogType}};
+use crate::engine::core::{Engine, LockableEngine};
+use crate::utils::send_to_side_bar;
 
 pub mod deaths;
 pub mod dna_transmission;
 pub mod spawn_child;
 
 /// Kinda expensive, will do a DFS on the districts then shuffle the population to make babies.
-pub fn update_population(population: &mut Population, debug: bool) {
+pub fn update_population(engine: &LockableEngine, population: &mut Population, debug: bool) {
     let order = population.num_districts;
     let mut marks: Vec<bool> = vec![false; order];
 
     let mut rng = rng();
 
-    update_district_peoples(0, population, &mut marks, &mut rng, debug);
+    update_district_peoples(engine, 0, population, &mut marks, &mut rng, debug);
 }
 
 fn update_district_peoples(
+    engine: &Arc<RwLock<Engine>>,
     district_id: usize,
     population: &mut Population,
     marked: &mut Vec<bool>,
@@ -47,25 +46,21 @@ fn update_district_peoples(
             .for_each(|alive| alive.age += 1);
 
             if debug {
-                SIDE_BAR.lock().unwrap().push_log_and_display(
-                    &STDOUT,
-                    Box::new("One year has passed..."),
-                    LogType::City,
-                    LogColor::Normal,
-                ).unwrap_or_default();
+                send_to_side_bar_auto!(engine, "One year has passed", LogType::City, LogColor::Normal);
             }
 
-        update_births(district, rng, debug);
-        update_deaths(district, debug);
+        update_births(engine, district, rng, debug);
+        update_deaths(engine, district, debug);
 
         for district_id in district.neighbors.clone() {
-            update_district_peoples(district_id, population, marked, rng, debug);
+            update_district_peoples(engine, district_id, population, marked, rng, debug);
         }
     }
 }
 
 /// Will shuffle the district's population because of the parents
 fn update_births(
+    engine: &Arc<RwLock<Engine>>,
     district: &mut PopulationDistrict,
     rng: &mut ThreadRng,
     debug: bool
@@ -90,12 +85,7 @@ fn update_births(
     .concat();
 
     if debug {
-        SIDE_BAR.lock().unwrap().push_log_and_display(
-            &STDOUT,
-            Box::new(format!("Births: {}", childs.len())),
-            LogType::City,
-            LogColor::Normal,
-        ).unwrap_or_default();
+        send_to_side_bar_auto!(engine, format!("Births: {}", childs.len()), LogType::City, LogColor::Normal);
     }
 
     district.add_peoples(&mut childs);
@@ -103,7 +93,7 @@ fn update_births(
 
 
 
-fn update_deaths(district: &mut PopulationDistrict, debug: bool) {
+fn update_deaths(engine: &LockableEngine, district: &mut PopulationDistrict, debug: bool) {
     let zone = district.zone_type.clone();
     let happiness: f64 = district.get_happiness_percentage().into();
 
@@ -120,12 +110,10 @@ fn update_deaths(district: &mut PopulationDistrict, debug: bool) {
         });
 
     if debug {
-        SIDE_BAR.lock().unwrap().push_log_and_display(
-            &STDOUT,
-            Box::new(format!("Deaths {}", district.get_population_number_by(PeopleLegalState::Dead) - bef)),
+        send_to_side_bar_auto!(engine,
+            format!("Deaths {}", district.get_population_number_by(PeopleLegalState::Dead) - bef),
             LogType::City,
-            LogColor::Normal,
-        ).unwrap_or_default();
+            LogColor::Normal);
     }
 }
 

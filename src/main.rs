@@ -1,22 +1,24 @@
 use crate::logging::RemoteLoggerClient;
 use lazy_static::lazy_static;
 use log::LevelFilter;
-use rand::rng;
 use rand::seq::SliceRandom;
 use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::KeyBindListener;
 use rustupolis::engine::layout::Layout;
 use rustupolis::engine::viewport::Viewport;
-use rustupolis::simulation::update_population;
 use rustupolis::terminal::screen::CleanScreen;
-use rustupolis::ui::sidebar::{LogColor, LogType};
-use rustupolis::{POPULATION, SIDE_BAR, STDOUT};
+use rustupolis::ui::sidebar::{LogColor, LogType, SideBar};
 use std::fmt::Display;
+use std::io::stdout;
 use std::ops::Deref;
-use std::sync::{Arc, Mutex};
-use std::thread::sleep;
-use std::time::Duration;
+use std::sync::{Arc, RwLock};
+use std::thread;
+use rand::rng;
+use termion::input::MouseTerminal;
+use termion::raw::IntoRawMode;
 use termion::terminal_size;
+use rustupolis::threads::demo::demo_scope;
+use rustupolis::threads::sidebar::sidebar;
 
 mod logging;
 
@@ -26,7 +28,7 @@ lazy_static! {
 
 fn main() {
     log::set_logger(LOGGER.deref())
-        .map(|()| log::set_max_level(LevelFilter::Trace))
+        .map(|()| log::set_max_level(LevelFilter::Debug))
         .unwrap();
 
     let _clear = CleanScreen::new();
@@ -40,7 +42,11 @@ fn main() {
 
     vp.width = (terminal_size().unwrap().0 as f32 * 0.75) as u16;
 
-    let mut engine = Engine::new(vp, STDOUT.deref());
+    let stdout = Arc::from(MouseTerminal::from(stdout().into_raw_mode().unwrap()));
+
+    let (sidebar_chan, sidebar) = sidebar(stdout.clone());
+
+    let mut engine = Engine::new(vp, stdout.clone(), sidebar_chan.clone());
 
     for d in bdrawables {
         engine.register_drawable(Box::new(d));
@@ -52,157 +58,19 @@ fn main() {
 
     engine.refresh();
 
-    let e = Arc::new(Mutex::new(engine));
+    let e = Arc::new(RwLock::new(engine));
 
-    let kb_engine_ref = e.clone();
-
-    let kb = KeyBindListener::new(kb_engine_ref, STDOUT.deref());
-
-    SIDE_BAR.lock().unwrap().draw(STDOUT.deref()).unwrap();
+    thread::scope(|s| {
+        let kb = KeyBindListener::new(s, e.clone());
+        let demo = demo_scope(s, e.clone(), kb.stop_var.clone());
+        let _ = kb.thread.join();
+        let _ = demo.join();
+        let _ = sidebar_chan.send((vec![Box::new("")], LogType::Debug, LogColor::Normal));
+        let _ = sidebar.join();
+    });
 
     // bien bien dégeu mais au moins on a une démo sympa
 
-    let mut witness_dead = false;
-    let mut rng = rng();
-
-    for _ in 0..3 {
-        SIDE_BAR
-            .lock()
-            .unwrap()
-            .push_log_and_display(
-                STDOUT.deref(),
-                Box::new("..."),
-                LogType::Debug,
-                LogColor::Normal,
-            )
-            .unwrap();
-
-        sleep(Duration::from_millis(400));
-    }
-
-    SIDE_BAR
-        .lock()
-        .unwrap()
-        .push_log_and_display(
-            STDOUT.deref(),
-            Box::new("Begin..."),
-            LogType::Debug,
-            LogColor::Unusual,
-        )
-        .unwrap();
-
-    sleep(Duration::from_secs(1));
-
-    SIDE_BAR
-        .lock()
-        .unwrap()
-        .push_log_and_display(
-            STDOUT.deref(),
-            Box::new("Generating starting population..."),
-            LogType::Debug,
-            LogColor::Normal,
-        )
-        .unwrap();
-
-    sleep(Duration::from_secs(1));
-
-    SIDE_BAR
-        .lock()
-        .unwrap()
-        .push_log_and_display(
-            STDOUT.deref(),
-            Box::new("Adding 100 people into city..."),
-            LogType::Debug,
-            LogColor::Normal,
-        )
-        .unwrap();
-
-    for i in 0..100 {
-        SIDE_BAR
-            .lock()
-            .unwrap()
-            .push_log_and_display(
-                STDOUT.deref(),
-                Box::new(format!("_____YEAR {i}_____")),
-                LogType::Debug,
-                LogColor::Normal,
-            )
-            .unwrap();
-
-        update_population(&mut POPULATION.lock().unwrap(), true);
-
-        sleep(Duration::from_millis(3600));
-
-        let peoples = POPULATION.lock().unwrap().get_core_district().num_people;
-        let deads = POPULATION
-            .lock()
-            .unwrap()
-            .get_core_district()
-            .get_population_number_by(rustupolis::population::people::PeopleLegalState::Dead);
-
-        SIDE_BAR
-            .lock()
-            .unwrap()
-            .push_log_and_display(
-                STDOUT.deref(),
-                Box::new(format!("New population : {}", peoples - deads)),
-                LogType::Debug,
-                LogColor::Unusual,
-            )
-            .unwrap();
-
-        sleep(Duration::from_millis(500));
-
-        if i % 10 == 0 {
-            SIDE_BAR
-                .lock()
-                .unwrap()
-                .push_log_and_display(
-                    STDOUT.deref(),
-                    Box::new("Displaying a random population member:"),
-                    LogType::Debug,
-                    LogColor::Unusual,
-                )
-                .unwrap();
-
-            if witness_dead {
-                witness_dead = false;
-                POPULATION
-                    .lock()
-                    .unwrap()
-                    .get_core_district_mut()
-                    .peoples
-                    .shuffle(&mut rng);
-            }
-
-            let people = POPULATION.lock().unwrap().get_core_district().peoples[0].clone();
-
-            if people.as_alive() == None {
-                witness_dead = true;
-            }
-
-            let debug: String = format!("{:#?}", people);
-            let lines = debug
-                .lines()
-                .map(|s| Box::new(s.to_string()) as Box<dyn Display + Send + 'static>)
-                .collect();
-
-            SIDE_BAR
-                .lock()
-                .unwrap()
-                .push_multiline_log_and_display(
-                    STDOUT.deref(),
-                    lines,
-                    LogType::None,
-                    LogColor::Normal,
-                )
-                .unwrap();
-
-            sleep(Duration::from_secs(2));
-        }
-    }
-
-    let _ = kb.thread.join();
-
-    drop(_clear);
+    println!("{}", Arc::strong_count(&stdout));
+    drop(e);
 }
