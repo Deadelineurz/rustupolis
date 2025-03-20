@@ -5,7 +5,7 @@ use std::fmt::Display;
 use std::io::{stdin, stdout, Stdout};
 use std::ops::Deref;
 use std::process::exit;
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, Condvar, Mutex, RwLock};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::thread::{JoinHandle, Scope, ScopedJoinHandle};
@@ -13,6 +13,7 @@ use termion::cursor;
 use termion::event::{Event, Key, MouseEvent};
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::RawTerminal;
+use crate::utils::interruptible_sleep::InterruptibleSleep;
 
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 
@@ -24,15 +25,20 @@ pub trait Clickable {
 
 pub struct KeyBindListener<'scope> {
     pub thread: ScopedJoinHandle<'scope, ()>,
+    pub stop_var: Arc<InterruptibleSleep>
 }
 
 pub static RUNNING: AtomicBool = AtomicBool::new(true);
 
 impl<'scope> KeyBindListener<'scope> {
     pub fn new<'env>(s: &'scope Scope<'scope, 'env>, e: Arc<RwLock<Engine>> ) -> Self {
+        let arc = Arc::new(InterruptibleSleep::new());
+        let sent = arc.clone();
+
         let t = s.spawn(move || {
             let cop = e;
             let stdin = stdin();
+            let stop_var = sent;
 
             for c in stdin.events() {
                 if c.is_err() {
@@ -87,11 +93,13 @@ impl<'scope> KeyBindListener<'scope> {
                 print!("{}", cursor::Goto(1, 1));
             }
 
+            stop_var.stop();
             RUNNING.store(false, Ordering::SeqCst)
         });
 
         KeyBindListener {
             thread: t,
+            stop_var: arc
         }
     }
 

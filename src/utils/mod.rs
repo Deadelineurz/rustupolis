@@ -1,3 +1,5 @@
+pub mod interruptible_sleep;
+
 use std::sync::mpsc::Sender;
 use crate::engine::core::LockableEngine;
 use crate::threads::sidebar::SideBarMessage;

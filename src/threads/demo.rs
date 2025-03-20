@@ -1,15 +1,19 @@
 use std::fmt::Display;
+use std::ops::Deref;
+use std::sync::Arc;
 use std::thread::{sleep, Scope, ScopedJoinHandle};
 use std::time::Duration;
+use log::info;
 use rand::prelude::SliceRandom;
 use rand::rng;
 use crate::engine::core::{Engine, LockableEngine};
-use crate::{send_to_side_bar_auto, POPULATION};
+use crate::{return_on_cancel, send_to_side_bar_auto, POPULATION};
 use crate::simulation::update_population;
 use crate::ui::sidebar::{LogColor, LogType, SyncDisplay};
+use crate::utils::interruptible_sleep::InterruptibleSleep;
 use crate::utils::send_to_side_bar;
 
-pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: LockableEngine) -> ScopedJoinHandle<'scope, ()> {
+pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: LockableEngine, stop_var: Arc<InterruptibleSleep>) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
         let engine = engine;
         let mut witness_dead = false;
@@ -27,7 +31,9 @@ pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockable
             LogType::Debug,
             LogColor::Unusual);
 
-        sleep(Duration::from_secs(1));
+        if !stop_var.wait_for(Duration::from_secs(1)) {
+            return
+        }
 
         send_to_side_bar_auto!(&engine,
             "Generating starting population..." ; "Adding 100 people into city...",
@@ -54,7 +60,7 @@ pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockable
 
             send_to_side_bar_auto!(&engine, format!("New population : {}", peoples - deads), LogType::Debug, LogColor::Unusual);
 
-            sleep(Duration::from_millis(500));
+            return_on_cancel!(stop_var, Duration::from_millis(500));
 
             if i % 10 == 0 {
                 send_to_side_bar_auto!(&engine, "Displaying a random population member:", LogType::Debug, LogColor::Unusual);
@@ -83,7 +89,7 @@ pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockable
 
                 send_to_side_bar(&engine, (lines, LogType::None, LogColor::Normal));
 
-                sleep(Duration::from_secs(2));
+                return_on_cancel!(stop_var, Duration::from_secs(2));
             }
         }
     })

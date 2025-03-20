@@ -28,7 +28,7 @@ lazy_static! {
 
 fn main() {
     log::set_logger(LOGGER.deref())
-        .map(|()| log::set_max_level(LevelFilter::Trace))
+        .map(|()| log::set_max_level(LevelFilter::Debug))
         .unwrap();
 
     let _clear = CleanScreen::new();
@@ -62,9 +62,9 @@ fn main() {
 
     thread::scope(|s| {
         let kb = KeyBindListener::new(s, e.clone());
-        // let demo = demo_scope(s, e.clone());
+        let demo = demo_scope(s, e.clone(), kb.stop_var.clone());
         let _ = kb.thread.join();
-        // let _ = demo.join();
+        let _ = demo.join();
         let _ = sidebar_chan.send((vec![Box::new("")], LogType::Debug, LogColor::Normal));
         let _ = sidebar.join();
     });
