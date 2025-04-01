@@ -40,7 +40,7 @@ fn main() {
 
     let mut vp = Viewport::default();
 
-    vp.width = (terminal_size().unwrap().0 as f32 * 0.75) as u16;
+    vp.width = (terminal_size().unwrap().0 as f32 * 0.75) as u16 - 1;
 
     let stdout = Arc::from(MouseTerminal::from(stdout().into_raw_mode().unwrap()));
 
@@ -68,9 +68,4 @@ fn main() {
         let _ = sidebar_chan.send((vec![Box::new("")], LogType::Debug, LogColor::Normal));
         let _ = sidebar.join();
     });
-
-    // bien bien dégeu mais au moins on a une démo sympa
-
-    println!("{}", Arc::strong_count(&stdout));
-    drop(e);
 }
