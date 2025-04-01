@@ -172,7 +172,7 @@ impl Drawable for Building {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Road {
     name: String,
-    id: String,
+    pub id: String,
     start_x: i16,
     start_y: i16,
     horizontal: bool,
@@ -186,8 +186,8 @@ impl Clickable for Road {
         Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.start_x, self.start_y)),
-            String::from(format!("Length: {}", self.length)),   
-            String::from(format!(" ")), // act as a newline
+            String::from(format!("Length: {}", self.length)),
+            String::from(" ".to_string()), // act as a newline
         ])
     }
 }

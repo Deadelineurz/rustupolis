@@ -13,6 +13,7 @@ pub mod population;
 pub mod simulation;
 pub mod threads;
 pub mod utils;
+pub mod roads;
 
 lazy_static! {
     pub static ref POPULATION: Arc<Mutex<Population>> = Arc::new(Mutex::new(Population::new()));
