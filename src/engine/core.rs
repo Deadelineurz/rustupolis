@@ -25,6 +25,13 @@ impl Engine {
         self.drawables.push(drawable)
     }
 
+    pub fn replace_empty_drawable(&mut self, drawable: Box<DynDrawable>){
+        let mut i = 0;
+
+        self.drawables.remove(0);
+        self.drawables.push(drawable)
+    }
+
     pub fn refresh(&self) {
         self.clear_viewport();
 

@@ -18,6 +18,7 @@ use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
 use rustupolis::threads::demo::demo_scope;
+use rustupolis::threads::engine_loop::{engine_loop};
 use rustupolis::threads::sidebar::sidebar;
 
 mod logging;
@@ -52,20 +53,31 @@ fn main() {
         engine.register_drawable(Box::new(d));
     }
 
+
+
     for d in rdrawables {
         engine.register_drawable(Box::new(d));
     }
 
     engine.refresh();
 
+
+
     let e = Arc::new(RwLock::new(engine));
 
     thread::scope(|s| {
         let kb = KeyBindListener::new(s, e.clone());
         let demo = demo_scope(s, e.clone(), kb.stop_var.clone());
+        let game_loop = engine_loop(s, e.clone(), kb.stop_var.clone());
         let _ = kb.thread.join();
         let _ = demo.join();
+        let _ = game_loop.join();
         let _ = sidebar_chan.send((vec![Box::new("")], LogType::Debug, LogColor::Normal));
         let _ = sidebar.join();
     });
+
+
+
+
+
 }
