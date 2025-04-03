@@ -10,6 +10,7 @@ use crate::{engine::layout::Building, population::{
     Population,
 }, send_to_side_bar_auto, ui::sidebar::{LogColor, LogType}};
 use crate::engine::core::{Engine, LockableEngine};
+use crate::engine::layout::{LayoutId, LAYOUT_ID_LENGTH};
 use crate::utils::send_to_side_bar;
 
 pub mod deaths;
@@ -119,14 +120,14 @@ fn update_deaths(engine: &LockableEngine, district: &mut PopulationDistrict, deb
 
 /// Ensure that the peoples are grouped by building uuid and only get selected once
 fn make_pairs(people: Vec<&People>, rng: &mut ThreadRng) -> Vec<(People, People)> {
-    let mut building_groups: HashMap<String, Vec<&People>> = HashMap::new();
+    let mut building_groups: HashMap<LayoutId, Vec<&People>> = HashMap::new();
 
     for person in people {
         building_groups
             .entry(
                 person
                     .get_building_uuid()
-                    .unwrap_or(&"homeless".to_string())
+                    .unwrap_or(&[0u8; LAYOUT_ID_LENGTH])
                     .clone(),
             )
             .or_default()

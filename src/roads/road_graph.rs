@@ -1,8 +1,9 @@
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
+use std::ops::BitXor;
 use crate::engine::drawable::Drawable;
-use crate::engine::layout::{Building, Layout, LayoutId, Road};
+use crate::engine::layout::{Building, Layout, LayoutId, Road, LAYOUT_ID_LENGTH};
 
 struct Rect {
     x: i16,
@@ -62,7 +63,7 @@ impl Debug for Node<'_> {
 }
 
 impl<'a> Node<'a> {
-    pub fn id(&self) -> &'a String {
+    pub fn id(&self) -> &'a LayoutId {
         match self {
             Node::Building(b) => &b.id,
             Node::Road(r) => &r.id
@@ -104,19 +105,26 @@ impl Debug for Edge<'_> {
 
 impl PartialEq for Edge<'_> {
     fn eq(&self, other: &Self) -> bool {
-        self.road_a == other.road_a && self.road_b == other.road_b
+        if self.road_a == other.road_a {
+            self.road_b == other.road_b
+        } else if self.road_b == other.road_a {
+            self.road_a == other.road_b
+        } else {
+            false
+        }
     }
 }
 
-impl Eq for Edge<'_> {
-
-}
+impl Eq for Edge<'_> {}
 
 impl Hash for Edge<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        let mut id = self.road_a.clone();
-        id += self.road_b;
-        id.hash(state);
+        let mut merged = [0u8; LAYOUT_ID_LENGTH];
+        for (i, (a, b)) in self.road_a.iter().zip(self.road_b.iter()).enumerate() {
+            merged[i] = a.bitxor(b)
+        }
+
+        merged.hash(state)
     }
 }
 
@@ -127,9 +135,10 @@ pub struct Graph<'a> {
 }
 
 impl Graph<'_> {
-    pub fn new<'a>(layout: &'a Layout) -> Graph<'a> {
+    pub fn new(layout: &Layout) -> Graph {
         let mut nodes: HashMap<LayoutId, Node> = HashMap::new();
         let mut edge_set: HashSet<Edge> = HashSet::new();
+
 
         for layout_member in &layout.roads {
             nodes.insert(layout_member.id.clone(), Node::Road(layout_member));

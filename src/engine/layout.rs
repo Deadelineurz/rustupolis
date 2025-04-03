@@ -2,16 +2,16 @@ use crate::{
     population::people::BasePeopleInfo,
     ui::colors::*, POPULATION,
 };
-use serde::{Deserialize, Serialize};
+use serde::{de, Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::{fmt::Display, str::FromStr};
-use base64::{DecodeError, Engine};
+use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use serde::de::Error;
-use serde::de::value::StringDeserializer;
 use super::{drawable::Drawable, keybinds::Clickable};
 
-pub type LayoutId = String;
+pub const LAYOUT_ID_LENGTH: usize = 24;
+pub type LayoutId = [u8; LAYOUT_ID_LENGTH];
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -32,7 +32,8 @@ impl Display for BuildingType {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Building {
     name: String,
-    pub id: String,
+    #[serde(deserialize_with = "deserialize_b64")]
+    pub id: LayoutId,
     district_id: usize,
     pos_x: i16,
     pos_y: i16,
@@ -60,7 +61,7 @@ impl Building {
             .count()
     }
 
-    pub fn get_building_uuid(&self) -> String {
+    pub fn get_building_uuid(&self) -> LayoutId {
         self.id.clone()
     }
 
@@ -177,7 +178,8 @@ impl Drawable for Building {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Road {
     name: String,
-    pub id: String,
+    #[serde(deserialize_with = "deserialize_b64")]
+    pub id: LayoutId,
     start_x: i16,
     start_y: i16,
     horizontal: bool,
@@ -298,4 +300,28 @@ impl Layout {
     pub fn get_roads(&self) -> Vec<Road> {
         self.roads.iter().map(|r| r.clone()).collect()
     }
+}
+
+fn deserialize_b64<'de, D>(deserializer: D) -> Result<LayoutId, D::Error>
+where
+    D: de::Deserializer<'de>
+{
+    let s: &str = de::Deserialize::deserialize(deserializer)?;
+    let res = BASE64_STANDARD.decode(s);
+
+    if let Err(_) = res {
+        return Err(Error::custom("Invalid base64"))
+    }
+
+    let mut out = [0u8; LAYOUT_ID_LENGTH];
+
+    for (i, x) in res.unwrap().iter().enumerate() {
+        if i > LAYOUT_ID_LENGTH - 1 {
+            break
+        }
+
+        out[i] = x.clone()
+    }
+
+    Ok(out)
 }
