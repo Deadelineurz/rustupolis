@@ -1,24 +1,23 @@
 use crate::logging::RemoteLoggerClient;
 use lazy_static::lazy_static;
-use log::LevelFilter;
-use rand::seq::SliceRandom;
+use log::{debug, LevelFilter};
 use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::KeyBindListener;
 use rustupolis::engine::layout::Layout;
 use rustupolis::engine::viewport::Viewport;
 use rustupolis::terminal::screen::CleanScreen;
-use rustupolis::ui::sidebar::{LogColor, LogType, SideBar};
+use rustupolis::threads::demo::demo_scope;
+use rustupolis::threads::sidebar::sidebar;
+use rustupolis::ui::sidebar::{LogColor, LogType};
 use std::fmt::Display;
 use std::io::stdout;
 use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 use std::thread;
-use rand::rng;
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
-use rustupolis::threads::demo::demo_scope;
-use rustupolis::threads::sidebar::sidebar;
+use rustupolis::roads::road_graph::Graph;
 
 mod logging;
 
@@ -34,6 +33,10 @@ fn main() {
     let _clear = CleanScreen::new();
 
     let layout = Layout::load_default_layout();
+
+    let wonder_graph = Graph::new(&layout);
+
+    debug!("{:?}", wonder_graph);
 
     let bdrawables = layout.get_buildings();
     let rdrawables = layout.get_roads();
