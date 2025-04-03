@@ -259,6 +259,14 @@ impl Layout {
         layout_obj
     }
 
+    pub fn load_default_layout2() -> Self {
+        let layout = include_str!("../initial_data/layout2.json");
+
+        let layout_obj: Layout = serde_json::from_str(layout).unwrap();
+
+        layout_obj
+    }
+
     pub fn load_core_layout() -> Self {
         let layout = include_str!("../initial_data/starting_core.json");
 
