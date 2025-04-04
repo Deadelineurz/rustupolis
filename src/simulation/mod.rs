@@ -127,7 +127,7 @@ fn make_pairs(people: Vec<&People>, rng: &mut ThreadRng) -> Vec<(People, People)
             .entry(
                 person
                     .get_building_uuid()
-                    .unwrap_or(&[0u8; LAYOUT_ID_LENGTH])
+                    .unwrap_or(&LayoutId::default())
                     .clone(),
             )
             .or_default()

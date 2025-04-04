@@ -5,15 +5,50 @@ use crate::{
 use serde::{de, Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::{fmt::Display, str::FromStr};
+use std::fmt::{write, Debug, Formatter};
+use std::ops::Deref;
+use std::slice::Iter;
 use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
 use serde::de::Error;
 use super::{drawable::Drawable, keybinds::Clickable};
 
-pub const LAYOUT_ID_LENGTH: usize = 24;
-pub type LayoutId = [u8; LAYOUT_ID_LENGTH];
+pub const LAYOUT_ID_LENGTH: usize = 12;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub struct LayoutId {
+    value: [u8; LAYOUT_ID_LENGTH]
+}
+
+impl LayoutId {
+    pub fn new(value: [u8; LAYOUT_ID_LENGTH]) -> Self {
+        LayoutId {
+            value
+        }
+    }
+
+    pub fn iter(&self) -> Iter<'_, u8> {
+        self.value.iter()
+    }
+}
+
+
+impl Default for LayoutId {
+    fn default() -> Self {
+        LayoutId {
+            value: [0u8; LAYOUT_ID_LENGTH]
+        }
+    }
+}
+
+impl Debug for LayoutId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", BASE64_STANDARD.encode(self.value))
+    }
+}
+
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum BuildingType {
     Custom,
@@ -29,7 +64,7 @@ impl Display for BuildingType {
 
 // ----- BUILDINGS -----
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Building {
     name: String,
     #[serde(deserialize_with = "deserialize_b64")]
@@ -175,7 +210,7 @@ impl Drawable for Building {
 
 // ----- ROADS -----
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Road {
     name: String,
     #[serde(deserialize_with = "deserialize_b64")]
@@ -187,7 +222,6 @@ pub struct Road {
     length: u8,
     pavement: char,
 }
-
 
 impl Clickable for Road {
     fn infos(&self) -> Option<Vec<String>> {
@@ -252,7 +286,7 @@ impl Drawable for Road {
 
 // ----- LAYOUT -----
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Layout {
     pub buildings: Vec<Building>,
     pub roads: Vec<Road>,
@@ -323,5 +357,5 @@ where
         out[i] = x.clone()
     }
 
-    Ok(out)
+    Ok(LayoutId::new(out))
 }
