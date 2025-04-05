@@ -1,53 +1,68 @@
+use termion::terminal_size;
+
 use super::colors::*;
-use crate::terminal::{
-    boxes::*,
-    lines::{draw_line, LineDirection, LineStyle}, text::draw_text,
-};
-use std::io::Error;
 use crate::engine::keybinds::Tty;
+use crate::terminal::boxes::*;
+use std::ops::Deref;
+use std::{io::Error, sync::Arc};
 
-const TOPBAR_HEIGHT_PERCENTAGE: f32 = 0.1;
+const TOPBAR_HEIGHT_MULTIPLIER: u16 = 8;
 
-#[derive(Debug, Clone)]
+pub struct TopBar {
+    stdout: Arc<Tty>,
+    hide: bool,
+    ter_width: u16,
+    ter_height: u16,
 
-pub struct TopBarInfo {
-    pub date: String,
-    pub population: u32,
-    pub happiness: f32,
+    height: u16,
 
+    day_number: u32,
 }
 
+impl TopBar {
+    /// Will get the terminal size
+    pub fn new(stdout: Arc<Tty>) -> Self {
+        let (x, y) = terminal_size().unwrap();
+        let height = x / TOPBAR_HEIGHT_MULTIPLIER;
 
-pub fn draw_topbar(stdout: &Tty, terminal_size: (u16, u16), side_bar_size: u16) -> Result<(), Error> {
-    let date = " Lorem Ipsum ";
+        TopBar {
+            stdout,
+            hide: false,
+            ter_width: x,
+            ter_height: y,
 
-    let term_width = terminal_size.0;
-    let term_height = terminal_size.1;
+            height,
 
-    let height = ((term_height as f32) * TOPBAR_HEIGHT_PERCENTAGE).round() as u16;
-    let separator1_x = date.len() as u16 + 3 ;
-    // let separator2_x = ((term_width as f32) * TOPBAR_SEPARATOR2_PERCENTAGE).round() as u16;
+            day_number: 0,
+        }
+    }
 
-    draw_box(
-        stdout,
-        1,
-        1,
-        term_width - side_bar_size - 1,
-        height,
-        BoxStyle::new()
-            .fill(BoxFill::color(UI_BLACK_COLOR))
-            .lines_color(UI_WHITE_COLOR),
-    )?;
+    pub fn next_day(mut self) {
+        self.day_number += 1;
+    }
 
-    draw_text(stdout, date, 3, 2, UI_WHITE_COLOR, UI_BLACK_COLOR)?;
+    pub fn update_terminal_size(&mut self) {
+        let (x, y) = terminal_size().unwrap();
+        self.ter_width = x;
+        self.ter_height = y;
 
-    draw_line(
-        stdout,
-        separator1_x,
-        2,
-        height - 2,
-        LineStyle::new().direction(LineDirection::Vertical),
-    )?;
+        self.height = x / TOPBAR_HEIGHT_MULTIPLIER;
+    }
 
-    Ok(())
+    pub fn draw(&self) -> Result<(), Error> {
+        if self.hide {
+            return Result::Ok(());
+        }
+
+        draw_box(
+            self.stdout.deref(),
+            1,
+            1,
+            self.ter_width + 1,
+            self.height + 1,
+            BoxStyle::new()
+                .fill(BoxFill::color(UI_BLACK_COLOR))
+                .lines_color(UI_WHITE_COLOR),
+        )
+    }
 }
