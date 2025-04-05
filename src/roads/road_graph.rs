@@ -92,18 +92,45 @@ impl<'a> Node<'a> {
     }
 }
 
-struct Edge<'a> {
+struct Pair<'a>
+{
     road_a: &'a LayoutId,
     road_b: &'a LayoutId
 }
 
-impl Debug for Edge<'_> {
+pub type Edge<'a> = Pair<'a>;
+
+impl Pair<'_>
+{
+    fn new<'a>(a: &'a LayoutId, b: &'a LayoutId) -> Pair<'a> {
+        Pair {
+            road_a: a,
+            road_b: b
+        }
+    }
+
+    fn has(&self, value: &LayoutId) -> bool {
+        value == self.road_a || value == self.road_b
+    }
+
+    fn other(&self, value: &LayoutId) -> &LayoutId {
+        if value == self.road_a {
+            self.road_b
+        } else {
+            self.road_a
+        }
+    }
+}
+
+impl Debug for Edge<'_>
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         write!(f, "{:?} <=> {:?}", self.road_a, self.road_b)
     }
 }
 
-impl PartialEq for Edge<'_> {
+impl PartialEq for Edge<'_>
+{
     fn eq(&self, other: &Self) -> bool {
         if self.road_a == other.road_a {
             self.road_b == other.road_b
@@ -120,7 +147,7 @@ impl Eq for Edge<'_> {}
 impl Hash for Edge<'_> {
     fn hash<H: Hasher>(&self, state: &mut H) {
         let mut merged = [0u8; LAYOUT_ID_LENGTH];
-        for (i, (a, b)) in self.road_a.iter().zip(self.road_b.iter()).enumerate() {
+        for (i, (a, b)) in self.road_a.into_iter().zip(self.road_b.into_iter()).enumerate() {
             merged[i] = a.bitxor(b)
         }
 
@@ -131,10 +158,11 @@ impl Hash for Edge<'_> {
 #[derive(Debug)]
 pub struct Graph<'a> {
     nodes: HashMap<LayoutId, Node<'a>>,
-    edges: HashSet<Edge<'a>>
+    edges: HashSet<Edge<'a>>,
+    building_connections: HashSet<Pair<'a>>
 }
 
-impl Graph<'_> {
+impl<'a> Graph<'a> {
     pub fn new(layout: &Layout) -> Graph {
         let mut nodes: HashMap<LayoutId, Node> = HashMap::new();
         let mut edge_set: HashSet<Edge> = HashSet::new();
@@ -183,7 +211,44 @@ impl Graph<'_> {
 
         Graph {
             nodes: nodes.clone(),
-            edges: edge_set
+            edges: edge_set,
+            building_connections: HashSet::new()
         }
+    }
+
+    fn connected_to(&self, start: &LayoutId) -> HashSet<&LayoutId> {
+        self.edges.iter().filter(|x| x.has(start)).map(|x| x.other(start)).collect::<HashSet<&LayoutId>>()
+    }
+
+    pub fn start_dfs(& mut self, layout: &'a Layout) {
+        let mut connections = HashSet::new();
+        for x in layout.buildings.iter().map(|x| &x.id) {
+            let mut marks = HashSet::new();
+
+            self.recursive_dfs_to_target(&mut marks, x);
+
+            for y in layout.buildings.iter().map(|x| &x.id) {
+                if x != y && marks.contains(y) {
+                    connections.insert(Pair::new(x, y));
+                }
+            }
+        }
+
+        self.building_connections = connections
+    }
+
+    fn recursive_dfs_to_target(&'a self, mark: &mut HashSet<&'a LayoutId>, current: &'a LayoutId) {
+        mark.insert(current);
+        for x in self.connected_to(current) {
+            if mark.contains(x) {
+                continue
+            }
+
+            self.recursive_dfs_to_target(mark, x)
+        }
+    }
+
+    pub fn are_connected(&self, building_id_a: &LayoutId, building_id_b: &LayoutId) -> bool {
+        self.building_connections.contains(&Pair::new(building_id_a, building_id_b))
     }
 }

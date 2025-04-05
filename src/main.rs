@@ -34,7 +34,8 @@ fn main() {
 
     let layout = Layout::load_default_layout();
 
-    let wonder_graph = Graph::new(&layout);
+    let mut wonder_graph = Graph::new(&layout);
+    wonder_graph.start_dfs(&layout);
 
     debug!("{:?}", wonder_graph);
 
