@@ -1,17 +1,16 @@
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
 use deaths::check_death;
 use rand::{rng, rngs::ThreadRng, seq::SliceRandom};
 use spawn_child::{number_of_children_to_make, spawn_childs};
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
+use crate::engine::core::{Engine, LockableEngine};
+use crate::engine::layout::LayoutId;
 use crate::{engine::layout::Building, population::{
     district::PopulationDistrict,
     people::{BasePeopleInfo, People, PeopleLegalState},
     Population,
 }, send_to_side_bar_auto, ui::sidebar::{LogColor, LogType}};
-use crate::engine::core::{Engine, LockableEngine};
-use crate::engine::layout::{LayoutId, LAYOUT_ID_LENGTH};
-use crate::utils::send_to_side_bar;
 
 pub mod deaths;
 pub mod dna_transmission;

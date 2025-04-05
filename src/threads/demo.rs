@@ -1,17 +1,14 @@
-use std::fmt::Display;
-use std::ops::Deref;
-use std::sync::Arc;
-use std::thread::{sleep, Scope, ScopedJoinHandle};
-use std::time::Duration;
-use log::info;
-use rand::prelude::SliceRandom;
-use rand::rng;
-use crate::engine::core::{Engine, LockableEngine};
-use crate::{return_on_cancel, send_to_side_bar_auto, POPULATION};
+use crate::engine::core::LockableEngine;
 use crate::simulation::update_population;
 use crate::ui::sidebar::{LogColor, LogType, SyncDisplay};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
 use crate::utils::send_to_side_bar;
+use crate::{return_on_cancel, send_to_side_bar_auto, POPULATION};
+use rand::prelude::SliceRandom;
+use rand::rng;
+use std::sync::Arc;
+use std::thread::{Scope, ScopedJoinHandle};
+use std::time::Duration;
 
 pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: LockableEngine, stop_var: Arc<InterruptibleSleep>) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {

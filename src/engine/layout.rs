@@ -1,17 +1,17 @@
+use super::{drawable::Drawable, keybinds::Clickable};
 use crate::{
     population::people::BasePeopleInfo,
     ui::colors::*, POPULATION,
 };
-use serde::{de, Deserialize, Serialize};
-use std::cmp::PartialEq;
-use std::{fmt::Display, str::FromStr};
-use std::fmt::{write, Debug, Formatter};
-use std::ops::Deref;
-use std::slice::Iter;
-use base64::Engine;
 use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
 use serde::de::Error;
-use super::{drawable::Drawable, keybinds::Clickable};
+use serde::{de, Deserialize};
+use std::array::IntoIter;
+use std::cmp::PartialEq;
+use std::fmt::{Debug, Formatter};
+use std::slice::Iter;
+use std::{fmt::Display};
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
 
@@ -32,6 +32,14 @@ impl LayoutId {
     }
 }
 
+impl IntoIterator for &LayoutId {
+    type Item = u8;
+    type IntoIter = IntoIter<u8, LAYOUT_ID_LENGTH>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.value.into_iter()
+    }
+}
 
 impl Default for LayoutId {
     fn default() -> Self {

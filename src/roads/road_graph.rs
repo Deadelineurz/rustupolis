@@ -1,9 +1,8 @@
+use crate::engine::drawable::Drawable;
+use crate::engine::layout::{Building, Layout, LayoutId, Road};
+use crate::utils::pair::Pair;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
-use std::hash::{Hash, Hasher};
-use std::ops::BitXor;
-use crate::engine::drawable::Drawable;
-use crate::engine::layout::{Building, Layout, LayoutId, Road, LAYOUT_ID_LENGTH};
 
 struct Rect {
     x: i16,
@@ -92,74 +91,13 @@ impl<'a> Node<'a> {
     }
 }
 
-struct Pair<'a>
-{
-    road_a: &'a LayoutId,
-    road_b: &'a LayoutId
-}
-
-pub type Edge<'a> = Pair<'a>;
-
-impl Pair<'_>
-{
-    fn new<'a>(a: &'a LayoutId, b: &'a LayoutId) -> Pair<'a> {
-        Pair {
-            road_a: a,
-            road_b: b
-        }
-    }
-
-    fn has(&self, value: &LayoutId) -> bool {
-        value == self.road_a || value == self.road_b
-    }
-
-    fn other(&self, value: &LayoutId) -> &LayoutId {
-        if value == self.road_a {
-            self.road_b
-        } else {
-            self.road_a
-        }
-    }
-}
-
-impl Debug for Edge<'_>
-{
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} <=> {:?}", self.road_a, self.road_b)
-    }
-}
-
-impl PartialEq for Edge<'_>
-{
-    fn eq(&self, other: &Self) -> bool {
-        if self.road_a == other.road_a {
-            self.road_b == other.road_b
-        } else if self.road_b == other.road_a {
-            self.road_a == other.road_b
-        } else {
-            false
-        }
-    }
-}
-
-impl Eq for Edge<'_> {}
-
-impl Hash for Edge<'_> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        let mut merged = [0u8; LAYOUT_ID_LENGTH];
-        for (i, (a, b)) in self.road_a.into_iter().zip(self.road_b.into_iter()).enumerate() {
-            merged[i] = a.bitxor(b)
-        }
-
-        merged.hash(state)
-    }
-}
+pub type Edge<'a> = Pair<'a, LayoutId>;
 
 #[derive(Debug)]
 pub struct Graph<'a> {
     nodes: HashMap<LayoutId, Node<'a>>,
     edges: HashSet<Edge<'a>>,
-    building_connections: HashSet<Pair<'a>>
+    building_connections: HashSet<Pair<'a, LayoutId>>
 }
 
 impl<'a> Graph<'a> {
@@ -189,10 +127,7 @@ impl<'a> Graph<'a> {
                 let other_rect = other_node.rect();
 
                 if ctangle.overlap(other_rect) {
-                    edge_set.insert(Edge {
-                        road_a: road_node.id(),
-                        road_b: other_node.id()
-                    });
+                    edge_set.insert(Edge::new(road_node.id(), other_node.id()));
                 }
             }
 
@@ -201,10 +136,7 @@ impl<'a> Graph<'a> {
                 let other_rect = other_node.rect();
 
                 if ctangle.overlap(other_rect) {
-                    edge_set.insert(Edge {
-                        road_a: road_node.id(),
-                        road_b: other_node.id()
-                    });
+                    edge_set.insert(Edge::new(road_node.id(), other_node.id()));
                 }
             }
         }

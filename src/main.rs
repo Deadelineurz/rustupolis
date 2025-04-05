@@ -5,11 +5,11 @@ use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::KeyBindListener;
 use rustupolis::engine::layout::Layout;
 use rustupolis::engine::viewport::Viewport;
+use rustupolis::roads::road_graph::Graph;
 use rustupolis::terminal::screen::CleanScreen;
 use rustupolis::threads::demo::demo_scope;
 use rustupolis::threads::sidebar::sidebar;
 use rustupolis::ui::sidebar::{LogColor, LogType};
-use std::fmt::Display;
 use std::io::stdout;
 use std::ops::Deref;
 use std::sync::{Arc, RwLock};
@@ -17,7 +17,6 @@ use std::thread;
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
-use rustupolis::roads::road_graph::Graph;
 
 mod logging;
 
