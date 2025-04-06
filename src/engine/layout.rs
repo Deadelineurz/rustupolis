@@ -11,15 +11,7 @@ use std::array::IntoIter;
 use std::cmp::PartialEq;
 use std::fmt::{Debug, Formatter};
 use std::slice::Iter;
-use std::{fmt::Display};
-use std::sync::Arc;
-use std::sync::mpsc::Sender;
-use log::trace;
-use serde::de::Unexpected::Option;
-use crate::engine::drawable::DynDrawable;
-use crate::engine::keybinds::Tty;
-use crate::engine::viewport::{background, Viewport};
-use crate::threads::sidebar::SideBarMessage;
+use std::fmt::Display;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
 
@@ -370,26 +362,38 @@ impl Layout {
 
     pub fn replace_empty_building(&mut self, buildingId : LayoutId){
         let mut i = 0;
+        let mut building: Option<&Building> = None;
 
-        for bldg in (self.buildings) {
+        for bldg in &self.buildings {
             if bldg.id == buildingId {
-                let new_bldg = Building {
-                    name : "Test12".to_string(),
-                    id : bldg.id,
-                    pos_x : bldg.pos_x,
-                    pos_y: bldg.pos_y,
-                    district_id: bldg.district_id,
-                    b_type: BuildingType::Uniform,
-                    width : bldg.width,
-                    height : bldg.height,
-                    texture : Some('e'),
-                    content : []
-                };
-                self.buildings.push(new_bldg);
-                self.buildings.remove(i);
+                building = Some(bldg);
+                break
             }
+
             i += 1
         }
+
+        if building.is_none() {
+            return;
+        }
+
+        let bldg = building.unwrap();
+
+        let new_bldg = Building {
+            name : "Test12".to_string(),
+            id : bldg.id,
+            pos_x : bldg.pos_x,
+            pos_y: bldg.pos_y,
+            district_id: bldg.district_id,
+            b_type: BuildingType::Uniform,
+            width : bldg.width,
+            height : bldg.height,
+            texture : Some('e'),
+            content : Some(vec![])
+        };
+
+        self.buildings.push(new_bldg);
+        self.buildings.remove(i);
     }
 
 }
