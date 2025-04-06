@@ -1,3 +1,4 @@
+use crate::engine::layout::LayoutId;
 use crate::population::{
     disease::{Disease, DiseaseLethality},
     district::DistrictZone,
@@ -123,7 +124,7 @@ fn dna_bonus(dna: DNA) -> f64 {
     }
 }
 
-fn homeless_bonus(building_uuid: &Option<String>) -> f64 {
+fn homeless_bonus(building_uuid: &Option<LayoutId>) -> f64 {
     match building_uuid {
         Some(_building) => 1.0,
         None => 1.45,

@@ -1,8 +1,8 @@
-use std::collections::{HashMap, HashSet};
-use std::fmt::{Debug, Formatter};
-use std::hash::{Hash, Hasher};
 use crate::engine::drawable::Drawable;
 use crate::engine::layout::{Building, Layout, LayoutId, Road};
+use crate::utils::pair::Pair;
+use std::collections::{HashMap, HashSet};
+use std::fmt::{Debug, Formatter};
 
 struct Rect {
     x: i16,
@@ -62,7 +62,7 @@ impl Debug for Node<'_> {
 }
 
 impl<'a> Node<'a> {
-    pub fn id(&self) -> &'a String {
+    pub fn id(&self) -> &'a LayoutId {
         match self {
             Node::Building(b) => &b.id,
             Node::Road(r) => &r.id
@@ -91,45 +91,20 @@ impl<'a> Node<'a> {
     }
 }
 
-struct Edge<'a> {
-    road_a: &'a LayoutId,
-    road_b: &'a LayoutId
-}
-
-impl Debug for Edge<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:?} <=> {:?}", self.road_a, self.road_b)
-    }
-}
-
-impl PartialEq for Edge<'_> {
-    fn eq(&self, other: &Self) -> bool {
-        self.road_a == other.road_a && self.road_b == other.road_b
-    }
-}
-
-impl Eq for Edge<'_> {
-
-}
-
-impl Hash for Edge<'_> {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        let mut id = self.road_a.clone();
-        id += self.road_b;
-        id.hash(state);
-    }
-}
+pub type Edge<'a> = Pair<'a, LayoutId>;
 
 #[derive(Debug)]
 pub struct Graph<'a> {
     nodes: HashMap<LayoutId, Node<'a>>,
-    edges: HashSet<Edge<'a>>
+    edges: HashSet<Edge<'a>>,
+    building_connections: HashSet<Pair<'a, LayoutId>>
 }
 
-impl Graph<'_> {
-    pub fn new<'a>(layout: &'a Layout) -> Graph<'a> {
+impl<'a> Graph<'a> {
+    pub fn new(layout: &Layout) -> Graph {
         let mut nodes: HashMap<LayoutId, Node> = HashMap::new();
         let mut edge_set: HashSet<Edge> = HashSet::new();
+
 
         for layout_member in &layout.roads {
             nodes.insert(layout_member.id.clone(), Node::Road(layout_member));
@@ -152,10 +127,7 @@ impl Graph<'_> {
                 let other_rect = other_node.rect();
 
                 if ctangle.overlap(other_rect) {
-                    edge_set.insert(Edge {
-                        road_a: road_node.id(),
-                        road_b: other_node.id()
-                    });
+                    edge_set.insert(Edge::new(road_node.id(), other_node.id()));
                 }
             }
 
@@ -164,17 +136,51 @@ impl Graph<'_> {
                 let other_rect = other_node.rect();
 
                 if ctangle.overlap(other_rect) {
-                    edge_set.insert(Edge {
-                        road_a: road_node.id(),
-                        road_b: other_node.id()
-                    });
+                    edge_set.insert(Edge::new(road_node.id(), other_node.id()));
                 }
             }
         }
 
         Graph {
             nodes: nodes.clone(),
-            edges: edge_set
+            edges: edge_set,
+            building_connections: HashSet::new()
         }
+    }
+
+    fn connected_to(&self, start: &LayoutId) -> HashSet<&LayoutId> {
+        self.edges.iter().filter(|x| x.has(start)).map(|x| x.other(start)).collect::<HashSet<&LayoutId>>()
+    }
+
+    pub fn start_dfs(& mut self, layout: &'a Layout) {
+        let mut connections = HashSet::new();
+        for x in layout.buildings.iter().map(|x| &x.id) {
+            let mut marks = HashSet::new();
+
+            self.recursive_dfs_to_target(&mut marks, x);
+
+            for y in layout.buildings.iter().map(|x| &x.id) {
+                if x != y && marks.contains(y) {
+                    connections.insert(Pair::new(x, y));
+                }
+            }
+        }
+
+        self.building_connections = connections
+    }
+
+    fn recursive_dfs_to_target(&'a self, mark: &mut HashSet<&'a LayoutId>, current: &'a LayoutId) {
+        mark.insert(current);
+        for x in self.connected_to(current) {
+            if mark.contains(x) {
+                continue
+            }
+
+            self.recursive_dfs_to_target(mark, x)
+        }
+    }
+
+    pub fn are_connected(&self, building_id_a: &LayoutId, building_id_b: &LayoutId) -> bool {
+        self.building_connections.contains(&Pair::new(building_id_a, building_id_b))
     }
 }

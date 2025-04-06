@@ -1,19 +1,62 @@
+use super::{drawable::Drawable, keybinds::Clickable};
 use crate::{
     population::people::BasePeopleInfo,
     ui::colors::*, POPULATION,
 };
-use serde::{Deserialize, Serialize};
-use std::cmp::PartialEq;
-use std::{fmt::Display, str::FromStr};
-use base64::{DecodeError, Engine};
 use base64::prelude::BASE64_STANDARD;
+use base64::Engine;
 use serde::de::Error;
-use serde::de::value::StringDeserializer;
-use super::{drawable::Drawable, keybinds::Clickable};
+use serde::{de, Deserialize};
+use std::array::IntoIter;
+use std::cmp::PartialEq;
+use std::fmt::{Debug, Formatter};
+use std::slice::Iter;
+use std::{fmt::Display};
 
-pub type LayoutId = String;
+pub const LAYOUT_ID_LENGTH: usize = 12;
 
-#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+pub struct LayoutId {
+    value: [u8; LAYOUT_ID_LENGTH]
+}
+
+impl LayoutId {
+    pub fn new(value: [u8; LAYOUT_ID_LENGTH]) -> Self {
+        LayoutId {
+            value
+        }
+    }
+
+    pub fn iter(&self) -> Iter<'_, u8> {
+        self.value.iter()
+    }
+}
+
+impl IntoIterator for &LayoutId {
+    type Item = u8;
+    type IntoIter = IntoIter<u8, LAYOUT_ID_LENGTH>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.value.into_iter()
+    }
+}
+
+impl Default for LayoutId {
+    fn default() -> Self {
+        LayoutId {
+            value: [0u8; LAYOUT_ID_LENGTH]
+        }
+    }
+}
+
+impl Debug for LayoutId {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", BASE64_STANDARD.encode(self.value))
+    }
+}
+
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum BuildingType {
     Custom,
@@ -29,10 +72,11 @@ impl Display for BuildingType {
 
 // ----- BUILDINGS -----
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Building {
     name: String,
-    pub id: String,
+    #[serde(deserialize_with = "deserialize_b64")]
+    pub id: LayoutId,
     district_id: usize,
     pos_x: i16,
     pos_y: i16,
@@ -60,7 +104,7 @@ impl Building {
             .count()
     }
 
-    pub fn get_building_uuid(&self) -> String {
+    pub fn get_building_uuid(&self) -> LayoutId {
         self.id.clone()
     }
 
@@ -174,10 +218,11 @@ impl Drawable for Building {
 
 // ----- ROADS -----
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(Deserialize, Clone, Debug)]
 pub struct Road {
     name: String,
-    pub id: String,
+    #[serde(deserialize_with = "deserialize_b64")]
+    pub id: LayoutId,
     start_x: i16,
     start_y: i16,
     horizontal: bool,
@@ -185,7 +230,6 @@ pub struct Road {
     length: u8,
     pavement: char,
 }
-
 
 impl Clickable for Road {
     fn infos(&self) -> Option<Vec<String>> {
@@ -250,7 +294,7 @@ impl Drawable for Road {
 
 // ----- LAYOUT -----
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Deserialize, Debug)]
 pub struct Layout {
     pub buildings: Vec<Building>,
     pub roads: Vec<Road>,
@@ -306,4 +350,28 @@ impl Layout {
     pub fn get_roads(&self) -> Vec<Road> {
         self.roads.iter().map(|r| r.clone()).collect()
     }
+}
+
+fn deserialize_b64<'de, D>(deserializer: D) -> Result<LayoutId, D::Error>
+where
+    D: de::Deserializer<'de>
+{
+    let s: &str = de::Deserialize::deserialize(deserializer)?;
+    let res = BASE64_STANDARD.decode(s);
+
+    if let Err(_) = res {
+        return Err(Error::custom("Invalid base64"))
+    }
+
+    let mut out = [0u8; LAYOUT_ID_LENGTH];
+
+    for (i, x) in res.unwrap().iter().enumerate() {
+        if i > LAYOUT_ID_LENGTH - 1 {
+            break
+        }
+
+        out[i] = x.clone()
+    }
+
+    Ok(LayoutId::new(out))
 }

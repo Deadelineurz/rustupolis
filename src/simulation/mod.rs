@@ -1,16 +1,16 @@
-use std::collections::HashMap;
-use std::sync::{Arc, RwLock};
 use deaths::check_death;
 use rand::{rng, rngs::ThreadRng, seq::SliceRandom};
 use spawn_child::{number_of_children_to_make, spawn_childs};
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
 
+use crate::engine::core::{Engine, LockableEngine};
+use crate::engine::layout::LayoutId;
 use crate::{engine::layout::Building, population::{
     district::PopulationDistrict,
     people::{BasePeopleInfo, People, PeopleLegalState},
     Population,
 }, send_to_side_bar_auto, ui::sidebar::{LogColor, LogType}};
-use crate::engine::core::{Engine, LockableEngine};
-use crate::utils::send_to_side_bar;
 
 pub mod deaths;
 pub mod dna_transmission;
@@ -119,14 +119,14 @@ fn update_deaths(engine: &LockableEngine, district: &mut PopulationDistrict, deb
 
 /// Ensure that the peoples are grouped by building uuid and only get selected once
 fn make_pairs(people: Vec<&People>, rng: &mut ThreadRng) -> Vec<(People, People)> {
-    let mut building_groups: HashMap<String, Vec<&People>> = HashMap::new();
+    let mut building_groups: HashMap<LayoutId, Vec<&People>> = HashMap::new();
 
     for person in people {
         building_groups
             .entry(
                 person
                     .get_building_uuid()
-                    .unwrap_or(&"homeless".to_string())
+                    .unwrap_or(&LayoutId::default())
                     .clone(),
             )
             .or_default()

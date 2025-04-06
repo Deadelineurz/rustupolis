@@ -1,14 +1,13 @@
 use crate::engine::drawable::DynDrawable;
 use crate::engine::keybinds::Tty;
 use crate::engine::viewport::{background, Viewport};
+use crate::threads::sidebar::SideBarMessage;
 use crate::ui::colors::A_UI_BLACK_LIGHT_COLOR;
 use log::trace;
 use std::io::Write;
-use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
+use std::sync::{Arc, RwLock};
 use termion::{cursor, terminal_size};
-use crate::threads::sidebar::SideBarMessage;
-use crate::ui::sidebar::SideBar;
 
 pub type LockableEngine = Arc<RwLock<Engine>>;
 

@@ -1,4 +1,4 @@
-use crate::engine::layout::Building;
+use crate::engine::layout::{Building, LayoutId};
 use crate::population::disease::*;
 use crate::population::dna::*;
 use rand::random_range;
@@ -65,7 +65,7 @@ pub struct AlivePerson {
     pub disease: Option<Disease>,
     /// If the work status is `None`, then this person has no job.
     pub work_status: Option<WorkLethality>,
-    pub building_uuid: Option<String>,
+    pub building_uuid: Option<LayoutId>,
     pub is_witness: bool
 }
 
@@ -74,7 +74,7 @@ pub struct DeadPerson {
     pub age: u8,
     pub dna: DNA,
     pub cause: CauseOfDeath,
-    pub building_uuid: Option<String>, // yep, the corpse can still be in a building lol
+    pub building_uuid: Option<LayoutId>, // yep, the corpse can still be in a building lol
     pub is_witness: bool
 }
 
@@ -86,7 +86,7 @@ pub enum People {
 pub trait BasePeopleInfo {
     fn get_age(&self) -> u8;
     fn get_dna(&self) -> DNA;
-    fn get_building_uuid(&self) -> Option<&String>;
+    fn get_building_uuid(&self) -> Option<&LayoutId>;
     fn is_witness(&self) -> bool;
 }
 
@@ -105,7 +105,7 @@ impl BasePeopleInfo for People {
         }
     }
 
-    fn get_building_uuid(&self) -> Option<&String> {
+    fn get_building_uuid(&self) -> Option<&LayoutId> {
         match self {
             People::Alive(AlivePerson { building_uuid, .. }) => building_uuid.as_ref(),
             People::Dead(DeadPerson { building_uuid, .. }) => building_uuid.as_ref(),

@@ -1,11 +1,10 @@
-use std::sync::{Arc};
-use std::sync::atomic::Ordering;
-use std::sync::mpsc::{channel, Sender};
-use std::thread;
-use std::thread::{JoinHandle, Scope};
-use log::debug;
 use crate::engine::keybinds::{Tty, RUNNING};
 use crate::ui::sidebar::{LogColor, LogType, SideBar, SyncDisplay};
+use std::sync::atomic::Ordering;
+use std::sync::mpsc::{channel, Sender};
+use std::sync::Arc;
+use std::thread;
+use std::thread::JoinHandle;
 
 pub type SideBarMessage = (Vec<Box<SyncDisplay>>, LogType, LogColor);
 
