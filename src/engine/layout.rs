@@ -5,8 +5,13 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
 use std::{fmt::Display, str::FromStr};
-
+use base64::{DecodeError, Engine};
+use base64::prelude::BASE64_STANDARD;
+use serde::de::Error;
+use serde::de::value::StringDeserializer;
 use super::{drawable::Drawable, keybinds::Clickable};
+
+pub type LayoutId = String;
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -27,7 +32,7 @@ impl Display for BuildingType {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Building {
     name: String,
-    id: String,
+    pub id: String,
     district_id: usize,
     pos_x: i16,
     pos_y: i16,
@@ -172,7 +177,7 @@ impl Drawable for Building {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Road {
     name: String,
-    id: String,
+    pub id: String,
     start_x: i16,
     start_y: i16,
     horizontal: bool,
@@ -181,13 +186,14 @@ pub struct Road {
     pavement: char,
 }
 
+
 impl Clickable for Road {
     fn infos(&self) -> Option<Vec<String>> {
         Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.start_x, self.start_y)),
-            String::from(format!("Length: {}", self.length)),   
-            String::from(format!(" ")), // act as a newline
+            String::from(format!("Length: {}", self.length)),
+            String::from(" ".to_string()), // act as a newline
         ])
     }
 }
