@@ -1,3 +1,4 @@
+use std::any::Any;
 use std::fmt::Display;
 use std::ops::Deref;
 use std::process::exit;
@@ -17,15 +18,35 @@ use crate::utils::send_to_side_bar;
 
 pub fn engine_loop<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: LockableEngine, stop_var: Arc<InterruptibleSleep>) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
-        let mut engine_write = engine.write().unwrap();
-        let layout2 = Layout::load_default_layout2();
-        let bdrawables2 = layout2.get_buildings();
+        sleep(Duration::from_secs(5));
+        fn remove_building_from_coords(x: i16, y: i16, engine: LockableEngine){
+            let to_delete = {
+                let engine_read = engine.write().unwrap();
+                let drwbl = engine_read.get_drawable_for_coordinates(20, 8);
+                if let Some(drwbl) = drwbl {
+                    Option::from(drwbl.id())
+                }
+                else {
+                    Option::None
+                }
+            };
 
+            let mut engine_write = engine.write().unwrap();
+            let layout2 = Layout::load_default_layout2();
+            let bdrawables2 = layout2.get_buildings();
 
-        for d in bdrawables2 {
-            engine_write.replace_empty_drawable(Box::new(d));
+            if let Some(to_delete) = to_delete {
+                for d in bdrawables2 {
+                    engine_write.layout.replace_empty_building(to_delete);
+                }
+                engine_write.refresh();
+            }
+            drop(engine_write);
         }
-
+        //remove_building_from_coords(1,2, engine);
+        let mut engine_write = engine.write().unwrap();
+        engine_write.refresh_drawables();
+        drop(engine_write);
         return_on_cancel!(stop_var, Duration::from_secs(2));
     })
 }

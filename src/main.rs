@@ -19,10 +19,7 @@ use rand::rng;
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
-use rustupolis::threads::demo::demo_scope;
 use rustupolis::threads::engine_loop::{engine_loop};
-use rustupolis::threads::sidebar::sidebar;
-use rustupolis::roads::road_graph::Graph;
 
 mod logging;
 
@@ -55,15 +52,8 @@ fn main() {
 
     let (sidebar_chan, sidebar) = sidebar(stdout.clone());
 
-    let mut engine = Engine::new(vp, stdout.clone(), sidebar_chan.clone());
+    let mut engine = Engine::new(vp, stdout.clone(), sidebar_chan.clone(), layout);
 
-    for d in bdrawables {
-        engine.register_drawable(Box::new(d));
-    }
-
-    for d in rdrawables {
-        engine.register_drawable(Box::new(d));
-    }
 
     engine.refresh();
 

@@ -8,6 +8,7 @@ use std::io::Write;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, RwLock};
 use termion::{cursor, terminal_size};
+use crate::engine::layout::{Layout, LayoutId};
 
 pub type LockableEngine = Arc<RwLock<Engine>>;
 
@@ -16,6 +17,7 @@ pub struct Engine {
     pub side_bar_tx: Sender<SideBarMessage>,
     pub background: String,
     pub stdout: Arc<Tty>,
+    pub layout: Layout,
     drawables: Vec<Box<DynDrawable>>,
 }
 
@@ -24,16 +26,23 @@ impl Engine {
         self.drawables.push(drawable)
     }
 
-    pub fn replace_empty_drawable(&mut self, drawable: Box<DynDrawable>){
-        let mut i = 0;
+    pub fn refresh_drawables(&mut self){
+        let bdrawables = self.layout.get_buildings();
+        let rdrawables = self.layout.get_roads();
 
-        self.drawables.remove(0);
-        self.drawables.push(drawable)
+        // Peut mieux faire x)
+        self.drawables = vec![];
+        for drwb in bdrawables.into_iter() {
+            self.drawables.push(Box::new(drwb))
+        }
+        for drwb in rdrawables.into_iter() {
+            self.drawables.push(Box::new(drwb))
+        }
     }
 
-    pub fn refresh(&self) {
+    pub fn refresh(&mut self) {
         self.clear_viewport();
-
+        self.refresh_drawables();
         for d in self
             .drawables
             .iter()
@@ -83,11 +92,12 @@ impl Engine {
         self.stdout.lock().flush().unwrap()
     }
 
-    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>) -> Self {
+    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>, layout: Layout) -> Self {
         trace!("{:?}", terminal_size());
         Engine {
             viewport,
             stdout,
+            layout,
             side_bar_tx: chan,
             drawables: vec![],
             background: { background(viewport.output_y, viewport.width, viewport.height) },

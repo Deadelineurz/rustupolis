@@ -12,6 +12,14 @@ use std::cmp::PartialEq;
 use std::fmt::{Debug, Formatter};
 use std::slice::Iter;
 use std::{fmt::Display};
+use std::sync::Arc;
+use std::sync::mpsc::Sender;
+use log::trace;
+use serde::de::Unexpected::Option;
+use crate::engine::drawable::DynDrawable;
+use crate::engine::keybinds::Tty;
+use crate::engine::viewport::{background, Viewport};
+use crate::threads::sidebar::SideBarMessage;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
 
@@ -214,6 +222,10 @@ impl Drawable for Building {
             _ => A_RUST_COLOR_1,
         }
     }
+
+    fn id(&self) -> LayoutId {
+        self.id
+    }
 }
 
 // ----- ROADS -----
@@ -289,6 +301,11 @@ impl Drawable for Road {
     fn color(&self) -> ansi_term::Color {
         A_GREY_COLOR
     }
+
+    fn id(&self) -> LayoutId {
+        self.id
+    }
+
 }
 
 
@@ -350,6 +367,31 @@ impl Layout {
     pub fn get_roads(&self) -> Vec<Road> {
         self.roads.iter().map(|r| r.clone()).collect()
     }
+
+    pub fn replace_empty_building(&mut self, buildingId : LayoutId){
+        let mut i = 0;
+
+        for bldg in (self.buildings) {
+            if bldg.id == buildingId {
+                let new_bldg = Building {
+                    name : "Test12".to_string(),
+                    id : bldg.id,
+                    pos_x : bldg.pos_x,
+                    pos_y: bldg.pos_y,
+                    district_id: bldg.district_id,
+                    b_type: BuildingType::Uniform,
+                    width : bldg.width,
+                    height : bldg.height,
+                    texture : Some('e'),
+                    content : []
+                };
+                self.buildings.push(new_bldg);
+                self.buildings.remove(i);
+            }
+            i += 1
+        }
+    }
+
 }
 
 fn deserialize_b64<'de, D>(deserializer: D) -> Result<LayoutId, D::Error>
