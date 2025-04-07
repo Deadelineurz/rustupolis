@@ -111,27 +111,6 @@ impl Building {
     pub fn get_district_id(&self) -> usize {
         self.district_id
     }
-}
-
-impl Clickable for Building {
-    fn infos(&self) -> Option<Vec<String>> {
-        Some(vec![
-            String::from(format!("Name: {}", self.name)),
-            String::from(format!("Position: {}, {}", self.pos_x, self.pos_y)),
-            String::from(format!("Population: {}", self.get_num_people_in_building())),
-            String::from(" ".to_string()), // act as a newline
-        ])
-    }
-}
-
-impl Drawable for Building {
-    fn x(&self) -> i16 {
-        self.pos_x
-    }
-
-    fn y(&self) -> i16 {
-        self.pos_y
-    }
 
     fn width(&self) -> u8 {
         if self.b_type == BuildingType::Custom {
@@ -155,6 +134,35 @@ impl Drawable for Building {
             return self.content.as_ref().unwrap().len() as u8;
         }
         self.height.unwrap()
+    }
+}
+
+impl Clickable for Building {
+    fn infos(&self) -> Option<Vec<String>> {
+        Some(vec![
+            String::from(format!("Name: {}", self.name)),
+            String::from(format!("Position: {}, {}", self.pos_x, self.pos_y)),
+            String::from(format!("Population: {}", self.get_num_people_in_building())),
+            String::from(" ".to_string()), // act as a newline
+        ])
+    }
+}
+
+impl Drawable for Building {
+    fn x(&self) -> i16 {
+        self.pos_x
+    }
+
+    fn y(&self) -> i16 {
+        self.pos_y
+    }
+
+    fn width(&self) -> u8 {
+        self.width()
+    }
+
+    fn height(&self) -> u8 {
+        self.height()
     }
 
     fn shape(&self) -> String {
@@ -197,12 +205,20 @@ impl Drawable for Building {
             }
         }
         let mut str: String = "".to_string();
-        for _ in 0..self.height.unwrap() {
-            str += &*(self
-                .texture
-                .unwrap()
-                .to_string()
-                .repeat(self.width.unwrap() as usize));
+        for i in 0..self.height.unwrap() {
+            if i == 0 { // Just to test
+                str += &*(self.texture.unwrap()
+                    .to_string().repeat(self.width.unwrap() as usize));
+
+            }
+            else {
+                str += &*(self
+                    .texture
+                    .unwrap()
+                    .to_string()
+                    .repeat(self.width.unwrap() as usize));
+            }
+
             str += "\n";
         }
         str
@@ -360,6 +376,19 @@ impl Layout {
         self.roads.iter().map(|r| r.clone()).collect()
     }
 
+    pub fn get_building_for_coordinates(&self, x: i16, y: i16) -> Option<&Building> {
+        for bldg in &(self.buildings) {
+            if let Some(hei) = bldg.height{
+                println!("{:} {:} {:} {:} {:}", bldg.name, bldg.x(), (x + bldg.width.unwrap() as i16) ,bldg.y(), (y + hei as i16));
+
+            }
+        }
+        let res = self.buildings
+            .iter()
+            .find(|it| it.b_type != BuildingType::Custom && it.x() <= x && (it.x() + it.width.unwrap() as i16) >= x && it.y() <= y && (it.y() + it.height.unwrap() as i16) >= y);
+        return res;
+    }
+
     pub fn replace_empty_building(&mut self, buildingId : LayoutId){
         let mut i = 0;
         let mut building: Option<&Building> = None;
@@ -388,7 +417,7 @@ impl Layout {
             b_type: BuildingType::Uniform,
             width : bldg.width,
             height : bldg.height,
-            texture : Some('e'),
+            texture : Some('█'),
             content : Some(vec![])
         };
 
