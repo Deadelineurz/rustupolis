@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use deaths::check_death;
 use rand::{rng, rngs::ThreadRng, seq::SliceRandom};
-use spawn_child::{number_of_children_to_make, spawn_childs};
+use births::{number_of_children_to_make, spawn_childs};
 
 use crate::{engine::layout::Building, population::{
     district::PopulationDistrict,
@@ -14,7 +14,7 @@ use crate::utils::send_to_side_bar;
 
 pub mod deaths;
 pub mod dna_transmission;
-pub mod spawn_child;
+pub mod births;
 
 /// Kinda expensive, will do a DFS on the districts then shuffle the population to make babies.
 pub fn update_population(engine: &LockableEngine, population: &mut Population, debug: bool) {
