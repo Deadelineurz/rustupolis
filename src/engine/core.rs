@@ -9,19 +9,21 @@ use std::sync::mpsc::Sender;
 use std::sync::{Arc, RwLock};
 use termion::{cursor, terminal_size};
 use crate::engine::layout::{Layout, LayoutId};
+use crate::roads::road_graph::Graph;
 
-pub type LockableEngine = Arc<RwLock<Engine>>;
+pub type LockableEngine<'a> =Arc<RwLock<Engine<'a>>>;
 
-pub struct Engine {
+pub struct Engine<'a> {
     pub viewport: Viewport,
     pub side_bar_tx: Sender<SideBarMessage>,
     pub background: String,
     pub stdout: Arc<Tty>,
     pub layout: Layout,
+    pub graph : &'a Graph<'a>,
     drawables: Vec<Box<DynDrawable>>,
 }
 
-impl Engine {
+impl Engine<'_> {
     pub fn register_drawable(&mut self, drawable: Box<DynDrawable>) {
         self.drawables.push(drawable)
     }
@@ -92,12 +94,13 @@ impl Engine {
         self.stdout.lock().flush().unwrap()
     }
 
-    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>, layout: Layout) -> Self {
+    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>, layout: Layout, graph: &Graph) -> Self {
         trace!("{:?}", terminal_size());
         Engine {
             viewport,
             stdout,
             layout,
+            graph: &graph,
             side_bar_tx: chan,
             drawables: vec![],
             background: { background(viewport.output_y, viewport.width, viewport.height) },

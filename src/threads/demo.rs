@@ -10,7 +10,7 @@ use std::sync::Arc;
 use std::thread::{Scope, ScopedJoinHandle};
 use std::time::Duration;
 
-pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: LockableEngine, stop_var: Arc<InterruptibleSleep>) -> ScopedJoinHandle<'scope, ()> {
+pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: LockableEngine<'scope>, stop_var: Arc<InterruptibleSleep>) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
         let engine = engine;
         let mut witness_dead = false;
