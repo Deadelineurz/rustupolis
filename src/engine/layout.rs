@@ -13,6 +13,7 @@ use std::fmt::{Debug, Formatter};
 use std::slice::Iter;
 use std::fmt::Display;
 use log::debug;
+use crate::engine::core::LockableEngine;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
 
@@ -136,6 +137,8 @@ impl Building {
         }
         self.height.unwrap()
     }
+
+
 }
 
 impl Clickable for Building {
@@ -380,7 +383,7 @@ impl Layout {
     pub fn get_building_for_coordinates(&self, x: i16, y: i16) -> Option<&Building> {
         for bldg in &(self.buildings) {
             if let Some(hei) = bldg.height{
-                debug!("{:} {:} {:} {:} {:}", bldg.name, bldg.x(), (x + bldg.width.unwrap() as i16) ,bldg.y(), (y + hei as i16));
+                //debug!("{:} {:} {:} {:} {:}", bldg.name, bldg.x(), (x + bldg.width.unwrap() as i16) ,bldg.y(), (y + hei as i16));
 
             }
         }
@@ -388,6 +391,22 @@ impl Layout {
             .iter()
             .find(|it| it.b_type != BuildingType::Custom && it.x() <= x && (it.x() + it.width.unwrap() as i16) >= x && it.y() <= y && (it.y() + it.height.unwrap() as i16) >= y);
         return res;
+    }
+
+    pub fn add_building_from_coords(&mut self, x: i16, y: i16, width: u8, height: u8) {
+        let new_bldg = Building {
+            name : "Test12".to_string(),
+            id : self.buildings[0].id,
+            pos_x : x,
+            pos_y: y,
+            district_id: 1,
+            b_type: BuildingType::Uniform,
+            width : Option::from(width),
+            height : Option::from(height),
+            texture : Some('█'),
+            content : Some(vec![])
+        };
+        self.buildings.push(new_bldg)
     }
 
     pub fn replace_empty_building(&mut self, building_id : LayoutId){
@@ -403,27 +422,26 @@ impl Layout {
             i += 1
         }
 
-        if building.is_none() {
-            return;
+        if !(building.is_none() ) {
+            let bldg = building.unwrap();
+
+            let new_bldg = Building {
+                name : "Test12".to_string(),
+                id : bldg.id,
+                pos_x : bldg.pos_x,
+                pos_y: bldg.pos_y,
+                district_id: bldg.district_id,
+                b_type: BuildingType::Uniform,
+                width : bldg.width,
+                height : bldg.height,
+                texture : Some('█'),
+                content : Some(vec![])
+            };
+            debug!("{} {:?}", i, self.buildings[0]);
+            self.buildings.remove(i);
+            self.buildings.push(new_bldg);
+            debug!("{} {:?}", i, self.buildings[0]);
         }
-
-        let bldg = building.unwrap();
-
-        let new_bldg = Building {
-            name : "Test12".to_string(),
-            id : bldg.id,
-            pos_x : bldg.pos_x,
-            pos_y: bldg.pos_y,
-            district_id: bldg.district_id,
-            b_type: BuildingType::Uniform,
-            width : bldg.width,
-            height : bldg.height,
-            texture : Some('█'),
-            content : Some(vec![])
-        };
-
-        self.buildings.push(new_bldg);
-        self.buildings.remove(i);
     }
 
 }

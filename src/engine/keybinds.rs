@@ -1,13 +1,14 @@
+use std::any::Any;
 use crate::engine::core::Engine;
 use crate::utils::interruptible_sleep::InterruptibleSleep;
-use log::trace;
+use log::{debug, trace};
 use std::io::{stdin, Stdout};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
 use std::thread::{Scope, ScopedJoinHandle};
 use termion::cursor;
-use termion::event::{Event, Key, MouseEvent};
+use termion::event::{Event, Key, MouseButton, MouseEvent};
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::RawTerminal;
 
@@ -29,7 +30,7 @@ pub static RUNNING: AtomicBool = AtomicBool::new(true);
 impl<'scope> KeyBindListener<'scope> {
     pub fn new<'env>(
         s: &'scope Scope<'scope, 'env>, e: Arc<RwLock<Engine>>,
-        click_subscribers: Vec<Sender<(i16, i16)>>
+        click_subscribers: Vec<Sender<(i16, i16, MouseButton)>>
     ) -> Self {
         let arc = Arc::new(InterruptibleSleep::new());
         let sent = arc.clone();
@@ -55,20 +56,20 @@ impl<'scope> KeyBindListener<'scope> {
                     Event::Key(Key::Down) => Self::offset_viewport(&cop, Key::Down),
                     Event::Key(Key::Char('q')) => break,
                     Event::Mouse(mouse_event) => match mouse_event {
-                        MouseEvent::Press(_, x, y) => {
-                            trace!("Mouse click at x: {} y: {}", x, y);
+                        MouseEvent::Press(click_type, x, y) => {
+                            debug!("Mouse click at x: {} y: {} | {:?}", x, y, click_type);
                             match cop.write() {
                                 Ok(ref mut engine) => {
                                     let (virtual_x, virtual_y) =
                                         engine.viewport.get_virtual_coordinates(*x, *y);
-                                    let d =
+                                    /*let d =
                                         engine.get_drawable_for_coordinates(virtual_x, virtual_y);
                                     if d.is_none() {
                                         continue;
-                                    }
+                                    }*/
 
                                     for sender in &clicks {
-                                        let _ = sender.send((virtual_x, virtual_y));
+                                        let _ = sender.send((virtual_x, virtual_y, *click_type));
                                     }
                                 }
                                 _ => (),
