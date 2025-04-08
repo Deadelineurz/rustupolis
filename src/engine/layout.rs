@@ -390,12 +390,12 @@ impl Layout {
         return res;
     }
 
-    pub fn replace_empty_building(&mut self, buildingId : LayoutId){
+    pub fn replace_empty_building(&mut self, building_id : LayoutId){
         let mut i = 0;
         let mut building: Option<&Building> = None;
 
         for bldg in &self.buildings {
-            if bldg.id == buildingId {
+            if bldg.id == building_id {
                 building = Some(bldg);
                 break
             }

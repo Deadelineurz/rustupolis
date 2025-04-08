@@ -5,8 +5,8 @@ use std::io::Write;
 use std::net::Shutdown;
 use std::os::unix::net::UnixStream;
 use std::path::PathBuf;
+use std::process;
 use std::sync::Mutex;
-use std::{env, process};
 use termion::color;
 use termion::color::Fg;
 

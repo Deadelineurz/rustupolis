@@ -8,8 +8,7 @@ use std::io::Write;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, RwLock};
 use termion::{cursor, terminal_size};
-use crate::engine::layout::{Layout, LayoutId};
-use crate::roads::road_graph::Graph;
+use crate::engine::layout::{Layout};
 
 pub type LockableEngine =Arc<RwLock<Engine>>;
 

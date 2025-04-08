@@ -10,8 +10,6 @@ use termion::cursor;
 use termion::event::{Event, Key, MouseEvent};
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::RawTerminal;
-use crate::engine::drawable::{Drawable, DynDrawable};
-use crate::engine::layout::LayoutId;
 
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 

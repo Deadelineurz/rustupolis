@@ -8,19 +8,17 @@ use rustupolis::engine::viewport::Viewport;
 use rustupolis::roads::road_graph::Graph;
 use rustupolis::terminal::screen::CleanScreen;
 use rustupolis::threads::demo::demo_scope;
+use rustupolis::threads::engine_loop::engine_loop;
 use rustupolis::threads::sidebar::sidebar;
 use rustupolis::ui::sidebar::{LogColor, LogType};
-use std::fmt::Display;
 use std::io::stdout;
 use std::ops::Deref;
-use std::sync::{Arc, RwLock};
 use std::sync::mpsc::channel;
+use std::sync::{Arc, RwLock};
 use std::thread;
-use rand::rng;
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
-use rustupolis::threads::engine_loop::{engine_loop};
 
 mod logging;
 
