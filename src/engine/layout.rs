@@ -1,7 +1,7 @@
 use super::{drawable::Drawable, keybinds::Clickable};
 use crate::{
     population::people::BasePeopleInfo,
-    ui::colors::*, POPULATION,
+    ui::colors::*,
 };
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
@@ -15,6 +15,7 @@ use std::fmt::Display;
 use log::debug;
 use rand::{rng, Fill};
 use crate::engine::core::LockableEngine;
+use crate::population::Population;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
 
@@ -101,8 +102,8 @@ pub struct Building {
 }
 
 impl Building {
-    pub fn get_num_people_in_building(&self) -> usize {
-        POPULATION.lock().unwrap()
+    pub fn get_num_people_in_building(&self, population: &Population) -> usize {
+        population
             .get_district(self.district_id)
             .unwrap()
             .peoples
@@ -153,11 +154,14 @@ impl Building {
 }
 
 impl Clickable for Building {
-    fn infos(&self) -> Option<Vec<String>> {
+    fn infos(&self, engine: &LockableEngine) -> Option<Vec<String>> {
         Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.pos_x, self.pos_y)),
-            String::from(format!("Population: {}", self.get_num_people_in_building())),
+            match engine.read() {
+                Ok(x) => String::from(format!("Population: {}", self.get_num_people_in_building(&x.population))),
+                Err(_) => {String::new()}
+            },
             String::from(" ".to_string()), // act as a newline
         ])
     }
@@ -267,7 +271,7 @@ pub struct Road {
 }
 
 impl Clickable for Road {
-    fn infos(&self) -> Option<Vec<String>> {
+    fn infos(&self, engine: &LockableEngine) -> Option<Vec<String>> {
         Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.start_x, self.start_y)),

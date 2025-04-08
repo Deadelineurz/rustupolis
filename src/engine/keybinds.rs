@@ -1,5 +1,5 @@
 use std::any::Any;
-use crate::engine::core::Engine;
+use crate::engine::core::{Engine, LockableEngine};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
 use log::{debug, trace};
 use std::io::{stdin, Stdout};
@@ -15,7 +15,7 @@ use termion::raw::RawTerminal;
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 
 pub trait Clickable {
-    fn infos(&self) -> Option<Vec<String>> {
+    fn infos(&self, engine: &LockableEngine) -> Option<Vec<String>> {
         None
     }
 }

@@ -14,6 +14,5 @@ pub mod utils;
 pub mod roads;
 
 lazy_static! {
-    pub static ref POPULATION: Arc<Mutex<Population>> = Arc::new(Mutex::new(Population::new()));
     pub static ref LAYOUT: Arc<Mutex<Layout>> = Arc::new(Mutex::new(Layout::load_default_layout()));
 }

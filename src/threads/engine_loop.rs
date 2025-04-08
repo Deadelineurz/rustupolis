@@ -1,7 +1,7 @@
 use crate::engine::core::{Engine, LockableEngine};
 use crate::engine::layout::{Building, BuildingType};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
-use crate::return_on_cancel;
+use crate::{lock_write, return_on_cancel};
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::thread::{Scope, ScopedJoinHandle};
@@ -19,7 +19,7 @@ pub fn engine_loop<'scope, 'env>(
     s.spawn(move || {
         let mut inputs = vec![];
         fn remove_building_from_coords(x: i16, y: i16, engine: &LockableEngine, _filter: BuildingType) -> bool{
-            let mut engine_write = engine.write().unwrap();
+            lock_write!(engine |> engine_write);
             let to_delete = {
                 let drwbl = engine_write.layout.get_building_for_coordinates(x, y);
                 if let Some(drwbl) = drwbl {
@@ -42,9 +42,9 @@ pub fn engine_loop<'scope, 'env>(
         }
 
         pub fn add_building_from_coords(x: i16, y: i16, width: u8, height: u8, engine: &LockableEngine) {
-            let mut engine = engine.write().unwrap();
-            engine.layout.add_building_from_coords(x, y, width, height);
-            engine.refresh();
+            lock_write!(engine |> e);
+            e.layout.add_building_from_coords(x, y, width, height);
+            e.refresh();
         }
 
         for (x,y,click_type) in receiver {

@@ -9,6 +9,7 @@ use std::sync::mpsc::Sender;
 use std::sync::{Arc, RwLock};
 use termion::{cursor, terminal_size};
 use crate::engine::layout::{Layout};
+use crate::population::Population;
 
 pub type LockableEngine =Arc<RwLock<Engine>>;
 
@@ -18,6 +19,7 @@ pub struct Engine {
     pub background: String,
     pub stdout: Arc<Tty>,
     pub layout: Layout,
+    pub population: Population,
     drawables: Vec<Box<DynDrawable>>,
 }
 
@@ -100,6 +102,7 @@ impl Engine {
             layout,
             side_bar_tx: chan,
             drawables: vec![],
+            population: Population::new(),
             background: { background(viewport.output_y, viewport.width, viewport.height) },
         }
     }
