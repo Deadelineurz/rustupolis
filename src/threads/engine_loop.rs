@@ -3,6 +3,7 @@ use std::fmt::Display;
 use std::ops::Deref;
 use std::process::exit;
 use std::sync::Arc;
+use std::sync::mpsc::Receiver;
 use std::thread::{sleep, Scope, ScopedJoinHandle};
 use std::time::Duration;
 use log::info;
@@ -16,9 +17,13 @@ use crate::ui::sidebar::{LogColor, LogType, SyncDisplay};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
 use crate::utils::send_to_side_bar;
 
-pub fn engine_loop<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: LockableEngine<'scope>, stop_var: Arc<InterruptibleSleep>) -> ScopedJoinHandle<'scope, ()> {
+pub fn engine_loop<'scope, 'env>(
+    s: &'scope Scope<'scope, 'env>,
+    engine: LockableEngine,
+    stop_var: Arc<InterruptibleSleep>,
+    receiver: Receiver<(i16, i16)>
+) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
-        sleep(Duration::from_secs(5));
         fn remove_building_from_coords(x: i16, y: i16, engine: &LockableEngine, filter: BuildingType) -> bool{
             let mut engine_write = engine.write().unwrap();
             let to_delete = {
@@ -41,8 +46,12 @@ pub fn engine_loop<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockabl
                 false
             }
         }
+
+        for (x,y) in receiver {
+            remove_building_from_coords(x,y, &engine, BuildingType::EmptySpace);
+        }
         //let mut engine_write = engine.write().unwrap();
-        remove_building_from_coords(30,23, &engine, BuildingType::EmptySpace);
+
 
         return_on_cancel!(stop_var, Duration::from_secs(2));
     })

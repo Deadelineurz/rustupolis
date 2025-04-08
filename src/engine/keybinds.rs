@@ -4,11 +4,14 @@ use log::trace;
 use std::io::{stdin, Stdout};
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
+use std::sync::mpsc::Sender;
 use std::thread::{Scope, ScopedJoinHandle};
 use termion::cursor;
 use termion::event::{Event, Key, MouseEvent};
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::RawTerminal;
+use crate::engine::drawable::{Drawable, DynDrawable};
+use crate::engine::layout::LayoutId;
 
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 
@@ -26,11 +29,15 @@ pub struct KeyBindListener<'scope> {
 pub static RUNNING: AtomicBool = AtomicBool::new(true);
 
 impl<'scope> KeyBindListener<'scope> {
-    pub fn new<'env>(s: &'scope Scope<'scope, 'env>, e: Arc<RwLock<Engine>> ) -> Self {
+    pub fn new<'env>(
+        s: &'scope Scope<'scope, 'env>, e: Arc<RwLock<Engine>>,
+        click_subscribers: Vec<Sender<(i16, i16)>>
+    ) -> Self {
         let arc = Arc::new(InterruptibleSleep::new());
         let sent = arc.clone();
 
         let t = s.spawn(move || {
+            let clicks = click_subscribers;
             let cop = e;
             let stdin = stdin();
             let stop_var = sent;
@@ -62,20 +69,9 @@ impl<'scope> KeyBindListener<'scope> {
                                         continue;
                                     }
 
-                                    let infos = d.unwrap().infos();
-
-                                    if infos.is_none() {
-                                        continue;
+                                    for sender in &clicks {
+                                        let _ = sender.send((virtual_x, virtual_y));
                                     }
-
-                                    let _s = infos.unwrap();
-                                    /*let _ = engine.sidebar.display_custom_infos(
-                                        &"Building infos",
-                                        s.iter()
-                                            .map(|s| s as &SyncDisplay)
-                                            .collect::<Vec<&SyncDisplay>>()
-                                            .as_slice(),
-                                    );*/
                                 }
                                 _ => (),
                             }

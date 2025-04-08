@@ -12,6 +12,7 @@ use std::cmp::PartialEq;
 use std::fmt::{Debug, Formatter};
 use std::slice::Iter;
 use std::fmt::Display;
+use log::debug;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
 
@@ -379,7 +380,7 @@ impl Layout {
     pub fn get_building_for_coordinates(&self, x: i16, y: i16) -> Option<&Building> {
         for bldg in &(self.buildings) {
             if let Some(hei) = bldg.height{
-                println!("{:} {:} {:} {:} {:}", bldg.name, bldg.x(), (x + bldg.width.unwrap() as i16) ,bldg.y(), (y + hei as i16));
+                debug!("{:} {:} {:} {:} {:}", bldg.name, bldg.x(), (x + bldg.width.unwrap() as i16) ,bldg.y(), (y + hei as i16));
 
             }
         }

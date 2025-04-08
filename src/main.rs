@@ -14,6 +14,7 @@ use std::fmt::Display;
 use std::io::stdout;
 use std::ops::Deref;
 use std::sync::{Arc, RwLock};
+use std::sync::mpsc::channel;
 use std::thread;
 use rand::rng;
 use termion::input::MouseTerminal;
@@ -41,9 +42,6 @@ fn main() {
 
     debug!("{:?}", wonder_graph);
 
-    let bdrawables = layout.get_buildings();
-    let rdrawables = layout.get_roads();
-
     let mut vp = Viewport::default();
 
     vp.width = (terminal_size().unwrap().0 as f32 * 0.75) as u16 - 1;
@@ -60,9 +58,10 @@ fn main() {
     let e = Arc::new(RwLock::new(engine));
 
     thread::scope(|s| {
-        let kb = KeyBindListener::new(s, e.clone());
+        let (sender, receiver) = channel();
+        let kb = KeyBindListener::new(s, e.clone(), vec![sender]);
         let demo = demo_scope(s, e.clone(), kb.stop_var.clone());
-        let game_loop = engine_loop(s, e.clone(), kb.stop_var.clone());
+        let game_loop = engine_loop(s, e.clone(), kb.stop_var.clone(), receiver);
         let _ = kb.thread.join();
         let _ = demo.join();
         let _ = game_loop.join();

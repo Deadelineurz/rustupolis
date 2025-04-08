@@ -11,19 +11,18 @@ use termion::{cursor, terminal_size};
 use crate::engine::layout::{Layout, LayoutId};
 use crate::roads::road_graph::Graph;
 
-pub type LockableEngine<'a> =Arc<RwLock<Engine<'a>>>;
+pub type LockableEngine =Arc<RwLock<Engine>>;
 
-pub struct Engine<'a> {
+pub struct Engine {
     pub viewport: Viewport,
     pub side_bar_tx: Sender<SideBarMessage>,
     pub background: String,
     pub stdout: Arc<Tty>,
     pub layout: Layout,
-    pub graph : &'a Graph<'a>,
     drawables: Vec<Box<DynDrawable>>,
 }
 
-impl Engine<'_> {
+impl Engine {
     pub fn register_drawable(&mut self, drawable: Box<DynDrawable>) {
         self.drawables.push(drawable)
     }
@@ -74,7 +73,7 @@ impl Engine<'_> {
         self.stdout.lock().flush().unwrap()
     }
 
-    pub fn get_drawable_for_coordinates(&self, x: i16, y: i16) -> Option<&Box<DynDrawable>> {
+    pub fn get_drawable_for_coordinates<'env>(&'env self, x: i16, y: i16) -> Option<&'env Box<DynDrawable>> {
         self.drawables
             .iter()
             .find(|it| it.x() <= x && it.right() > x && it.y() <= y && it.bottom() > y)
@@ -94,13 +93,12 @@ impl Engine<'_> {
         self.stdout.lock().flush().unwrap()
     }
 
-    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>, layout: Layout, graph: &Graph) -> Self {
+    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>, layout: Layout) -> Self {
         trace!("{:?}", terminal_size());
         Engine {
             viewport,
             stdout,
             layout,
-            graph: &graph,
             side_bar_tx: chan,
             drawables: vec![],
             background: { background(viewport.output_y, viewport.width, viewport.height) },
