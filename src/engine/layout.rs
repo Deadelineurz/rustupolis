@@ -411,7 +411,7 @@ impl Layout {
     pub fn add_building_from_coords(&mut self, x: i16, y: i16, width: u8, height: u8) {
         let new_bldg = Building {
             name : "Test12".to_string(),
-            id : self.buildings[0].id,
+            id : LayoutId::random(),
             pos_x : x,
             pos_y: y,
             district_id: 1,
@@ -442,7 +442,7 @@ impl Layout {
 
             let new_bldg = Building {
                 name : "Test12".to_string(),
-                id : bldg.id,
+                id : LayoutId::random(),
                 pos_x : bldg.pos_x,
                 pos_y: bldg.pos_y,
                 district_id: bldg.district_id,
