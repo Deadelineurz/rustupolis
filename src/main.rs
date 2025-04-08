@@ -3,7 +3,7 @@ use lazy_static::lazy_static;
 use log::{debug, LevelFilter};
 use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::KeyBindListener;
-use rustupolis::engine::layout::Layout;
+use rustupolis::engine::layout::{Layout, LayoutId};
 use rustupolis::engine::viewport::Viewport;
 use rustupolis::roads::road_graph::Graph;
 use rustupolis::terminal::screen::CleanScreen;
@@ -37,8 +37,6 @@ fn main() {
 
     let mut wonder_graph = Graph::new(&layout);
     wonder_graph.start_dfs(&layout);
-
-    debug!("{:?}", wonder_graph);
 
     let mut vp = Viewport::default();
 

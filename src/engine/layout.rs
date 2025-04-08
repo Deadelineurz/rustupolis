@@ -13,6 +13,7 @@ use std::fmt::{Debug, Formatter};
 use std::slice::Iter;
 use std::fmt::Display;
 use log::debug;
+use rand::{rng, Fill};
 use crate::engine::core::LockableEngine;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
@@ -31,6 +32,16 @@ impl LayoutId {
 
     pub fn iter(&self) -> Iter<'_, u8> {
         self.value.iter()
+    }
+
+    pub fn random() -> Self {
+        let mut rng = rng();
+
+        let mut x = [0u8; LAYOUT_ID_LENGTH];
+        x.fill(&mut rng);
+        LayoutId {
+            value: x
+        }
     }
 }
 
