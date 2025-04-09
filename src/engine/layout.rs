@@ -1,8 +1,5 @@
 use super::{drawable::Drawable, keybinds::Clickable};
-use crate::{
-    population::people::BasePeopleInfo,
-    ui::colors::*,
-};
+use crate::{lock_read, lock_unlock, population::people::BasePeopleInfo, ui::colors::*};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine;
 use serde::de::Error;
@@ -162,15 +159,15 @@ impl Building {
 
 impl Clickable for Building {
     fn infos(&self, engine: &LockableEngine) -> Option<Vec<String>> {
-        Some(vec![
+        lock_read!(engine |> r);
+        let x = Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.pos_x, self.pos_y)),
-            match engine.read() {
-                Ok(x) => String::from(format!("Population: {}", self.get_num_people_in_building(&x.population))),
-                Err(_) => {String::new()}
-            },
+            // String::from(format!("Population: {}", self.get_num_people_in_building(&r.population))),
             String::from(" ".to_string()), // act as a newline
-        ])
+        ]);
+        lock_unlock!(r);
+        x
     }
 }
 

@@ -12,6 +12,10 @@ use termion::event::{Event, Key, MouseButton, MouseEvent};
 use termion::event::Key::Insert;
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::RawTerminal;
+use crate::{lock_read, lock_unlock};
+use crate::threads::sidebar::SideBarMessage;
+use crate::ui::sidebar::SyncDisplay;
+use crate::utils::send_to_side_bar_read;
 
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 
@@ -32,7 +36,8 @@ impl<'scope> KeyBindListener<'scope> {
     pub fn new<'env>(
         s: &'scope Scope<'scope, 'env>, e: Arc<RwLock<Engine>>,
         click_subscribers: Vec<Sender<(i16, i16, (Option<MouseButton>, Option<Key>))>>,
-        keys_subscribers: Vec<Sender<Key>>
+        keys_subscribers: Vec<Sender<Key>>,
+        sidebar: Sender<SideBarMessage>
     ) -> Self {
         let arc = Arc::new(InterruptibleSleep::new());
         let sent = arc.clone();
@@ -76,14 +81,17 @@ impl<'scope> KeyBindListener<'scope> {
                                     Ok(ref mut engine) => {
                                         let (virtual_x, virtual_y) =
                                             engine.viewport.get_virtual_coordinates(*x, *y);
-                                        /*let d =
-                                            engine.get_drawable_for_coordinates(virtual_x, virtual_y);
-                                        if d.is_none() {
-                                            continue;
-                                        }*/
+                                        let d =
+                                            engine.get_drawable_for_coordinates(virtual_x, virtual_y).map(|x| x.infos(&cop));
 
                                         for click_sender in &clicks {
                                             let _ = click_sender.send((virtual_x, virtual_y, (Some(*click_type), None)));
+                                        }
+
+                                        if let Some(Some(x)) = d {
+                                            lock_read!(cop |> s);
+                                            send_to_side_bar_read(&s, SideBarMessage::CustomInfos(Box::new("Building infos"), x.iter().map(|x| Box::new(x.clone()) as Box<SyncDisplay>).collect::<Vec<Box<SyncDisplay>>>()));
+                                            lock_unlock!(s);
                                         }
                                     }
                                     _ => (),

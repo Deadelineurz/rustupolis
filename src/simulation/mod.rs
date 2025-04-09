@@ -12,6 +12,7 @@ use crate::{engine::layout::Building, lock_read, lock_unlock, lock_write, popula
     Population,
 }, send_to_side_bar_auto, ui::sidebar::{LogColor, LogType}};
 use crate::threads::sidebar::SideBarMessage;
+use crate::utils::send_to_side_bar_read;
 
 pub mod deaths;
 pub mod dna_transmission;
@@ -96,7 +97,7 @@ fn update_births(
     .concat();
 
     if debug {
-        let _ = pipe.send((vec![Box::new(format!("Births: {}", childs.len()))], LogType::City, LogColor::Normal));
+        let _ = pipe.send(SideBarMessage::Single(Box::new(format!("Births: {}", childs.len())), LogType::City, LogColor::Normal));
     }
 
     district.add_peoples(&mut childs);
@@ -121,9 +122,7 @@ fn update_deaths(pipe: Sender<SideBarMessage>, district: &mut PopulationDistrict
         });
 
     if debug {
-        let _ = pipe.send((vec![Box::new(format!("Deaths {}", district.get_population_number_by(PeopleLegalState::Dead) - bef))],
-                           LogType::City,
-                           LogColor::Normal));
+        let _ = pipe.send(SideBarMessage::Single(Box::new(format!("Deaths {}", district.get_population_number_by(PeopleLegalState::Dead) - bef)), LogType::City, LogColor::Normal));
     }
 }
 

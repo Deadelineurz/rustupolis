@@ -1,7 +1,7 @@
 use crate::engine::core::{Engine, LockableEngine};
 use crate::engine::layout::{Building, BuildingType, LayoutId};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
-use crate::{lock_write, return_on_cancel};
+use crate::{lock_read, lock_unlock, lock_write, return_on_cancel};
 use std::env;
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
@@ -65,12 +65,12 @@ impl Clickable for Selection {
 
 fn check_click_target(input : (i16,i16), engine: &LockableEngine) -> Option<DrawableType> {
     let mut dtype = Option::from(None);
-    let eng = engine.read().unwrap();
+    lock_read!(engine |> eng);
     let drwb = eng.get_drawable_for_coordinates(input.0, input.1);
     if drwb.is_some() {
         dtype = Option::from(drwb.unwrap().d_type());
     }
-    drop(eng);
+    lock_unlock!(eng);
     dtype
 }
 
@@ -112,22 +112,22 @@ pub fn engine_loop<'scope, 'env>(
             }
             if inputs[0].2.1.is_some() && inputs[0].2.1.unwrap() == Key::Esc {
                 *inputs = vec![];
-                let mut eng = engine.write().unwrap();
+                lock_write!(engine |> eng);
                 eng.layout.selections = vec![];
                 eng.refresh_drawables();
                 eng.refresh();
-                drop(eng);
+                lock_unlock!(eng);
                 return;
             }
             if inputs.iter().count() >=2 { // 2 actions keybinds
                 if inputs[0].2.0.is_some()  && inputs[1].2.0.is_some() {
                     if inputs[0].2.0.unwrap() == MouseButton::Right && inputs[1].2.0.unwrap() == MouseButton::Left {
                         // Cleaned the current selections
-                        let mut eng = engine.write().unwrap();
+                        lock_write!(engine |> eng);
                         eng.layout.selections = vec![];
                         eng.refresh_drawables();
                         eng.refresh();
-                        drop(eng);
+                        lock_unlock!(eng);
 
                         let left_click_target = check_click_target((inputs[1].0, inputs[1].1), engine);
                         if left_click_target == Option::from(None) {
@@ -138,11 +138,11 @@ pub fn engine_loop<'scope, 'env>(
                                 width: if inputs[1].0 > inputs[0].0 {(inputs[1].0 - inputs[0].0) as u8} else { (inputs[0].0 - inputs[1].0) as u8 },
                                 height: if inputs[1].1 > inputs[0].1 {(inputs[1].1 - inputs[0].1) as u8} else { (inputs[0].1 - inputs[1].1) as u8 }
                             };
-                            let mut eng = engine.write().unwrap();
+                            lock_write!(engine |> eng);
                             eng.layout.selections.push(drwbl);
                             eng.refresh_drawables();
                             eng.refresh();
-                            drop(eng);
+                            lock_unlock!(eng);
                         }
                         else if left_click_target == Option::from(Road) {
 
@@ -155,22 +155,22 @@ pub fn engine_loop<'scope, 'env>(
                                 width: if start.1 == end.1 {(start.0 - end.0).abs() as u8} else { 2 },
                                 height: if start.0 == end.0 {(start.1 - end.1).abs() as u8} else { 1 }
                             };
-                            let mut eng = engine.write().unwrap();
+                            lock_write!(engine |> eng);
                             eng.layout.selections.push(drwbl);
                             eng.refresh_drawables();
                             eng.refresh();
-                            drop(eng);
+                            lock_unlock!(eng);
                         }
                     }
                 }
                 if inputs[0].2.1.is_some() && inputs[1].2.0.is_some()  && inputs[2].2.0.is_some() {
                     let mut sel = Option::from(None);
-                    let mut eng = engine.write().unwrap();
+                    lock_write!(engine |> eng);
                     sel = Option::from((eng.layout.selections[0].clone()));
                     eng.layout.selections = vec![];
                     eng.refresh_drawables();
                     eng.refresh();
-                    drop(eng);
+                    lock_unlock!(eng);
                     if sel.is_some() {
                         if inputs[0].2.1.unwrap() == Key::Char('\n') && inputs[1].2.0.unwrap() == MouseButton::Right && inputs[2].2.0.unwrap() == MouseButton::Left {
                             if sel.unwrap().sel_type == SelectionType::Void{

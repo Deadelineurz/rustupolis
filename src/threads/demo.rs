@@ -9,6 +9,7 @@ use rand::rng;
 use std::sync::Arc;
 use std::thread::{Scope, ScopedJoinHandle};
 use std::time::Duration;
+use crate::threads::sidebar::SideBarMessage;
 
 pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: LockableEngine, stop_var: Arc<InterruptibleSleep>) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
@@ -33,12 +34,11 @@ pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockable
         }
 
         send_to_side_bar_auto!(e, engine,
-            "Generating starting population..." ; "Adding 100 people into city...",
+            "Generating starting population...",
             LogType::Debug,
             LogColor::Normal);
 
         for i in 0..100 {
-
             send_to_side_bar_auto!(e, engine,
                 format!("_____YEAR {i}_____"),
                 LogType::Debug,
@@ -88,7 +88,7 @@ pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: Lockable
 
                 lock_read!(engine |> x);
 
-                send_to_side_bar_read(&x, (lines, LogType::None, LogColor::Normal));
+                send_to_side_bar_read(&x, SideBarMessage::Multiple(lines, LogType::None, LogColor::Normal));
 
                 lock_unlock!(x);
                 return_on_cancel!(stop_var, Duration::from_secs(2));

@@ -19,6 +19,7 @@ use std::thread;
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
+use rustupolis::threads::sidebar::SideBarMessage::Quit;
 
 mod logging;
 
@@ -56,13 +57,13 @@ fn main() {
     thread::scope(|s| {
         let (click_sender, click_receiver) = channel();
         let (key_sender, key_receiver) = channel();
-        let kb = KeyBindListener::new(s, e.clone(), vec![click_sender], vec![key_sender]);
+        let kb = KeyBindListener::new(s, e.clone(), vec![click_sender], vec![key_sender], sidebar_chan.clone());
         let demo = demo_scope(s, e.clone(), kb.stop_var.clone());
         let game_loop = engine_loop(s, e.clone(), kb.stop_var.clone(), click_receiver, key_receiver);
         let _ = kb.thread.join();
         let _ = demo.join();
         let _ = game_loop.join();
-        let _ = sidebar_chan.send((vec![Box::new("")], LogType::Debug, LogColor::Normal));
+        let _ = sidebar_chan.send(Quit);
         let _ = sidebar.join();
     });
 }
