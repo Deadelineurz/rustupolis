@@ -1,24 +1,21 @@
 use crate::logging::RemoteLoggerClient;
 use lazy_static::lazy_static;
 use log::LevelFilter;
-use rand::seq::SliceRandom;
 use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::KeyBindListener;
 use rustupolis::engine::layout::Layout;
 use rustupolis::engine::viewport::Viewport;
 use rustupolis::terminal::screen::CleanScreen;
-use rustupolis::ui::sidebar::{LogColor, LogType, SideBar};
-use std::fmt::Display;
+use rustupolis::threads::demo::demo_scope;
+use rustupolis::threads::sidebar::*;
+use rustupolis::ui::sidebar::{LogColor, LogType};
 use std::io::stdout;
 use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 use std::thread;
-use rand::rng;
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
-use rustupolis::threads::demo::demo_scope;
-use rustupolis::threads::sidebar::sidebar;
 
 mod logging;
 
@@ -38,11 +35,18 @@ fn main() {
     let bdrawables = layout.get_buildings();
     let rdrawables = layout.get_roads();
 
+    let stdout = Arc::from(MouseTerminal::from(stdout().into_raw_mode().unwrap()));
+
+    // ----- UI SETUP -----
     let mut vp = Viewport::default();
 
-    vp.width = (terminal_size().unwrap().0 as f32 * 0.75) as u16;
-
-    let stdout = Arc::from(MouseTerminal::from(stdout().into_raw_mode().unwrap()));
+    let (ter_x, ter_y) = terminal_size().unwrap();
+    let sidebar_width_offset = (ter_x as f32 * 0.75) as u16;
+    
+    vp.width = sidebar_width_offset;
+    
+    vp.set_y_offset((ter_y as f32 * 0.1) as u16 + 2);
+    // ----- UI SETUP -----
 
     let (sidebar_chan, sidebar) = sidebar(stdout.clone());
 
@@ -60,6 +64,7 @@ fn main() {
 
     let e = Arc::new(RwLock::new(engine));
 
+
     thread::scope(|s| {
         let kb = KeyBindListener::new(s, e.clone());
         let demo = demo_scope(s, e.clone(), kb.stop_var.clone());
@@ -68,8 +73,6 @@ fn main() {
         let _ = sidebar_chan.send((vec![Box::new("")], LogType::Debug, LogColor::Normal));
         let _ = sidebar.join();
     });
-
-    // bien bien dégeu mais au moins on a une démo sympa
 
     println!("{}", Arc::strong_count(&stdout));
     drop(e);
