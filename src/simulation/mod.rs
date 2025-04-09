@@ -1,20 +1,18 @@
 use births::{number_of_children_to_make, spawn_childs};
 use deaths::check_death;
-use rand::{rngs::ThreadRng, seq::SliceRandom};
+use rand::{rng, rngs::ThreadRng, seq::SliceRandom};
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
-
+use std::sync::mpsc::Sender;
 use crate::engine::core::{Engine, LockableEngine};
-use crate::{
-    engine::layout::Building,
-    population::{
-        district::PopulationDistrict,
-        people::{BasePeopleInfo, People, PeopleLegalState},
-        Population,
-    },
-    send_to_side_bar_auto,
-    ui::sidebar::{LogColor, LogType},
-};
+use crate::{engine::layout::Building, lock_read, lock_unlock, lock_write, population::{
+    district::PopulationDistrict,
+    people::{BasePeopleInfo, People, PeopleLegalState},
+    Population,
+}, send_to_side_bar_auto, ui::sidebar::{LogColor, LogType}};
+use crate::engine::layout::LayoutId;
+use crate::threads::sidebar::SideBarMessage;
+
 pub mod births;
 pub mod deaths;
 pub mod dna_transmission;
@@ -23,30 +21,32 @@ pub mod dna_transmission;
 /// Kinda expensive, will do a DFS on the districts then shuffle the population to make babies.
 pub fn update_time_population(
     engine: &LockableEngine,
-    population: &mut Population,
     birth_month: bool,
     rng: &mut ThreadRng,
     debug: bool,
 ) {
-    let order = population.num_districts;
+    lock_read!(engine |> pop);
+    let order = pop.population.num_districts;
+    lock_unlock!(pop);
     let mut marks: Vec<bool> = vec![false; order];
 
-    update_district_peoples(engine, 0, population, birth_month, &mut marks, rng, debug);
+    update_district_peoples(engine, 0, birth_month, &mut marks, rng, debug);
 }
 
 fn update_district_peoples(
     engine: &Arc<RwLock<Engine>>,
     district_id: usize,
-    population: &mut Population,
     birth_month: bool,
     marked: &mut Vec<bool>,
     rng: &mut ThreadRng,
-    debug: bool,
+    debug: bool
 ) {
+    lock_write!(engine |> pop);
     if !marked[district_id] {
         marked[district_id] = true;
+        let s = pop.side_bar_tx.clone();
 
-        let district = population.get_district_mut(district_id).unwrap();
+        let district = pop.population.get_district_mut(district_id).unwrap();
 
         district
             .peoples
@@ -56,52 +56,40 @@ fn update_district_peoples(
                 alive.age_in_months += 1;
                 if let Some(name) = alive.get_witness_name() {
                     if alive.age_in_months % 120 == 0 {
-                        send_to_side_bar_auto!(
-                            engine,
-                            format!("{} celebrate his {}th year!", name, alive.get_age()),
-                            LogType::City,
-                            LogColor::Normal
-                        );
+                        let _ = s.clone().send(SideBarMessage::Single(Box::new(format!("{} celebrate his {}th year!", name, alive.get_age())),
+                                                              LogType::City,
+                                                              LogColor::Normal));
                     }
                 }
             });
 
-        if debug {
-            send_to_side_bar_auto!(
-                engine,
-                "One month has passed",
-                LogType::City,
-                LogColor::Normal
-            );
-        }
-
         if birth_month {
-            update_births(engine, district, rng, debug);
+            update_births(s.clone(), district, rng, debug);
         }
-        update_deaths(engine, district, rng, debug);
+        update_deaths(s.clone(), district, debug);
 
-        // district.recalcul_happiness();
+        let clones = district.neighbors.clone();
+        pop.refresh();
+        lock_unlock!(pop);
 
-        for district_id in district.neighbors.clone() {
-            update_district_peoples(
-                engine,
-                district_id,
-                population,
-                birth_month,
-                marked,
-                rng,
-                debug,
-            );
+        lock_read!(engine |> rlock);
+
+        if debug {
+            send_to_side_bar_auto!(r, &rlock, "One year has passed", LogType::City, LogColor::Normal);
+        }
+
+        for district_id in clones {
+            update_district_peoples(engine, district_id, birth_month, marked, rng, debug);
         }
     }
 }
 
 /// Will shuffle the district's population because of the parents
 fn update_births(
-    engine: &Arc<RwLock<Engine>>,
+    pipe: Sender<SideBarMessage>,
     district: &mut PopulationDistrict,
     rng: &mut ThreadRng,
-    debug: bool,
+    debug: bool
 ) {
     let mut childs: Vec<People> = make_pairs(
         district
@@ -120,27 +108,17 @@ fn update_births(
         );
         if kids.len() > 0 {
             if parent1.is_witness() {
-                send_to_side_bar_auto!(
-                    engine,
-                    format!(
-                        "{} had {} child",
-                        parent1.get_witness_name().unwrap(),
-                        kids.len()
-                    ),
-                    LogType::City,
-                    LogColor::Normal
-                );
+                let _ = pipe.send(SideBarMessage::Single(Box::new(format!(
+                    "{} had {} child",
+                    parent1.get_witness_name().unwrap(),
+                    kids.len()
+                )), LogType::City, LogColor::Normal));
             } else if parent2.is_witness() {
-                send_to_side_bar_auto!(
-                    engine,
-                    format!(
-                        "{} had {} child",
-                        parent2.get_witness_name().unwrap(),
-                        kids.len()
-                    ),
-                    LogType::City,
-                    LogColor::Normal
-                );
+                let _ = pipe.send(SideBarMessage::Single(Box::new(format!(
+                    "{} had {} child",
+                    parent2.get_witness_name().unwrap(),
+                    kids.len()
+                )), LogType::City, LogColor::Normal));
             }
         }
 
@@ -150,23 +128,13 @@ fn update_births(
     .concat();
 
     if debug {
-        send_to_side_bar_auto!(
-            engine,
-            format!("Births: {}", childs.len()),
-            LogType::City,
-            LogColor::Normal
-        );
+        let _ = pipe.send(SideBarMessage::Single(Box::new(format!("Births: {}", childs.len())), LogType::City, LogColor::Normal));
     }
 
     district.add_peoples(&mut childs);
 }
 
-fn update_deaths(
-    engine: &LockableEngine,
-    district: &mut PopulationDistrict,
-    rng: &mut ThreadRng,
-    debug: bool,
-) {
+fn update_deaths(pipe: Sender<SideBarMessage>, district: &mut PopulationDistrict, debug: bool) {
     let zone = district.zone_type.clone();
     let happiness: f64 = district.get_happiness_percentage().into();
 
@@ -174,57 +142,45 @@ fn update_deaths(
 
     district.peoples.retain(|people| people.as_alive() != None); // clear corpse
     district.peoples.iter_mut().for_each(|people| {
-        if let Some((cause, _)) = check_death(people.as_alive().unwrap(), zone, happiness, rng) {
+        let mut rng = rng();
+        if let Some((cause, _)) = check_death(people.as_alive().unwrap(), zone, happiness, &mut rng) {
             if people.is_witness() {
-                send_to_side_bar_auto!(
-                    engine,
-                    format!(
-                        "{} died {} at {}y.",
-                        people.get_witness_name().unwrap(),
-                        match cause {
-                            crate::population::people::CauseOfDeath::OldAge => "of old age",
-                            crate::population::people::CauseOfDeath::Murder => "killed by someone",
-                            crate::population::people::CauseOfDeath::Sickness => "of a disease",
-                            crate::population::people::CauseOfDeath::Radiations => "of radiations",
-                            crate::population::people::CauseOfDeath::WorkAccident =>
-                                "of a work accident",
-                            crate::population::people::CauseOfDeath::EatenByMonster =>
-                                "eaten by a monster",
-                            crate::population::people::CauseOfDeath::Poverty => "because of hunger",
-                        },
-                        people.get_age()
-                    ),
-                    LogType::City,
-                    LogColor::Important
-                );
+                let _ = pipe.send(SideBarMessage::Single(Box::new(format!(
+                    "{} died {} at {}y.",
+                    people.get_witness_name().unwrap(),
+                    match cause {
+                        crate::population::people::CauseOfDeath::OldAge => "of old age",
+                        crate::population::people::CauseOfDeath::Murder => "killed by someone",
+                        crate::population::people::CauseOfDeath::Sickness => "of a disease",
+                        crate::population::people::CauseOfDeath::Radiations => "of radiations",
+                        crate::population::people::CauseOfDeath::WorkAccident =>
+                            "of a work accident",
+                        crate::population::people::CauseOfDeath::EatenByMonster =>
+                            "eaten by a monster",
+                        crate::population::people::CauseOfDeath::Poverty => "because of hunger",
+                    },
+                    people.get_age()
+                )), LogType::City, LogColor::Important));
             }
             people.make_dead(cause);
         }
     });
 
     if debug {
-        send_to_side_bar_auto!(
-            engine,
-            format!(
-                "Deaths {}",
-                district.get_population_number_by(PeopleLegalState::Dead) - bef
-            ),
-            LogType::City,
-            LogColor::Normal
-        );
+        let _ = pipe.send(SideBarMessage::Single(Box::new(format!("Deaths {}", district.get_population_number_by(PeopleLegalState::Dead) - bef)), LogType::City, LogColor::Normal));
     }
 }
 
 /// Ensure that the peoples are grouped by building uuid and only get selected once
 fn make_pairs(people: Vec<&People>, rng: &mut ThreadRng) -> Vec<(People, People)> {
-    let mut building_groups: HashMap<String, Vec<&People>> = HashMap::new();
+    let mut building_groups: HashMap<LayoutId, Vec<&People>> = HashMap::new();
 
     for person in people {
         building_groups
             .entry(
                 person
                     .get_building_uuid()
-                    .unwrap_or(&"homeless".to_string())
+                    .unwrap_or(&LayoutId::default())
                     .clone(),
             )
             .or_default()

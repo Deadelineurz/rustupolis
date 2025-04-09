@@ -3,12 +3,15 @@ use crate::simulation::update_time_population;
 use crate::ui::sidebar::{LogColor, LogType};
 use crate::ui::topbar::TopBar;
 use crate::utils::interruptible_sleep::InterruptibleSleep;
-use crate::{return_on_cancel, send_to_side_bar_auto, POPULATION};
+use crate::utils::{send_to_side_bar_read};
+use crate::{lock_read, lock_unlock, lock_write, return_on_cancel, send_to_side_bar_auto};
+use rand::prelude::SliceRandom;
 use rand::rng;
 use std::sync::Arc;
 use std::thread::{Scope, ScopedJoinHandle};
 use std::time::Duration;
 use termion::terminal_size;
+use crate::threads::sidebar::SideBarMessage;
 
 pub fn demo_scope<'scope, 'env>(
     s: &'scope Scope<'scope, 'env>,
@@ -28,30 +31,31 @@ pub fn demo_scope<'scope, 'env>(
         );
         topbar.draw().unwrap();
 
-        send_to_side_bar_auto!(&engine, "Begin...", LogType::Debug, LogColor::Unusual);
+        send_to_side_bar_auto!(e, engine,
+            "Begin...",
+            LogType::Debug,
+            LogColor::Unusual);
 
         if !stop_var.wait_for(Duration::from_secs(1)) {
             return;
         }
 
-        send_to_side_bar_auto!(&engine,
-            "Generating starting population..." ; "Adding 100 people into city...",
+        send_to_side_bar_auto!(e, engine,
+            "Generating starting population...",
             LogType::Debug,
             LogColor::Normal);
 
         for i in 0..1200 {
             let _ = topbar.update_displayed_year(i / 12);
-
             update_time_population(
                 &engine,
-                &mut POPULATION.lock().unwrap(),
                 i % 12 == 0,
                 &mut rng,
                 false,
             );
+            lock_read!(engine |> pop);
 
-            let mutex = POPULATION.lock().unwrap();
-            let core_district = mutex.get_core_district();
+            let core_district = pop.population.get_core_district();
 
             let peoples = core_district.num_people;
             let workers = core_district.working_poulation;
@@ -62,20 +66,10 @@ pub fn demo_scope<'scope, 'env>(
 
             let _ = topbar.update_displayed_workers(workers, peoples);
 
+            lock_unlock!(pop);
+
             return_on_cancel!(stop_var, Duration::from_millis(50));
 
-            // if i % 10 == 0 {
-            //     send_to_side_bar_auto!(&engine, "Displaying a random population member:", LogType::Debug, LogColor::Unusual);
-
-            //     if witness_dead {
-            //         witness_dead = false;
-            //         POPULATION
-            //             .lock()
-            //             .unwrap()
-            //             .get_core_district_mut()
-            //             .peoples
-            //             .shuffle(&mut rng);
-            //     }
 
             //     let people = POPULATION.lock().unwrap().get_core_district().peoples[0].clone();
 

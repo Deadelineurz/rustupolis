@@ -1,6 +1,5 @@
-use std::sync::{Condvar, Mutex, WaitTimeoutResult};
+use std::sync::{Condvar, Mutex};
 use std::time::Duration;
-use log::debug;
 
 #[macro_export]
 macro_rules! return_on_cancel {

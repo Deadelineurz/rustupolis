@@ -1,33 +1,58 @@
-use crate::engine::drawable::DynDrawable;
+use std::any::type_name;
+use std::cmp::PartialEq;
+use crate::engine::drawable::{DrawableType, DynDrawable};
 use crate::engine::keybinds::Tty;
 use crate::engine::viewport::{background, Viewport};
-use crate::ui::colors::A_UI_BLACK_LIGHT_COLOR;
-use log::trace;
-use std::io::Write;
-use std::sync::{Arc, RwLock};
-use std::sync::mpsc::Sender;
-use termion::{cursor, terminal_size};
 use crate::threads::sidebar::SideBarMessage;
-use crate::ui::sidebar::SideBar;
+use crate::ui::colors::A_UI_BLACK_LIGHT_COLOR;
+use log::{debug, trace};
+use std::io::Write;
+use std::sync::mpsc::Sender;
+use std::sync::{Arc, RwLock};
+use termion::{cursor, terminal_size};
+use crate::engine::layout::{Layout};
+use crate::population::Population;
+use crate::threads::engine_loop::Selection;
 
-pub type LockableEngine = Arc<RwLock<Engine>>;
+pub type LockableEngine =Arc<RwLock<Engine>>;
 
 pub struct Engine {
     pub viewport: Viewport,
     pub side_bar_tx: Sender<SideBarMessage>,
     pub background: String,
     pub stdout: Arc<Tty>,
-    drawables: Vec<Box<DynDrawable>>,
+    pub layout: Layout,
+    pub population: Population,
+    pub drawables: Vec<Box<DynDrawable>>,
 }
+
 
 impl Engine {
     pub fn register_drawable(&mut self, drawable: Box<DynDrawable>) {
         self.drawables.push(drawable)
     }
 
-    pub fn refresh(&self) {
-        self.clear_viewport();
+    pub fn refresh_drawables(&mut self){
+        let bdrawables = self.layout.get_buildings();
+        let rdrawables = self.layout.get_roads();
+        let seldrawables = self.layout.get_selections();
 
+        self.drawables = vec![];
+
+        for drwb in seldrawables.into_iter() {
+            self.drawables.push(Box::new(drwb))
+        }
+        for drwb in bdrawables.into_iter() {
+            self.drawables.push(Box::new(drwb))
+        }
+        for drwb in rdrawables.into_iter() {
+            self.drawables.push(Box::new(drwb))
+        }
+    }
+
+    pub fn refresh(&mut self) {
+        self.clear_viewport();
+        self.refresh_drawables();
         for d in self
             .drawables
             .iter()
@@ -43,7 +68,7 @@ impl Engine {
                     self.stdout.lock(),
                     "{}{}",
                     cursor::Goto(coordinates.x, coordinates.y),
-                    d.color().paint(
+                    d.color(&self.population).paint(
                         line.chars().collect::<Vec<char>>()
                             [coordinates.crop_left..(d.width() as usize - coordinates.crop_right)]
                             .iter()
@@ -57,7 +82,10 @@ impl Engine {
         self.stdout.lock().flush().unwrap()
     }
 
-    pub fn get_drawable_for_coordinates(&self, x: i16, y: i16) -> Option<&Box<DynDrawable>> {
+    pub fn get_drawable_for_coordinates<'env>(&'env self, x: i16, y: i16) -> Option<&'env Box<DynDrawable>> {
+        debug!("{:?}", self.drawables
+            .iter()
+            .find(|it| it.x() <= x && it.right() > x && it.y() <= y && it.bottom() > y));
         self.drawables
             .iter()
             .find(|it| it.x() <= x && it.right() > x && it.y() <= y && it.bottom() > y)
@@ -77,13 +105,15 @@ impl Engine {
         self.stdout.lock().flush().unwrap()
     }
 
-    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>) -> Self {
+    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>, layout: Layout) -> Self {
         trace!("{:?}", terminal_size());
         Engine {
             viewport,
             stdout,
+            layout,
             side_bar_tx: chan,
             drawables: vec![],
+            population: Population::new(),
             background: { background(viewport.output_y, viewport.width, viewport.height) },
         }
     }

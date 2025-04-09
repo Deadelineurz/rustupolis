@@ -1,8 +1,19 @@
 use std::fmt::Debug;
+use crate::engine::core::LockableEngine;
 use crate::engine::keybinds::Clickable;
+use crate::engine::layout::LayoutId;
+use crate::population::Population;
 
 pub type DynDrawable = dyn Drawable;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DrawableType {
+    Building,
+    BuildingEmpty,
+    Road,
+    Selection
+
+}
 pub trait Drawable
 where
     Self: Debug + Sync + Send + Clickable,
@@ -12,8 +23,11 @@ where
     fn width(&self) -> u8;
     fn height(&self) -> u8;
     fn shape(&self) -> String;
-    fn color(&self) -> ansi_term::Color;
+    fn color(&self, pop: &Population) -> ansi_term::Color;
+    fn id(&self) -> LayoutId;
+    fn d_type(&self) -> DrawableType;
 }
+
 
 impl DynDrawable {
     pub fn right(&self) -> i16 {
