@@ -16,14 +16,22 @@ use termion::event::{Key, MouseButton};
 use crate::engine::drawable::{Drawable, DrawableType};
 use crate::engine::drawable::DrawableType::{BuildingEmpty, Road};
 use crate::engine::keybinds::Clickable;
+use crate::threads::engine_loop::SelectionType::Void;
 use crate::ui::colors::{A_RUST_COLOR_1, A_SAND_COLOR, A_UI_WHITE_DARK_COLOR};
 
+#[derive(Copy, Deserialize, Clone, Debug, PartialEq)]
+pub enum SelectionType {
+    Building,
+    Road,
+    Void
+}
 #[derive(Copy, Deserialize, Clone, Debug)]
 pub struct Selection {
     pub(crate) pos_x: i16,
     pub(crate) pos_y: i16,
     pub(crate) width: u8,
     pub(crate) height: u8,
+    pub(crate) sel_type: SelectionType
 }
 
 impl Drawable for Selection {
@@ -70,10 +78,12 @@ fn calculate_road_coords(start : (i16,i16), end: (i16,i16)) -> ((i16,i16),(i16,i
     let y1 = start.1;
     let x2 = end.0;
     let y2 = end.1;
-
+    debug!("calculate road coord {:?}", (start, end));
     let mut new_end_coords = (x2, y2);
-    if x2.abs() >= y2.abs() {new_end_coords = (x2, y1)}
-    else if y2.abs() > x2.abs() {new_end_coords = (x1, y2)}
+    debug!("calculate end coord cleaned {:?}", ((x2-x1).abs(), (y2-y1).abs()));
+
+    if (x2-x1).abs() >= (y2-y1).abs() {new_end_coords = (x2, y1)}
+    else if (y2-y1).abs() > (x2-x1).abs() {new_end_coords = (x1, y2)}
     (start, new_end_coords)
 }
 
@@ -111,10 +121,17 @@ pub fn engine_loop<'scope, 'env>(
             if inputs.iter().count() >=2 { // 2 actions keybinds
                 if inputs[0].2.0.is_some()  && inputs[1].2.0.is_some() {
                     if inputs[0].2.0.unwrap() == MouseButton::Right && inputs[1].2.0.unwrap() == MouseButton::Left {
+                        // Cleaned the current selections
+                        let mut eng = engine.write().unwrap();
+                        eng.layout.selections = vec![];
+                        eng.refresh_drawables();
+                        eng.refresh();
+                        drop(eng);
+
                         let left_click_target = check_click_target((inputs[1].0, inputs[1].1), engine);
-                        debug!("left_click_target {:?}", left_click_target);
                         if left_click_target == Option::from(None) {
                             let drwbl = Selection {
+                                sel_type: Void,
                                 pos_x: if inputs[1].0 > inputs[0].0 {inputs[0].0} else {inputs[1].0},
                                 pos_y: if inputs[1].1 > inputs[0].1 {inputs[0].1} else {inputs[1].1},
                                 width: if inputs[1].0 > inputs[0].0 {(inputs[1].0 - inputs[0].0) as u8} else { (inputs[0].0 - inputs[1].0) as u8 },
@@ -127,15 +144,15 @@ pub fn engine_loop<'scope, 'env>(
                             drop(eng);
                         }
                         else if left_click_target == Option::from(Road) {
-                            debug!("road clicked {:?}", (inputs));
 
                             let (start,end) = calculate_road_coords((inputs[1].0, inputs[1].1),(inputs[0].0, inputs[0].1));
                             debug!("road clicked {:?}", (start, end));
                             let drwbl = Selection {
+                                sel_type: SelectionType::Road,
                                 pos_x: if start.0 > end.0 {end.0} else {start.0},
                                 pos_y: if start.1 > end.1 {end.1} else {start.1},
-                                width: 4,
-                                height: 5
+                                width: if start.1 == end.1 {(start.0 - end.0).abs() as u8} else { 2 },
+                                height: if start.0 == end.0 {(start.1 - end.1).abs() as u8} else { 1 }
                             };
                             let mut eng = engine.write().unwrap();
                             eng.layout.selections.push(drwbl);
@@ -146,23 +163,33 @@ pub fn engine_loop<'scope, 'env>(
                     }
                 }
                 if inputs[0].2.1.is_some() && inputs[1].2.0.is_some()  && inputs[2].2.0.is_some() {
-                    if inputs[0].2.1.unwrap() == Key::Char('\n') && inputs[1].2.0.unwrap() == MouseButton::Right && inputs[2].2.0.unwrap() == MouseButton::Left {
-                        if check_click_target((inputs[1].0, inputs[1].1), engine) == Option::from(None){
-                            let mut eng = engine.write().unwrap();
-                            eng.layout.selections = vec![];
-                            eng.refresh_drawables();
-                            eng.refresh();
-                            drop(eng);
-                            add_building_from_coords(
-                                if inputs[2].0 > inputs[1].0 {inputs[1].0} else {inputs[2].0},
-                                if inputs[2].1 > inputs[1].1 {inputs[1].1} else {inputs[2].1},
-                                if inputs[2].0 > inputs[1].0 {(inputs[2].0 - inputs[1].0) as u8} else { (inputs[1].0 - inputs[2].0) as u8 },
-                                if inputs[2].1 > inputs[1].1 {(inputs[2].1 - inputs[1].1) as u8} else { (inputs[1].1 - inputs[2].1) as u8 },
-                                engine) ;
+                    let mut sel = Option::from(None);
+                    let mut eng = engine.write().unwrap();
+                    sel = Option::from((eng.layout.selections[0].clone()));
+                    eng.layout.selections = vec![];
+                    eng.refresh_drawables();
+                    eng.refresh();
+                    drop(eng);
+                    if sel.is_some() {
+                        if inputs[0].2.1.unwrap() == Key::Char('\n') && inputs[1].2.0.unwrap() == MouseButton::Right && inputs[2].2.0.unwrap() == MouseButton::Left {
+                            if sel.unwrap().sel_type == SelectionType::Void{
+                                add_building_from_coords(
+                                    if inputs[2].0 > inputs[1].0 {inputs[1].0} else {inputs[2].0},
+                                    if inputs[2].1 > inputs[1].1 {inputs[1].1} else {inputs[2].1},
+                                    if inputs[2].0 > inputs[1].0 {(inputs[2].0 - inputs[1].0) as u8} else { (inputs[1].0 - inputs[2].0) as u8 },
+                                    if inputs[2].1 > inputs[1].1 {(inputs[2].1 - inputs[1].1) as u8} else { (inputs[1].1 - inputs[2].1) as u8 },
+                                    engine) ;
+                            }
+                            else if sel.unwrap().sel_type == SelectionType::Road {
+                                let (mut start_x, mut start_y, mut width, mut height) = (0,0,0,0);
+                                let selection = sel.unwrap();
+                                (start_x, start_y, width, height) = (selection.pos_x, selection.pos_y, selection.width, selection.height);
+                                add_road_from_coords(start_x, start_y, width, height, engine);
+                            }
+
+                            *inputs = vec![];
+
                         }
-
-                        *inputs = vec![];
-
                     }
                 }
             }
@@ -193,6 +220,12 @@ pub fn engine_loop<'scope, 'env>(
         pub fn add_building_from_coords(x: i16, y: i16, width: u8, height: u8, engine: &LockableEngine) {
             lock_write!(engine |> e);
             e.layout.add_building_from_coords(x, y, width, height);
+            e.refresh();
+        }
+
+        pub fn add_road_from_coords(x: i16, y: i16, width: u8, height: u8, engine: &LockableEngine) {
+            lock_write!(engine |> e);
+            e.layout.add_road_from_coords(x, y, width, height);
             e.refresh();
         }
 

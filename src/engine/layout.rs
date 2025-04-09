@@ -443,6 +443,20 @@ impl Layout {
         self.buildings.push(new_bldg)
     }
 
+    pub fn add_road_from_coords(&mut self, x: i16, y: i16, width: u8, height: u8) {
+        let new_road = Road {
+            name: "Road12".to_string(),
+            id: Default::default(),
+            start_x: x,
+            start_y: y,
+            horizontal: if width >= height {true} else {false} ,
+            width: if width >= height {1} else {2},
+            length: if width >= height {width} else {height},
+            pavement: '▓',
+        };
+        self.roads.push(new_road);
+    }
+
     pub fn replace_empty_building(&mut self, building_id : LayoutId){
         let mut i = 0;
         let mut building: Option<&Building> = None;

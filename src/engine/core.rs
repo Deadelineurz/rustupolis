@@ -83,6 +83,9 @@ impl Engine {
     }
 
     pub fn get_drawable_for_coordinates<'env>(&'env self, x: i16, y: i16) -> Option<&'env Box<DynDrawable>> {
+        debug!("{:?}", self.drawables
+            .iter()
+            .find(|it| it.x() <= x && it.right() > x && it.y() <= y && it.bottom() > y));
         self.drawables
             .iter()
             .find(|it| it.x() <= x && it.right() > x && it.y() <= y && it.bottom() > y)
