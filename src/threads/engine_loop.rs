@@ -14,6 +14,7 @@ use termion::cursor::Right;
 use termion::event::Key::Left;
 use termion::event::{Key, MouseButton};
 use crate::engine::drawable::{Drawable, DrawableType};
+use crate::engine::drawable::DrawableType::{BuildingEmpty, Road};
 use crate::engine::keybinds::Clickable;
 use crate::ui::colors::{A_RUST_COLOR_1, A_SAND_COLOR, A_UI_WHITE_DARK_COLOR};
 
@@ -26,22 +27,10 @@ pub struct Selection {
 }
 
 impl Drawable for Selection {
-    fn x(&self) -> i16 {
-        self.pos_x
-    }
-
-    fn y(&self) -> i16 {
-        self.pos_y
-    }
-
-    fn width(&self) -> u8 {
-        self.width
-    }
-
-    fn height(&self) -> u8 {
-        self.height
-    }
-
+    fn x(&self) -> i16 { self.pos_x }
+    fn y(&self) -> i16 { self.pos_y }
+    fn width(&self) -> u8 { self.width }
+    fn height(&self) -> u8 { self.height }
     fn shape(&self) -> String {
         let mut str: String = "".to_string();
         for i in 0..self.height {
@@ -53,18 +42,9 @@ impl Drawable for Selection {
         }
         str
     }
-
-    fn color(&self) -> ansi_term::Color {
-        A_UI_WHITE_DARK_COLOR
-    }
-
-    fn id(&self) -> LayoutId {
-        LayoutId::random()
-    }
-
-    fn d_type(&self) -> DrawableType {
-        DrawableType::Selection
-    }
+    fn color(&self) -> ansi_term::Color {A_UI_WHITE_DARK_COLOR}
+    fn id(&self) -> LayoutId {LayoutId::random()}
+    fn d_type(&self) -> DrawableType {DrawableType::Selection}
 }
 impl Clickable for Selection {
     fn infos(&self, engine: &LockableEngine) -> Option<Vec<String>> {
@@ -74,6 +54,28 @@ impl Clickable for Selection {
     }
 }
 
+fn check_click_target(input : (i16,i16), engine: &LockableEngine) -> Option<DrawableType> {
+    let mut dtype = Option::from(None);
+    let eng = engine.read().unwrap();
+    let drwb = eng.get_drawable_for_coordinates(input.0, input.1);
+    if drwb.is_some() {
+        dtype = Option::from(drwb.unwrap().d_type());
+    }
+    drop(eng);
+    dtype
+}
+
+fn calculate_road_coords(start : (i16,i16), end: (i16,i16)) -> ((i16,i16),(i16,i16)) {
+    let x1 = start.0;
+    let y1 = start.1;
+    let x2 = end.0;
+    let y2 = end.1;
+
+    let mut new_end_coords = (x2, y2);
+    if x2.abs() >= y2.abs() {new_end_coords = (x2, y1)}
+    else if y2.abs() > x2.abs() {new_end_coords = (x1, y2)}
+    (start, new_end_coords)
+}
 
 
 pub fn engine_loop<'scope, 'env>(
@@ -88,6 +90,15 @@ pub fn engine_loop<'scope, 'env>(
 
         fn check_inputs(inputs: &mut (Vec<(i16, i16, (Option<MouseButton>, Option<Key>))>), engine: &LockableEngine) {
             let n = inputs.iter().count();
+
+            if inputs[0].2.0.is_some() && inputs[0].2.0.unwrap() == MouseButton::Left && check_click_target((inputs[0].0, inputs[0].1), engine) == Option::from(BuildingEmpty) {
+                let boolean = replace_building_from_coords(inputs[0].0, inputs[0].1, engine, BuildingType::EmptySpace);
+                if boolean {
+                    *inputs = vec![];
+                }
+
+                return;
+            }
             if inputs[0].2.1.is_some() && inputs[0].2.1.unwrap() == Key::Esc {
                 *inputs = vec![];
                 let mut eng = engine.write().unwrap();
@@ -97,48 +108,61 @@ pub fn engine_loop<'scope, 'env>(
                 drop(eng);
                 return;
             }
-            if inputs[0].2.0.is_some() && inputs[0].2.0.unwrap() == MouseButton::Left {
-                let boolean = replace_building_from_coords(inputs[0].0, inputs[0].1, engine, BuildingType::EmptySpace);
-                if boolean {
-                    *inputs = vec![];
-                }
-
-                return;
-            }
-            if inputs.iter().count() == 3 { // 2 actions keybinds
-                if inputs[0].2.1.is_some() && inputs[1].2.0.is_some()  && inputs[2].2.0.is_some() {
-                    if inputs[1].2.0.unwrap() == MouseButton::Right && inputs[2].2.0.unwrap() == MouseButton::Left {
-                        //debug!("{:?}",(inputs[1].0, inputs[1].1,(inputs[1].0 - inputs[2].0), (inputs[1].1 - inputs[2].1) ));
-                        let mut eng = engine.write().unwrap();
-                        eng.layout.selections = vec![];
-                        eng.refresh_drawables();
-                        eng.refresh();
-                        drop(eng);
-                        add_building_from_coords(
-                            if inputs[2].0 > inputs[1].0 {inputs[1].0} else {inputs[2].0},
-                            if inputs[2].1 > inputs[1].1 {inputs[1].1} else {inputs[2].1},
-                            if inputs[2].0 > inputs[1].0 {(inputs[2].0 - inputs[1].0) as u8} else { (inputs[1].0 - inputs[2].0) as u8 },
-                            if inputs[2].1 > inputs[1].1 {(inputs[2].1 - inputs[1].1) as u8} else { (inputs[1].1 - inputs[2].1) as u8 },
-                            engine) ;
-                        *inputs = vec![];
-
-                    }
-                }
-            }
-            else if n == 2 {
+            if inputs.iter().count() >=2 { // 2 actions keybinds
                 if inputs[0].2.0.is_some()  && inputs[1].2.0.is_some() {
                     if inputs[0].2.0.unwrap() == MouseButton::Right && inputs[1].2.0.unwrap() == MouseButton::Left {
-                        let drwbl = Selection {
-                            pos_x: if inputs[1].0 > inputs[0].0 {inputs[0].0} else {inputs[1].0},
-                            pos_y: if inputs[1].1 > inputs[0].1 {inputs[0].1} else {inputs[1].1},
-                            width: if inputs[1].0 > inputs[0].0 {(inputs[1].0 - inputs[0].0) as u8} else { (inputs[0].0 - inputs[1].0) as u8 },
-                            height: if inputs[1].1 > inputs[0].1 {(inputs[1].1 - inputs[0].1) as u8} else { (inputs[0].1 - inputs[1].1) as u8 }
-                        };
-                        let mut eng = engine.write().unwrap();
-                        eng.layout.selections.push(drwbl);
-                        eng.refresh_drawables();
-                        eng.refresh();
-                        drop(eng);
+                        let left_click_target = check_click_target((inputs[1].0, inputs[1].1), engine);
+                        debug!("left_click_target {:?}", left_click_target);
+                        if left_click_target == Option::from(None) {
+                            let drwbl = Selection {
+                                pos_x: if inputs[1].0 > inputs[0].0 {inputs[0].0} else {inputs[1].0},
+                                pos_y: if inputs[1].1 > inputs[0].1 {inputs[0].1} else {inputs[1].1},
+                                width: if inputs[1].0 > inputs[0].0 {(inputs[1].0 - inputs[0].0) as u8} else { (inputs[0].0 - inputs[1].0) as u8 },
+                                height: if inputs[1].1 > inputs[0].1 {(inputs[1].1 - inputs[0].1) as u8} else { (inputs[0].1 - inputs[1].1) as u8 }
+                            };
+                            let mut eng = engine.write().unwrap();
+                            eng.layout.selections.push(drwbl);
+                            eng.refresh_drawables();
+                            eng.refresh();
+                            drop(eng);
+                        }
+                        else if left_click_target == Option::from(Road) {
+                            debug!("road clicked {:?}", (inputs));
+
+                            let (start,end) = calculate_road_coords((inputs[1].0, inputs[1].1),(inputs[0].0, inputs[0].1));
+                            debug!("road clicked {:?}", (start, end));
+                            let drwbl = Selection {
+                                pos_x: if start.0 > end.0 {end.0} else {start.0},
+                                pos_y: if start.1 > end.1 {end.1} else {start.1},
+                                width: 4,
+                                height: 5
+                            };
+                            let mut eng = engine.write().unwrap();
+                            eng.layout.selections.push(drwbl);
+                            eng.refresh_drawables();
+                            eng.refresh();
+                            drop(eng);
+                        }
+                    }
+                }
+                if inputs[0].2.1.is_some() && inputs[1].2.0.is_some()  && inputs[2].2.0.is_some() {
+                    if inputs[0].2.1.unwrap() == Key::Char('\n') && inputs[1].2.0.unwrap() == MouseButton::Right && inputs[2].2.0.unwrap() == MouseButton::Left {
+                        if check_click_target((inputs[1].0, inputs[1].1), engine) == Option::from(None){
+                            let mut eng = engine.write().unwrap();
+                            eng.layout.selections = vec![];
+                            eng.refresh_drawables();
+                            eng.refresh();
+                            drop(eng);
+                            add_building_from_coords(
+                                if inputs[2].0 > inputs[1].0 {inputs[1].0} else {inputs[2].0},
+                                if inputs[2].1 > inputs[1].1 {inputs[1].1} else {inputs[2].1},
+                                if inputs[2].0 > inputs[1].0 {(inputs[2].0 - inputs[1].0) as u8} else { (inputs[1].0 - inputs[2].0) as u8 },
+                                if inputs[2].1 > inputs[1].1 {(inputs[2].1 - inputs[1].1) as u8} else { (inputs[1].1 - inputs[2].1) as u8 },
+                                engine) ;
+                        }
+
+                        *inputs = vec![];
+
                     }
                 }
             }

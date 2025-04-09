@@ -7,6 +7,7 @@ pub type DynDrawable = dyn Drawable;
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DrawableType {
     Building,
+    BuildingEmpty,
     Road,
     Selection
 

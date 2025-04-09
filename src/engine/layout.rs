@@ -262,7 +262,7 @@ impl Drawable for Building {
     }
 
     fn d_type(&self) -> DrawableType {
-        DrawableType::Building
+        if self.b_type == BuildingType::EmptySpace {DrawableType::BuildingEmpty} else {DrawableType::Building}
     }
 }
 
