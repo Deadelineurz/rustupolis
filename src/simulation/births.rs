@@ -30,9 +30,14 @@ pub fn number_of_children_to_make(people: &AlivePerson, env: &PopulationDistrict
     }
 }
 
-pub fn spawn_childs(amount: u8, parent1: &AlivePerson, parent2: &AlivePerson) -> Vec<People> {
+pub fn spawn_childs(
+    amount: u8,
+    is_witness: bool,
+    parent1: &AlivePerson,
+    parent2: &AlivePerson,
+) -> Vec<People> {
     let mut vec = Vec::new();
-    for _ in 0..amount {
+    for i in 0..(amount + if is_witness { 1 } else { 0 }) {
         let mut dna = mix_dna(parent1.dna, parent2.dna);
 
         let bonus_mutation = match (
@@ -50,6 +55,7 @@ pub fn spawn_childs(amount: u8, parent1: &AlivePerson, parent2: &AlivePerson) ->
             dna,
             parent1.mood.to_average(parent2.mood),
             parent1.building_uuid.clone(),
+            i == 0 && is_witness,
         ));
     }
 

@@ -249,7 +249,12 @@ impl People {
     }
 
     /// Create a new alive people, age is 0 month.
-    pub fn create_people(dna: DNA, mood: Mood, birth_place: Option<LayoutId>) -> Self {
+    pub fn create_people(
+        dna: DNA,
+        mood: Mood,
+        birth_place: Option<LayoutId>,
+        is_witness: bool,
+    ) -> Self {
         People::Alive(AlivePerson {
             age_in_months: 0,
             dna,
@@ -257,14 +262,18 @@ impl People {
             disease: None,
             work_status: None,
             building_uuid: birth_place,
-            witness_name: None,
+            witness_name: if is_witness {
+                Some(BRITISH_NAMES.choose(&mut rng()).unwrap().to_string())
+            } else {
+                None
+            },
         })
     }
 
     /// Create a new alive people, will add a random number of DNA traits
     pub fn create_random_people(working_age: bool, max_dna_traits: u8, is_witness: bool) -> Self {
         let age = match working_age {
-            true => 18 + rand::random_range(0..=32),
+            true => 18 + rand::random_range(0..=20),
             false => rand::random_range(0..18),
         };
 
@@ -274,7 +283,7 @@ impl People {
         }
 
         People::Alive(AlivePerson {
-            age_in_months: age,
+            age_in_months: age * 12,
             dna: DNA::from_flag(dna_traits),
             mood: Mood::Neutral,
             disease: None,
@@ -291,7 +300,7 @@ impl People {
     /// Create a new alive people, which history will be logged
     pub fn create_witness(age: u32, dna_traits: u32, starting_building: Option<Building>) -> Self {
         People::Alive(AlivePerson {
-            age_in_months: age,
+            age_in_months: age * 12,
             dna: DNA::from_flag(dna_traits),
             mood: Mood::Neutral,
             disease: None,

@@ -36,9 +36,7 @@ pub fn demo_scope<'scope, 'env>(
             LogType::Debug,
             LogColor::Unusual);
 
-        if !stop_var.wait_for(Duration::from_secs(1)) {
-            return;
-        }
+        return_on_cancel!(stop_var, Duration::from_millis(500));
 
         send_to_side_bar_auto!(e, engine,
             "Generating starting population...",
@@ -46,11 +44,13 @@ pub fn demo_scope<'scope, 'env>(
             LogColor::Normal);
 
         let mut refresh = 0;
+	let mut witnesses_to_birth: u8 = 0;
         for i in 0..1200 {
             let _ = topbar.update_displayed_year(i / 12);
             update_time_population(
                 &engine,
                 i % 12 == 0,
+                &mut witnesses_to_birth,
                 &mut rng,
                 false,
             );

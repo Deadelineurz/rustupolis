@@ -22,7 +22,7 @@ impl Population {
             districts: Vec::new(),
         };
 
-        pop.add_district(100, DistrictZone::Core, 1);
+        pop.add_district(100, DistrictZone::Core, 2);
         pop.get_district_mut(0).unwrap().update_building_occupation();
 
         pop

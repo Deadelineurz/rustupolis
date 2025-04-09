@@ -22,6 +22,7 @@ pub mod dna_transmission;
 pub fn update_time_population(
     engine: &LockableEngine,
     birth_month: bool,
+    witness_to_make: &mut u8,
     rng: &mut ThreadRng,
     debug: bool,
 ) {
@@ -30,13 +31,22 @@ pub fn update_time_population(
     lock_unlock!(pop);
     let mut marks: Vec<bool> = vec![false; order];
 
-    update_district_peoples(engine, 0, birth_month, &mut marks, rng, debug);
+    update_district_peoples(
+        engine,
+        0,
+        birth_month,
+        witness_to_make,
+        &mut marks,
+        rng,
+        debug,
+    )
 }
 
 fn update_district_peoples(
     engine: &Arc<RwLock<Engine>>,
     district_id: usize,
     birth_month: bool,
+    witness_to_make: &mut u8,
     marked: &mut Vec<bool>,
     rng: &mut ThreadRng,
     debug: bool
@@ -64,22 +74,22 @@ fn update_district_peoples(
             });
 
         if birth_month {
-            update_births(s.clone(), district, rng, debug);
+            update_births(s.clone(), district, witness_to_make, rng, debug);
         }
-        update_deaths(s.clone(), district, debug);
+        *witness_to_make += update_deaths(s.clone(), district, debug);
 
         let clones = district.neighbors.clone();
         // pop.refresh();
         lock_unlock!(pop);
 
-        lock_read!(engine |> rlock);
-
         if debug {
-            send_to_side_bar_auto!(r, &rlock, "One year has passed", LogType::City, LogColor::Normal);
+            send_to_side_bar_auto!(e, engine, "One year has passed", LogType::City, LogColor::Normal);
         }
 
+
+
         for district_id in clones {
-            update_district_peoples(engine, district_id, birth_month, marked, rng, debug);
+            update_district_peoples(engine, district_id, birth_month, witness_to_make, marked, rng, debug);
         }
     }
 }
@@ -88,6 +98,7 @@ fn update_district_peoples(
 fn update_births(
     pipe: Sender<SideBarMessage>,
     district: &mut PopulationDistrict,
+    witness_to_make: &mut u8,
     rng: &mut ThreadRng,
     debug: bool
 ) {
@@ -103,6 +114,12 @@ fn update_births(
     .map(|(parent1, parent2)| {
         let kids = spawn_childs(
             number_of_children_to_make(parent1.as_alive().unwrap(), district),
+            if *witness_to_make > 0 {
+                *witness_to_make -= 1;
+                true
+            } else {
+                false
+            },
             parent1.as_alive().unwrap(),
             parent2.as_alive().unwrap(),
         );
@@ -134,11 +151,13 @@ fn update_births(
     district.add_peoples(&mut childs);
 }
 
-fn update_deaths(pipe: Sender<SideBarMessage>, district: &mut PopulationDistrict, debug: bool) {
+fn update_deaths(pipe: Sender<SideBarMessage>, district: &mut PopulationDistrict, debug: bool) -> u8 {
     let zone = district.zone_type.clone();
     let happiness: f64 = district.get_happiness_percentage().into();
 
     let bef = district.get_population_number_by(PeopleLegalState::Dead);
+
+    let mut witness_to_make = 0;
 
     district.peoples.retain(|people| people.as_alive() != None); // clear corpse
     district.peoples.iter_mut().for_each(|people| {
@@ -161,6 +180,7 @@ fn update_deaths(pipe: Sender<SideBarMessage>, district: &mut PopulationDistrict
                     },
                     people.get_age()
                 )), LogType::City, LogColor::Important));
+		witness_to_make += 1;
             }
             people.make_dead(cause);
         }
@@ -169,6 +189,7 @@ fn update_deaths(pipe: Sender<SideBarMessage>, district: &mut PopulationDistrict
     if debug {
         let _ = pipe.send(SideBarMessage::Single(Box::new(format!("Deaths {}", district.get_population_number_by(PeopleLegalState::Dead) - bef)), LogType::City, LogColor::Normal));
     }
+    witness_to_make
 }
 
 /// Ensure that the peoples are grouped by building uuid and only get selected once
