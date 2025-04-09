@@ -1,9 +1,7 @@
-use std::{io::stdout, sync::{Arc, Mutex}};
-use engine::{keybinds::Tty, layout::Layout};
+use std::sync::{Arc, Mutex};
+use engine::layout::Layout;
 use lazy_static::lazy_static;
 use population::Population;
-use termion::{input::MouseTerminal, raw::IntoRawMode};
-use crate::ui::sidebar::SideBar;
 
 pub mod terminal;
 pub mod logging;

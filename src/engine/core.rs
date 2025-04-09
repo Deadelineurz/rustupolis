@@ -8,7 +8,6 @@ use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
 use termion::{cursor, terminal_size};
 use crate::threads::sidebar::SideBarMessage;
-use crate::ui::sidebar::SideBar;
 
 pub type LockableEngine = Arc<RwLock<Engine>>;
 

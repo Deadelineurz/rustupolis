@@ -1,14 +1,9 @@
 use crate::engine::core::Engine;
-use crate::ui::sidebar::SyncDisplay;
-use log::trace;
-use std::fmt::Display;
-use std::io::{stdin, stdout, Stdout};
-use std::ops::Deref;
-use std::process::exit;
-use std::sync::{Arc, Condvar, Mutex, RwLock};
+use std::io::{stdin, Stdout};
+use std::sync::{Arc, RwLock};
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::thread;
-use std::thread::{JoinHandle, Scope, ScopedJoinHandle};
+use std::thread::{Scope, ScopedJoinHandle};
+use log::trace;
 use termion::cursor;
 use termion::event::{Event, Key, MouseEvent};
 use termion::input::{MouseTerminal, TermRead};
@@ -73,7 +68,7 @@ impl<'scope> KeyBindListener<'scope> {
                                         continue;
                                     }
 
-                                    let s = infos.unwrap();
+                                    let _s = infos.unwrap();
                                     /*let _ = engine.sidebar.display_custom_infos(
                                         &"Building infos",
                                         s.iter()

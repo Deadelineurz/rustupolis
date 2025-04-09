@@ -1,9 +1,8 @@
-use std::sync::{Arc};
+use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
-use std::thread::{JoinHandle, Scope};
-use log::debug;
+use std::thread::JoinHandle;
 use crate::engine::keybinds::{Tty, RUNNING};
 use crate::ui::sidebar::{LogColor, LogType, SideBar, SyncDisplay};
 
