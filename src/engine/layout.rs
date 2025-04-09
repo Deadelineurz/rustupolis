@@ -102,7 +102,8 @@ pub struct Building {
 
 impl Building {
     pub fn get_num_people_in_building(&self, population: &Population) -> usize {
-        population
+        if population.get_district(self.district_id).is_some() {
+            population
             .get_district(self.district_id)
             .unwrap()
             .peoples
@@ -114,7 +115,8 @@ impl Building {
                     false
                 }
             })
-            .count()
+            .count()}
+        else { 0 }
     }
 
     pub fn get_building_uuid(&self) -> LayoutId {
