@@ -82,6 +82,7 @@ impl<'scope> KeyBindListener<'scope> {
                                     Ok(ref mut engine) => {
                                         let (virtual_x, virtual_y) =
                                             engine.viewport.get_virtual_coordinates(*x, *y);
+                                        debug!("x: {virtual_x}, y: {virtual_y}");
                                         let d =
                                             engine.get_drawable_for_coordinates(virtual_x, virtual_y).map(|x| x.infos(engine.deref()));
 

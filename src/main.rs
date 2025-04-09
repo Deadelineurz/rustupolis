@@ -46,10 +46,8 @@ fn main() {
 
     vp.width = (terminal_size().unwrap().0 as f32 * 0.75) as u16 - 1;
 
-    let sidebar_width_offset = (ter_x as f32 * 0.75) as u16;
-    
-    
-    vp.set_y_offset((ter_y as f32 * 0.1) as u16 + 2);
+    vp.output_y = (ter_y as f32 * 0.1) as u16 + 2;
+    vp.height = ter_y - vp.output_y;
 
     let (sidebar_chan, sidebar) = sidebar(stdout.clone());
 
@@ -59,7 +57,6 @@ fn main() {
     engine.refresh();
 
     let e = Arc::new(RwLock::new(engine));
-
 
     thread::scope(|s| {
         let (click_sender, click_receiver) = channel();

@@ -45,6 +45,7 @@ pub fn demo_scope<'scope, 'env>(
             LogType::Debug,
             LogColor::Normal);
 
+        let mut refresh = 0;
         for i in 0..1200 {
             let _ = topbar.update_displayed_year(i / 12);
             update_time_population(
@@ -68,8 +69,15 @@ pub fn demo_scope<'scope, 'env>(
 
             lock_unlock!(pop);
 
-            return_on_cancel!(stop_var, Duration::from_millis(50));
+            if refresh == 20 {
+                lock_write!(engine |> e);
+                refresh = 0;
+                e.refresh();
+                lock_unlock!(e);
+            }
 
+            return_on_cancel!(stop_var, Duration::from_millis(50));
+            refresh += 1;
 
             //     let people = POPULATION.lock().unwrap().get_core_district().peoples[0].clone();
 
