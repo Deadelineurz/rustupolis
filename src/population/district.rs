@@ -1,4 +1,4 @@
-use crate::{population::*, LAYOUT};
+use crate::{engine::layout::BuildingType, population::*, LAYOUT};
 use rand::{rng, seq::IndexedRandom};
 use strum_macros::EnumString;
 
@@ -85,7 +85,7 @@ impl PopulationDistrict {
 
     pub fn update_building_occupation(&mut self) {
         let mut binding = LAYOUT.lock().unwrap();
-        let buildings = binding.get_buildings_district_mut(self.id);
+        let buildings: Vec<&mut Building> = binding.get_buildings_district_mut(self.id);
 
         let mut rng = rng();
         for people in self
@@ -94,8 +94,15 @@ impl PopulationDistrict {
             .filter(|people| people.get_legal_state() != PeopleLegalState::Child)
         {
             if let Some(people) = people.as_alive_mut() {
-                people.building_uuid =
-                    Some(buildings.choose(&mut rng).unwrap().get_building_uuid());
+                people.building_uuid = Some(
+                    buildings
+                        .iter()
+                        .filter(|b| b.get_building_type() != BuildingType::EmptySpace)
+                        .collect::<Vec<_>>()
+                        .choose(&mut rng)
+                        .unwrap()
+                        .get_building_uuid(),
+                );
             }
         }
     }
