@@ -54,7 +54,7 @@ fn update_district_peoples(
         update_deaths(s, district, debug);
 
         let clones = district.neighbors.clone();
-
+        pop.refresh();
         lock_unlock!(pop);
 
         lock_read!(engine |> rlock);

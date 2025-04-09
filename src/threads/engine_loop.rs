@@ -16,6 +16,7 @@ use termion::event::{Key, MouseButton};
 use crate::engine::drawable::{Drawable, DrawableType};
 use crate::engine::drawable::DrawableType::{BuildingEmpty, Road};
 use crate::engine::keybinds::Clickable;
+use crate::population::Population;
 use crate::threads::engine_loop::SelectionType::Void;
 use crate::ui::colors::{A_RUST_COLOR_1, A_SAND_COLOR, A_UI_WHITE_DARK_COLOR};
 
@@ -50,7 +51,7 @@ impl Drawable for Selection {
         }
         str
     }
-    fn color(&self) -> ansi_term::Color {A_UI_WHITE_DARK_COLOR}
+    fn color(&self, pop: &Population) -> ansi_term::Color {A_UI_WHITE_DARK_COLOR}
     fn id(&self) -> LayoutId {LayoutId::random()}
     fn d_type(&self) -> DrawableType {DrawableType::Selection}
 }

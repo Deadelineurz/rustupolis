@@ -68,7 +68,7 @@ impl Engine {
                     self.stdout.lock(),
                     "{}{}",
                     cursor::Goto(coordinates.x, coordinates.y),
-                    d.color().paint(
+                    d.color(&self.population).paint(
                         line.chars().collect::<Vec<char>>()
                             [coordinates.crop_left..(d.width() as usize - coordinates.crop_right)]
                             .iter()

@@ -1,6 +1,8 @@
 use std::fmt::Debug;
+use crate::engine::core::LockableEngine;
 use crate::engine::keybinds::Clickable;
 use crate::engine::layout::LayoutId;
+use crate::population::Population;
 
 pub type DynDrawable = dyn Drawable;
 
@@ -21,7 +23,7 @@ where
     fn width(&self) -> u8;
     fn height(&self) -> u8;
     fn shape(&self) -> String;
-    fn color(&self) -> ansi_term::Color;
+    fn color(&self, pop: &Population) -> ansi_term::Color;
     fn id(&self) -> LayoutId;
     fn d_type(&self) -> DrawableType;
 }

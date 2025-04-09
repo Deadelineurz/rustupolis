@@ -250,10 +250,26 @@ impl Drawable for Building {
         str
     }
 
-    fn color(&self) -> ansi_term::Color {
+    fn color(&self, population: &Population) -> ansi_term::Color {
         match &self.b_type {
             s if s == &BuildingType::EmptySpace => A_SAND_COLOR,
-            _ => A_RUST_COLOR_1,
+            _ => {
+                if (self.get_num_people_in_building(population) > 20 ) {
+                    A_RUST_COLOR_1
+                }
+                else if (self.get_num_people_in_building(population) > 15 ){
+                    A_RUST_COLOR_2
+                    }
+                else if (self.get_num_people_in_building(population) > 10 ){
+                    A_LIGHT_COLOR
+                }
+                else if (self.get_num_people_in_building(population) > 10 ){
+                    A_SAND_COLOR
+                }
+                else {
+                    A_DARKEST_COLOR
+                }
+            },
         }
     }
 
@@ -336,7 +352,7 @@ impl Drawable for Road {
         }
     }
 
-    fn color(&self) -> ansi_term::Color {
+    fn color(&self, pop: &Population) -> ansi_term::Color {
         A_GREY_COLOR
     }
 
