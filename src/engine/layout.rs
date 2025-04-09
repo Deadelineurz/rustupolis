@@ -15,7 +15,9 @@ use std::fmt::Display;
 use log::debug;
 use rand::{rng, Fill};
 use crate::engine::core::LockableEngine;
+use crate::engine::drawable::DrawableType;
 use crate::population::Population;
+use crate::threads::engine_loop::Selection;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
 
@@ -139,7 +141,12 @@ impl Building {
             }
             n
         } else {
-            self.width.unwrap()
+            if let Some(width) = self.width {
+                return width
+            }
+            else {
+                return 0
+            }
         }
     }
 
@@ -253,6 +260,10 @@ impl Drawable for Building {
     fn id(&self) -> LayoutId {
         self.id
     }
+
+    fn d_type(&self) -> DrawableType {
+        DrawableType::Building
+    }
 }
 
 // ----- ROADS -----
@@ -332,6 +343,9 @@ impl Drawable for Road {
     fn id(&self) -> LayoutId {
         self.id
     }
+    fn d_type(&self) -> DrawableType {
+        DrawableType::Road
+    }
 
 }
 
@@ -342,6 +356,7 @@ impl Drawable for Road {
 pub struct Layout {
     pub buildings: Vec<Building>,
     pub roads: Vec<Road>,
+    pub selections : Vec<Selection>
 }
 
 impl Layout {
@@ -395,7 +410,11 @@ impl Layout {
         self.roads.iter().map(|r| r.clone()).collect()
     }
 
-    pub fn get_building_for_coordinates(&self, x: i16, y: i16) -> Option<&Building> {
+    pub fn get_selections(&self) -> Vec<Selection> {
+        self.selections.iter().map(|r| r.clone()).collect()
+    }
+
+    pub fn get_building_for_coordinates(&self, x: i16, y: i16, filter : BuildingType) -> Option<&Building> {
         for bldg in &(self.buildings) {
             if let Some(hei) = bldg.height{
                 //debug!("{:} {:} {:} {:} {:}", bldg.name, bldg.x(), (x + bldg.width.unwrap() as i16) ,bldg.y(), (y + hei as i16));
@@ -404,8 +423,8 @@ impl Layout {
         }
         let res = self.buildings
             .iter()
-            .find(|it| it.b_type != BuildingType::Custom && it.x() <= x && (it.x() + it.width.unwrap() as i16) >= x && it.y() <= y && (it.y() + it.height.unwrap() as i16) >= y);
-        return res;
+            .find(|it| it.b_type == filter && it.x() <= x && (it.x() + it.width() as i16) >= x && it.y() <= y && (it.y() + it.height() as i16) >= y);
+        res
     }
 
     pub fn add_building_from_coords(&mut self, x: i16, y: i16, width: u8, height: u8) {
@@ -439,6 +458,7 @@ impl Layout {
 
         if !(building.is_none() ) {
             let bldg = building.unwrap();
+            //debug!("{:?}", bldg);
 
             let new_bldg = Building {
                 name : "Test12".to_string(),
@@ -447,15 +467,13 @@ impl Layout {
                 pos_y: bldg.pos_y,
                 district_id: bldg.district_id,
                 b_type: BuildingType::Uniform,
-                width : bldg.width,
-                height : bldg.height,
-                texture : Some('█'),
+                width : Option::from(bldg.width()),
+                height : Option::from(bldg.height()),
+                texture : Some('▓'),
                 content : Some(vec![])
             };
-            debug!("{} {:?}", i, self.buildings[0]);
-            self.buildings.remove(i);
             self.buildings.push(new_bldg);
-            debug!("{} {:?}", i, self.buildings[0]);
+            self.buildings.remove(i);
         }
     }
 

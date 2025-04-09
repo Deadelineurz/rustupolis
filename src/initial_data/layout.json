@@ -121,8 +121,8 @@
       "content": null
     },
     {
-      "name": "TVAGUE7",
-      "id": "VFZBR1VFNg==",
+      "name": "TVAGUE10",
+      "id": "VkZaQlIxVkZOZz09",
       "district_id": 0,
       "pos_x": 79,
       "pos_y": 16,
@@ -188,7 +188,7 @@
     },
     {
       "name": "Marché",
-      "id": "UUc=",
+      "id": "TWFyY2jDqQ==",
       "district_id": 0,
       "pos_x": 78,
       "pos_y": 1,
@@ -206,7 +206,7 @@
     },
     {
       "name": "HAB_FULL",
-      "id": "UUc=",
+      "id": "SEFCX0ZVTEw=",
       "district_id": 0,
       "pos_x": 78,
       "pos_y": 37,
@@ -223,8 +223,8 @@
       ]
     },
     {
-      "name": "TAG",
-      "id": "UUc=",
+      "name": "TAG1",
+      "id": "VEFHMQ==",
       "district_id": 0,
       "pos_x": 79,
       "pos_y": 30,
@@ -277,7 +277,7 @@
     },
     {
       "name": "TVAGUE9",
-      "id": "VFZBR1VFOA==",
+      "id": "VFZBR1VFOQ==",
     "district_id": 0,
       "pos_x": 150,
       "pos_y": 1,
@@ -479,7 +479,7 @@
     },
     {
       "name": "R12_HORI",
-      "id": "UjEx",
+      "id": "UjEyX0hPUkk=",
       "district_id": 0,
       "start_x": 0,
       "start_y": 42,
@@ -490,7 +490,7 @@
     },
     {
       "name": "R13_HORI",
-      "id": "UjEx",
+      "id": "UjEzX0hPUkk=",
       "district_id": 0,
       "start_x": 0,
       "start_y": 0,
@@ -499,5 +499,6 @@
       "length": 160,
       "pavement": "▓"
     }
-  ]
+  ],
+  "selections" : []
 }

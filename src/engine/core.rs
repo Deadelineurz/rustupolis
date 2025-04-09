@@ -1,15 +1,18 @@
-use crate::engine::drawable::DynDrawable;
+use std::any::type_name;
+use std::cmp::PartialEq;
+use crate::engine::drawable::{DrawableType, DynDrawable};
 use crate::engine::keybinds::Tty;
 use crate::engine::viewport::{background, Viewport};
 use crate::threads::sidebar::SideBarMessage;
 use crate::ui::colors::A_UI_BLACK_LIGHT_COLOR;
-use log::trace;
+use log::{debug, trace};
 use std::io::Write;
 use std::sync::mpsc::Sender;
 use std::sync::{Arc, RwLock};
 use termion::{cursor, terminal_size};
 use crate::engine::layout::{Layout};
 use crate::population::Population;
+use crate::threads::engine_loop::Selection;
 
 pub type LockableEngine =Arc<RwLock<Engine>>;
 
@@ -20,8 +23,9 @@ pub struct Engine {
     pub stdout: Arc<Tty>,
     pub layout: Layout,
     pub population: Population,
-    drawables: Vec<Box<DynDrawable>>,
+    pub drawables: Vec<Box<DynDrawable>>,
 }
+
 
 impl Engine {
     pub fn register_drawable(&mut self, drawable: Box<DynDrawable>) {
@@ -31,9 +35,13 @@ impl Engine {
     pub fn refresh_drawables(&mut self){
         let bdrawables = self.layout.get_buildings();
         let rdrawables = self.layout.get_roads();
+        let seldrawables = self.layout.get_selections();
 
-        // Peut mieux faire x)
         self.drawables = vec![];
+
+        for drwb in seldrawables.into_iter() {
+            self.drawables.push(Box::new(drwb))
+        }
         for drwb in bdrawables.into_iter() {
             self.drawables.push(Box::new(drwb))
         }

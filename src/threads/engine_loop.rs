@@ -1,27 +1,152 @@
 use crate::engine::core::{Engine, LockableEngine};
-use crate::engine::layout::{Building, BuildingType};
+use crate::engine::layout::{Building, BuildingType, LayoutId};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
 use crate::{lock_write, return_on_cancel};
+use std::env;
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::thread::{Scope, ScopedJoinHandle};
 use std::time::Duration;
+use ansi_term::{Color, Colour};
 use log::{debug, trace};
+use serde::Deserialize;
+use termion::cursor::Right;
 use termion::event::Key::Left;
-use termion::event::MouseButton;
+use termion::event::{Key, MouseButton};
+use crate::engine::drawable::{Drawable, DrawableType};
+use crate::engine::keybinds::Clickable;
+use crate::ui::colors::{A_RUST_COLOR_1, A_SAND_COLOR, A_UI_WHITE_DARK_COLOR};
+
+#[derive(Copy, Deserialize, Clone, Debug)]
+pub struct Selection {
+    pub(crate) pos_x: i16,
+    pub(crate) pos_y: i16,
+    pub(crate) width: u8,
+    pub(crate) height: u8,
+}
+
+impl Drawable for Selection {
+    fn x(&self) -> i16 {
+        self.pos_x
+    }
+
+    fn y(&self) -> i16 {
+        self.pos_y
+    }
+
+    fn width(&self) -> u8 {
+        self.width
+    }
+
+    fn height(&self) -> u8 {
+        self.height
+    }
+
+    fn shape(&self) -> String {
+        let mut str: String = "".to_string();
+        for i in 0..self.height {
+
+            str += &*(
+                ("␥").to_string()
+                .repeat(self.width as usize));
+            str += "\n";
+        }
+        str
+    }
+
+    fn color(&self) -> ansi_term::Color {
+        A_UI_WHITE_DARK_COLOR
+    }
+
+    fn id(&self) -> LayoutId {
+        LayoutId::random()
+    }
+
+    fn d_type(&self) -> DrawableType {
+        DrawableType::Selection
+    }
+}
+impl Clickable for Selection {
+    fn infos(&self, engine: &LockableEngine) -> Option<Vec<String>> {
+        Some(vec![
+            String::from("".to_string()),
+        ])
+    }
+}
+
+
 
 pub fn engine_loop<'scope, 'env>(
     s: &'scope Scope<'scope, 'env>,
     engine: LockableEngine,
     stop_var: Arc<InterruptibleSleep>,
-    receiver: Receiver<(i16, i16, MouseButton)>
+    click_receiver: Receiver<(i16, i16, (Option<MouseButton>, Option<Key>))>,
+    key_receiver: Receiver<Key>
 ) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
         let mut inputs = vec![];
-        fn remove_building_from_coords(x: i16, y: i16, engine: &LockableEngine, _filter: BuildingType) -> bool{
+
+        fn check_inputs(inputs: &mut (Vec<(i16, i16, (Option<MouseButton>, Option<Key>))>), engine: &LockableEngine) {
+            let n = inputs.iter().count();
+            if inputs[0].2.1.is_some() && inputs[0].2.1.unwrap() == Key::Esc {
+                *inputs = vec![];
+                let mut eng = engine.write().unwrap();
+                eng.layout.selections = vec![];
+                eng.refresh_drawables();
+                eng.refresh();
+                drop(eng);
+                return;
+            }
+            if inputs[0].2.0.is_some() && inputs[0].2.0.unwrap() == MouseButton::Left {
+                let boolean = replace_building_from_coords(inputs[0].0, inputs[0].1, engine, BuildingType::EmptySpace);
+                if boolean {
+                    *inputs = vec![];
+                }
+
+                return;
+            }
+            if inputs.iter().count() == 3 { // 2 actions keybinds
+                if inputs[0].2.1.is_some() && inputs[1].2.0.is_some()  && inputs[2].2.0.is_some() {
+                    if inputs[1].2.0.unwrap() == MouseButton::Right && inputs[2].2.0.unwrap() == MouseButton::Left {
+                        //debug!("{:?}",(inputs[1].0, inputs[1].1,(inputs[1].0 - inputs[2].0), (inputs[1].1 - inputs[2].1) ));
+                        let mut eng = engine.write().unwrap();
+                        eng.layout.selections = vec![];
+                        eng.refresh_drawables();
+                        eng.refresh();
+                        drop(eng);
+                        add_building_from_coords(
+                            if inputs[2].0 > inputs[1].0 {inputs[1].0} else {inputs[2].0},
+                            if inputs[2].1 > inputs[1].1 {inputs[1].1} else {inputs[2].1},
+                            if inputs[2].0 > inputs[1].0 {(inputs[2].0 - inputs[1].0) as u8} else { (inputs[1].0 - inputs[2].0) as u8 },
+                            if inputs[2].1 > inputs[1].1 {(inputs[2].1 - inputs[1].1) as u8} else { (inputs[1].1 - inputs[2].1) as u8 },
+                            engine) ;
+                        *inputs = vec![];
+
+                    }
+                }
+            }
+            else if n == 2 {
+                if inputs[0].2.0.is_some()  && inputs[1].2.0.is_some() {
+                    if inputs[0].2.0.unwrap() == MouseButton::Right && inputs[1].2.0.unwrap() == MouseButton::Left {
+                        let drwbl = Selection {
+                            pos_x: if inputs[1].0 > inputs[0].0 {inputs[0].0} else {inputs[1].0},
+                            pos_y: if inputs[1].1 > inputs[0].1 {inputs[0].1} else {inputs[1].1},
+                            width: if inputs[1].0 > inputs[0].0 {(inputs[1].0 - inputs[0].0) as u8} else { (inputs[0].0 - inputs[1].0) as u8 },
+                            height: if inputs[1].1 > inputs[0].1 {(inputs[1].1 - inputs[0].1) as u8} else { (inputs[0].1 - inputs[1].1) as u8 }
+                        };
+                        let mut eng = engine.write().unwrap();
+                        eng.layout.selections.push(drwbl);
+                        eng.refresh_drawables();
+                        eng.refresh();
+                        drop(eng);
+                    }
+                }
+            }
+        }
+        fn replace_building_from_coords(x: i16, y: i16, engine: &LockableEngine, filter: BuildingType) -> bool{
             lock_write!(engine |> engine_write);
             let to_delete = {
-                let drwbl = engine_write.layout.get_building_for_coordinates(x, y);
+                let drwbl = engine_write.layout.get_building_for_coordinates(x, y, filter);
                 if let Some(drwbl) = drwbl {
                     Option::from(drwbl.id)
                 }
@@ -47,19 +172,24 @@ pub fn engine_loop<'scope, 'env>(
             e.refresh();
         }
 
-        for (x,y,click_type) in receiver {
-            inputs.push((x,y, click_type));
-            debug!("{:?}", inputs);
+        for (x, y, click_type) in click_receiver {
+            inputs.insert(0, (x,y, click_type));
+
+            check_inputs(&mut inputs, &engine);
             //
-            if click_type == MouseButton::Right {
+            /*if click_type == MouseButton::Right {
                 add_building_from_coords(x,y,10,10, &engine);
             }
             else {
-                remove_building_from_coords(x,y, &engine, BuildingType::Uniform);
-            }
+                replace_building_from_coords(x,y, &engine, BuildingType::EmptySpace);
+            }*/
         }
-        //let mut engine_write = engine.write().unwrap();
+        /*for key in key_receiver {
+            debug!("{:? }", key);
+            if key == Key::Insert{
 
-
+                check_inputs(&mut inputs, &engine);
+            }
+        }*/
     })
 }

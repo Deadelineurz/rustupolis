@@ -9,6 +9,7 @@ use std::sync::mpsc::Sender;
 use std::thread::{Scope, ScopedJoinHandle};
 use termion::cursor;
 use termion::event::{Event, Key, MouseButton, MouseEvent};
+use termion::event::Key::Insert;
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::RawTerminal;
 
@@ -30,13 +31,15 @@ pub static RUNNING: AtomicBool = AtomicBool::new(true);
 impl<'scope> KeyBindListener<'scope> {
     pub fn new<'env>(
         s: &'scope Scope<'scope, 'env>, e: Arc<RwLock<Engine>>,
-        click_subscribers: Vec<Sender<(i16, i16, MouseButton)>>
+        click_subscribers: Vec<Sender<(i16, i16, (Option<MouseButton>, Option<Key>))>>,
+        keys_subscribers: Vec<Sender<Key>>
     ) -> Self {
         let arc = Arc::new(InterruptibleSleep::new());
         let sent = arc.clone();
 
         let t = s.spawn(move || {
             let clicks = click_subscribers;
+            let keys = keys_subscribers;
             let cop = e;
             let stdin = stdin();
             let stop_var = sent;
@@ -55,24 +58,36 @@ impl<'scope> KeyBindListener<'scope> {
                     Event::Key(Key::Up) => Self::offset_viewport(&cop, Key::Up),
                     Event::Key(Key::Down) => Self::offset_viewport(&cop, Key::Down),
                     Event::Key(Key::Char('q')) => break,
+                    Event::Key(Key::Char('\n')) => {
+                        for sender in &clicks {
+                            let _ = sender.send((0,0, (None, Some(Key::Char('\n')))));
+                        }
+                    },
+                    Event::Key(Key::Esc) => {
+                        for sender in &clicks {
+                            let _ = sender.send((0,0, (None, Some(Key::Esc))));
+                        }
+                    }
                     Event::Mouse(mouse_event) => match mouse_event {
                         MouseEvent::Press(click_type, x, y) => {
                             debug!("Mouse click at x: {} y: {} | {:?}", x, y, click_type);
-                            match cop.write() {
-                                Ok(ref mut engine) => {
-                                    let (virtual_x, virtual_y) =
-                                        engine.viewport.get_virtual_coordinates(*x, *y);
-                                    /*let d =
-                                        engine.get_drawable_for_coordinates(virtual_x, virtual_y);
-                                    if d.is_none() {
-                                        continue;
-                                    }*/
+                            if !(*click_type == MouseButton::WheelDown) {
+                                match cop.write() {
+                                    Ok(ref mut engine) => {
+                                        let (virtual_x, virtual_y) =
+                                            engine.viewport.get_virtual_coordinates(*x, *y);
+                                        /*let d =
+                                            engine.get_drawable_for_coordinates(virtual_x, virtual_y);
+                                        if d.is_none() {
+                                            continue;
+                                        }*/
 
-                                    for sender in &clicks {
-                                        let _ = sender.send((virtual_x, virtual_y, *click_type));
+                                        for click_sender in &clicks {
+                                            let _ = click_sender.send((virtual_x, virtual_y, (Some(*click_type), None)));
+                                        }
                                     }
+                                    _ => (),
                                 }
-                                _ => (),
                             }
                         }
                         _ => (),

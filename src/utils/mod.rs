@@ -23,25 +23,25 @@ macro_rules! send_to_side_bar_auto {
 #[macro_export]
 macro_rules! lock_read {
     ($lock: ident |> $lock_name: ident) => {
-        log::debug!("Reading {} into {}", stringify!($lock), stringify!($lock_name));
+        //log::debug!("Reading {} into {}", stringify!($lock), stringify!($lock_name));
         let $lock_name = $lock.read().unwrap();
-        log::debug!("Lock {} acquired", stringify!($lock_name))
+        //log::debug!("Lock {} acquired", stringify!($lock_name))
     }
 }
 
 #[macro_export]
 macro_rules! lock_write {
     ($lock: ident |> $lock_name: ident) => {
-        log::debug!("Writing {} into {}", stringify!($lock), stringify!($lock_name));
+        //log::debug!("Writing {} into {}", stringify!($lock), stringify!($lock_name));
         let mut $lock_name = $lock.write().unwrap();
-        log::debug!("Lock {} acquired", stringify!($lock_name))
+        //log::debug!("Lock {} acquired", stringify!($lock_name))
     }
 }
 
 #[macro_export]
 macro_rules! lock_unlock {
     ($lock: ident) => {
-        log::debug!("Unlocking {}", stringify!($lock));
+        //log::debug!("Unlocking {}", stringify!($lock));
         drop($lock);
     };
 }

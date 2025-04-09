@@ -4,6 +4,13 @@ use crate::engine::layout::LayoutId;
 
 pub type DynDrawable = dyn Drawable;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DrawableType {
+    Building,
+    Road,
+    Selection
+
+}
 pub trait Drawable
 where
     Self: Debug + Sync + Send + Clickable,
@@ -15,7 +22,9 @@ where
     fn shape(&self) -> String;
     fn color(&self) -> ansi_term::Color;
     fn id(&self) -> LayoutId;
+    fn d_type(&self) -> DrawableType;
 }
+
 
 impl DynDrawable {
     pub fn right(&self) -> i16 {

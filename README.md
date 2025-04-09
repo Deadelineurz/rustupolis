@@ -1,6 +1,11 @@
 # Rustupolis
 Vous pouvez lancer la dernière version du projet en vous connectant à `ssh -p 2223 rustupolis@rustupolis.owochle.app`
 
+# Commandes
+- flèches directionelles
+- clic gauche + clic droit, selection pour batiment, entrée pour confirmer our esc pour suppr
+- clic gauche sur terrain vague, nouveau batiment
+
 # Pour chaque district
 ## 1. Mise à jour de la population
 ### a. Création d'enfant
