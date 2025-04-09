@@ -25,13 +25,23 @@ pub fn update_time_population(
     engine: &LockableEngine,
     population: &mut Population,
     birth_month: bool,
+    witness_to_make: &mut u8,
     rng: &mut ThreadRng,
     debug: bool,
 ) {
     let order = population.num_districts;
     let mut marks: Vec<bool> = vec![false; order];
 
-    update_district_peoples(engine, 0, population, birth_month, &mut marks, rng, debug);
+    update_district_peoples(
+        engine,
+        0,
+        population,
+        birth_month,
+        witness_to_make,
+        &mut marks,
+        rng,
+        debug,
+    )
 }
 
 fn update_district_peoples(
@@ -39,6 +49,7 @@ fn update_district_peoples(
     district_id: usize,
     population: &mut Population,
     birth_month: bool,
+    witness_to_make: &mut u8,
     marked: &mut Vec<bool>,
     rng: &mut ThreadRng,
     debug: bool,
@@ -75,11 +86,11 @@ fn update_district_peoples(
             );
         }
 
-        if birth_month {
-            update_births(engine, district, rng, debug);
-        }
-        update_deaths(engine, district, rng, debug);
+        *witness_to_make += update_deaths(engine, district, rng, debug);
 
+        if birth_month {
+            update_births(engine, district, witness_to_make, rng, debug);
+        }
         // district.recalcul_happiness();
 
         for district_id in district.neighbors.clone() {
@@ -88,6 +99,7 @@ fn update_district_peoples(
                 district_id,
                 population,
                 birth_month,
+                witness_to_make,
                 marked,
                 rng,
                 debug,
@@ -100,6 +112,7 @@ fn update_district_peoples(
 fn update_births(
     engine: &Arc<RwLock<Engine>>,
     district: &mut PopulationDistrict,
+    witness_to_make: &mut u8,
     rng: &mut ThreadRng,
     debug: bool,
 ) {
@@ -115,6 +128,18 @@ fn update_births(
     .map(|(parent1, parent2)| {
         let kids = spawn_childs(
             number_of_children_to_make(parent1.as_alive().unwrap(), district),
+            if *witness_to_make > 0 {
+                send_to_side_bar_auto!(
+                    engine,
+                    format!("A new witness is born!"),
+                    LogType::City,
+                    LogColor::Unusual
+                );
+                *witness_to_make -= 1;
+                true
+            } else {
+                false
+            },
             parent1.as_alive().unwrap(),
             parent2.as_alive().unwrap(),
         );
@@ -166,11 +191,13 @@ fn update_deaths(
     district: &mut PopulationDistrict,
     rng: &mut ThreadRng,
     debug: bool,
-) {
+) -> u8 {
     let zone = district.zone_type.clone();
     let happiness: f64 = district.get_happiness_percentage().into();
 
     let bef = district.get_population_number_by(PeopleLegalState::Dead);
+
+    let mut witness_to_make = 0;
 
     district.peoples.retain(|people| people.as_alive() != None); // clear corpse
     district.peoples.iter_mut().for_each(|people| {
@@ -197,6 +224,7 @@ fn update_deaths(
                     LogType::City,
                     LogColor::Important
                 );
+                witness_to_make += 1;
             }
             people.make_dead(cause);
         }
@@ -212,7 +240,9 @@ fn update_deaths(
             LogType::City,
             LogColor::Normal
         );
-    }
+    };
+
+    witness_to_make
 }
 
 /// Ensure that the peoples are grouped by building uuid and only get selected once
