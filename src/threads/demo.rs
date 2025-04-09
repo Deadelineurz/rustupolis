@@ -1,96 +1,100 @@
-use std::fmt::Display;
-use std::ops::Deref;
-use std::sync::Arc;
-use std::thread::{sleep, Scope, ScopedJoinHandle};
-use std::time::Duration;
-use log::info;
+use crate::engine::core::LockableEngine;
+use crate::simulation::update_time_population;
+use crate::ui::sidebar::{LogColor, LogType};
+use crate::ui::topbar::TopBar;
+use crate::utils::interruptible_sleep::InterruptibleSleep;
+use crate::utils::{send_to_side_bar_read};
+use crate::{lock_read, lock_unlock, lock_write, return_on_cancel, send_to_side_bar_auto};
 use rand::prelude::SliceRandom;
 use rand::rng;
-use crate::engine::core::{Engine, LockableEngine};
-use crate::{return_on_cancel, send_to_side_bar_auto, POPULATION};
-use crate::simulation::update_population;
-use crate::ui::sidebar::{LogColor, LogType, SyncDisplay};
-use crate::utils::interruptible_sleep::InterruptibleSleep;
-use crate::utils::send_to_side_bar;
+use std::sync::Arc;
+use std::thread::{Scope, ScopedJoinHandle};
+use std::time::Duration;
+use termion::terminal_size;
+use crate::threads::sidebar::SideBarMessage;
 
-pub fn demo_scope<'scope, 'env>(s: &'scope Scope<'scope, 'env>, engine: LockableEngine, stop_var: Arc<InterruptibleSleep>) -> ScopedJoinHandle<'scope, ()> {
+pub fn demo_scope<'scope, 'env>(
+    s: &'scope Scope<'scope, 'env>,
+    engine: LockableEngine,
+    stop_var: Arc<InterruptibleSleep>,
+) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
         let engine = engine;
-        let mut witness_dead = false;
         let mut rng = rng();
-        /*for _ in 0..3 {
-            send_to_side_bar(&engine, (Box::new("..."),
-                                      LogType::Debug,
-                                      LogColor::Normal));
 
-            sleep(Duration::from_millis(400));
-        }*/
+        let (ter_x, _ter_y) = terminal_size().unwrap();
+        let sidebar_width_offset = (ter_x as f32 * 0.75) as u16;
 
-        send_to_side_bar_auto!(&engine,
+        let topbar = TopBar::new(
+            engine.read().unwrap().stdout.clone(),
+            ter_x - sidebar_width_offset - 1,
+        );
+        topbar.draw().unwrap();
+
+        send_to_side_bar_auto!(e, engine,
             "Begin...",
             LogType::Debug,
             LogColor::Unusual);
 
-        if !stop_var.wait_for(Duration::from_secs(1)) {
-            return
-        }
+        return_on_cancel!(stop_var, Duration::from_millis(500));
 
-        send_to_side_bar_auto!(&engine,
-            "Generating starting population..." ; "Adding 100 people into city...",
+        send_to_side_bar_auto!(e, engine,
+            "Generating starting population...",
             LogType::Debug,
             LogColor::Normal);
 
-        for i in 0..100 {
+        let mut refresh = 0;
+	let mut witnesses_to_birth: u8 = 0;
+        for i in 0..12000 {
+            let _ = topbar.update_displayed_year(i / 12);
+            update_time_population(
+                &engine,
+                i % 12 == 0,
+                &mut witnesses_to_birth,
+                &mut rng,
+                false,
+            );
+            lock_read!(engine |> pop);
 
-            send_to_side_bar_auto!(&engine,
-                format!("_____YEAR {i}_____"),
-                LogType::Debug,
-                LogColor::Normal);
+            let core_district = pop.population.get_core_district();
 
-            update_population(&engine, &mut POPULATION.lock().unwrap(), true);
+            let peoples = core_district.num_people;
+            let workers = core_district.working_poulation;
 
-            // sleep(Duration::from_millis(3600));
+            let _ = topbar.update_displayed_population(peoples);
 
-            let peoples = POPULATION.lock().unwrap().get_core_district().num_people;
-            let deads = POPULATION
-                .lock()
-                .unwrap()
-                .get_core_district()
-                .get_population_number_by(crate::population::people::PeopleLegalState::Dead);
+            let _ = topbar.update_displayed_happiness(core_district.get_happiness_percentage());
 
-            send_to_side_bar_auto!(&engine, format!("New population : {}", peoples - deads), LogType::Debug, LogColor::Unusual);
+            let _ = topbar.update_displayed_workers(workers, peoples);
 
-            return_on_cancel!(stop_var, Duration::from_millis(500));
+            lock_unlock!(pop);
 
-            if i % 10 == 0 {
-                send_to_side_bar_auto!(&engine, "Displaying a random population member:", LogType::Debug, LogColor::Unusual);
-
-                if witness_dead {
-                    witness_dead = false;
-                    POPULATION
-                        .lock()
-                        .unwrap()
-                        .get_core_district_mut()
-                        .peoples
-                        .shuffle(&mut rng);
-                }
-
-                let people = POPULATION.lock().unwrap().get_core_district().peoples[0].clone();
-
-                if people.as_alive() == None {
-                    witness_dead = true;
-                }
-
-                let debug: String = format!("{:#?}", people);
-                let lines = debug
-                    .lines()
-                    .map(|s| Box::new(s.to_string()) as Box<SyncDisplay>)
-                    .collect();
-
-                send_to_side_bar(&engine, (lines, LogType::None, LogColor::Normal));
-
-                return_on_cancel!(stop_var, Duration::from_secs(2));
+            if refresh == 20 {
+                lock_write!(engine |> e);
+                refresh = 0;
+                e.refresh();
+                lock_unlock!(e);
             }
+
+            return_on_cancel!(stop_var, Duration::from_millis(50));
+            refresh += 1;
+
+            //     let people = POPULATION.lock().unwrap().get_core_district().peoples[0].clone();
+
+            //     if people.as_alive() == None {
+            //         witness_dead = true;
+            //     }
+
+            //     let debug: String = format!("{:#?}", people);
+            //     let lines = debug
+            //         .lines()
+            //         .map(|s| Box::new(s.to_string()) as Box<SyncDisplay>)
+            //         .collect();
+
+            //     send_to_side_bar(&engine, (lines, LogType::None, LogColor::Normal));
+
+            //     return_on_cancel!(stop_var, Duration::from_secs(2));
+            // }
         }
     })
 }

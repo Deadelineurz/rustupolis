@@ -60,6 +60,10 @@ impl SideBar {
         }
     }
 
+    pub fn get_width(&self) -> u16 {
+        self.width
+    }
+
     /// The number of chars that can be displayed on one line
     pub fn get_text_line_max_len(&self) -> u16 {
         self.text_line_max_len

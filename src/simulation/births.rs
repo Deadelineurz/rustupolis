@@ -12,7 +12,7 @@ const UNSTABLE_DNA_MUTATION_BONUS: f64 = 0.13;
 
 /// return 0, 1, or 2 childrens to make
 pub fn number_of_children_to_make(people: &AlivePerson, env: &PopulationDistrict) -> u8 {
-    let birth_probability = fertility_from_age(people.age)
+    let birth_probability = fertility_from_age(people.get_age())
         * fertility_bonus(people.dna)
         * mood_bonus(&people.mood)
         * happiness_bonus(env.get_happiness_percentage().into())
@@ -30,9 +30,14 @@ pub fn number_of_children_to_make(people: &AlivePerson, env: &PopulationDistrict
     }
 }
 
-pub fn spawn_childs(amount: u8, parent1: &AlivePerson, parent2: &AlivePerson) -> Vec<People> {
+pub fn spawn_childs(
+    amount: u8,
+    is_witness: bool,
+    parent1: &AlivePerson,
+    parent2: &AlivePerson,
+) -> Vec<People> {
     let mut vec = Vec::new();
-    for _ in 0..amount {
+    for i in 0..(amount + if is_witness { 1 } else { 0 }) {
         let mut dna = mix_dna(parent1.dna, parent2.dna);
 
         let bonus_mutation = match (
@@ -46,15 +51,12 @@ pub fn spawn_childs(amount: u8, parent1: &AlivePerson, parent2: &AlivePerson) ->
 
         dna = mutate_dna(dna, MUTATION_PERCENTAGE + bonus_mutation);
 
-        vec.push(People::Alive(AlivePerson {
-            age: 0,
+        vec.push(People::create_people(
             dna,
-            mood: parent1.mood.to_average(parent2.mood),
-            disease: None,
-            work_status: None,
-            building_uuid: parent1.building_uuid.clone(),
-            is_witness: false
-        }));
+            parent1.mood.to_average(parent2.mood),
+            parent1.building_uuid.clone(),
+            i == 0 && is_witness,
+        ));
     }
 
     vec
@@ -71,7 +73,7 @@ fn fertility_bonus(dna: DNA) -> f64 {
 }
 
 /// Simple bell curve centred arround 30 years
-fn fertility_from_age(age: u8) -> f64 {
+fn fertility_from_age(age: u32) -> f64 {
     f64::exp(-((age as f64 - 30.0) as f64 / 10.0).powf(2.0))
 }
 
