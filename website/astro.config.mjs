@@ -6,6 +6,7 @@ import sitemap from "@astrojs/sitemap";
 export default defineConfig({
   vite: {
       plugins: [tailwindcss()],
+    // @ts-ignore
   },
 
   site: 'https://deadelineurz.github.io',
