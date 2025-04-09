@@ -56,7 +56,7 @@ impl Drawable for Selection {
     fn d_type(&self) -> DrawableType {DrawableType::Selection}
 }
 impl Clickable for Selection {
-    fn infos(&self, engine: &LockableEngine) -> Option<Vec<String>> {
+    fn infos(&self, engine: &Engine) -> Option<Vec<String>> {
         Some(vec![
             String::from("".to_string()),
         ])

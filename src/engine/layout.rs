@@ -1,7 +1,7 @@
 use super::{drawable::Drawable, keybinds::Clickable};
 use crate::{lock_read, lock_unlock, population::people::BasePeopleInfo, ui::colors::*};
 use base64::prelude::BASE64_STANDARD;
-use base64::Engine;
+use base64::Engine as b64Engine;
 use serde::de::Error;
 use serde::{de, Deserialize};
 use std::array::IntoIter;
@@ -11,7 +11,7 @@ use std::slice::Iter;
 use std::fmt::Display;
 use log::debug;
 use rand::{rng, Fill};
-use crate::engine::core::LockableEngine;
+use crate::engine::core::{Engine, LockableEngine};
 use crate::engine::drawable::DrawableType;
 use crate::population::Population;
 use crate::threads::engine_loop::Selection;
@@ -158,15 +158,13 @@ impl Building {
 }
 
 impl Clickable for Building {
-    fn infos(&self, engine: &LockableEngine) -> Option<Vec<String>> {
-        lock_read!(engine |> r);
+    fn infos(&self, engine: &crate::engine::core::Engine) -> Option<Vec<String>> {
         let x = Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.pos_x, self.pos_y)),
-            // String::from(format!("Population: {}", self.get_num_people_in_building(&r.population))),
+            String::from(format!("Population: {}", self.get_num_people_in_building(&engine.population))),
             String::from(" ".to_string()), // act as a newline
         ]);
-        lock_unlock!(r);
         x
     }
 }
@@ -295,7 +293,7 @@ pub struct Road {
 }
 
 impl Clickable for Road {
-    fn infos(&self, engine: &LockableEngine) -> Option<Vec<String>> {
+    fn infos(&self, engine: &Engine) -> Option<Vec<String>> {
         Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.start_x, self.start_y)),

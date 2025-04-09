@@ -3,6 +3,7 @@ use crate::engine::core::{Engine, LockableEngine};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
 use log::{debug, trace};
 use std::io::{stdin, Stdout};
+use std::ops::Deref;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, RwLock};
 use std::sync::mpsc::Sender;
@@ -15,12 +16,12 @@ use termion::raw::RawTerminal;
 use crate::{lock_read, lock_unlock};
 use crate::threads::sidebar::SideBarMessage;
 use crate::ui::sidebar::SyncDisplay;
-use crate::utils::send_to_side_bar_read;
+use crate::utils::{send_to_side_bar_read, send_to_side_bar_write};
 
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 
 pub trait Clickable {
-    fn infos(&self, engine: &LockableEngine) -> Option<Vec<String>> {
+    fn infos(&self, engine: &Engine) -> Option<Vec<String>> {
         None
     }
 }
@@ -82,16 +83,14 @@ impl<'scope> KeyBindListener<'scope> {
                                         let (virtual_x, virtual_y) =
                                             engine.viewport.get_virtual_coordinates(*x, *y);
                                         let d =
-                                            engine.get_drawable_for_coordinates(virtual_x, virtual_y).map(|x| x.infos(&cop));
+                                            engine.get_drawable_for_coordinates(virtual_x, virtual_y).map(|x| x.infos(engine.deref()));
 
                                         for click_sender in &clicks {
                                             let _ = click_sender.send((virtual_x, virtual_y, (Some(*click_type), None)));
                                         }
 
                                         if let Some(Some(x)) = d {
-                                            lock_read!(cop |> s);
-                                            send_to_side_bar_read(&s, SideBarMessage::CustomInfos(Box::new("Building infos"), x.iter().map(|x| Box::new(x.clone()) as Box<SyncDisplay>).collect::<Vec<Box<SyncDisplay>>>()));
-                                            lock_unlock!(s);
+                                            send_to_side_bar_write(engine, SideBarMessage::CustomInfos(Box::new("Building infos"), x.iter().map(|x| Box::new(x.clone()) as Box<SyncDisplay>).collect::<Vec<Box<SyncDisplay>>>()));
                                         }
                                     }
                                     _ => (),
