@@ -1,7 +1,7 @@
 use log::trace;
 use rand::prelude::IndexedRandom;
 use termion::terminal_size;
-use crate::engine::drawable::{DynDrawable};
+use crate::engine::drawable::DynDrawable;
 
 pub fn background(output_y: u16, width: u16, height: u16) -> String {
     trace!("width is {}", width);
@@ -124,6 +124,14 @@ impl Viewport {
 
     pub fn bottom(&self) -> i16 {
         self.virtual_y + self.height as i16
+    }
+
+    pub fn top(&self) -> i16 {
+        self.output_y as i16
+    }
+
+    pub fn set_y_offset(&mut self, y: u16) {
+        self.output_y = y;
     }
 
 }

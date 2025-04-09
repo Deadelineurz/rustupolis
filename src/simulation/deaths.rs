@@ -1,3 +1,5 @@
+use rand::{rngs::ThreadRng, Rng};
+
 use crate::population::{
     disease::{Disease, DiseaseLethality},
     district::DistrictZone,
@@ -10,45 +12,58 @@ pub fn check_death(
     people: &AlivePerson,
     district_zone: DistrictZone,
     district_happiness: f64,
-) -> Option<CauseOfDeath> {
+    rng: &mut ThreadRng
+) -> Option<(CauseOfDeath, f64)> {
     let work_bonus = work_bonus(&people.work_status);
     let sickness_bonus = sickness_bonus(&people.disease);
     let zone_bonus = zone_bonus(district_zone);
     let homelesness_bonus = homeless_bonus(&people.building_uuid);
-    let deathrate_from_age = deathrate_from_age(people.age, people.dna);
-
-    let cause_of_death = f64::max(
-        f64::max(work_bonus, homelesness_bonus),
-        f64::max(
-            f64::max(homelesness_bonus, zone_bonus),
-            deathrate_from_age * 2.0,
-        ),
-    );
+    let deathrate_from_age = deathrate_from_age(people.get_age(), people.dna);
+    let dna_bonus = dna_bonus(people.dna);
+    let mood_bonus = mood_bonus(&people.mood);
+    let happiness_bonus = happiness_bonus(district_happiness);
 
     let death_probability = deathrate_from_age
-        * dna_bonus(people.dna)
-        * mood_bonus(&people.mood)
-        * happiness_bonus(district_happiness)
+        * dna_bonus
+        * mood_bonus
+        * happiness_bonus
         * zone_bonus
         * sickness_bonus
         * work_bonus
         * homelesness_bonus;
 
-    let dice = rand::random::<f64>();
-    if dice < death_probability {
-        return match cause_of_death {
-            x if x == sickness_bonus => Some(CauseOfDeath::Sickness),
-            x if x == homelesness_bonus || x == zone_bonus => Some(CauseOfDeath::Poverty),
-            x if x == work_bonus => Some(CauseOfDeath::WorkAccident),
-            _ => Some(CauseOfDeath::OldAge),
-        };
-    }
+    let dice: f64 = rng.random();
 
-    None
+    if dice < death_probability {
+        let causes = vec![
+            (CauseOfDeath::OldAge, deathrate_from_age * dna_bonus),
+            (CauseOfDeath::Sickness, sickness_bonus),
+            (CauseOfDeath::Radiations, zone_bonus),
+            (CauseOfDeath::WorkAccident, work_bonus),
+            (CauseOfDeath::Poverty, homelesness_bonus),
+            (CauseOfDeath::Murder, 1.0 - mood_bonus),
+            (CauseOfDeath::EatenByMonster, 1.0 - happiness_bonus),
+        ];
+
+        let total_weight: f64 = causes.iter().map(|(_, w)| w).sum();
+        let mut roll = rng.random::<f64>() * total_weight;
+
+        for (cause, weight) in causes {
+            if roll < weight {
+                return Some((cause, weight));
+            }
+            roll -= weight;
+        }
+
+        // Fallback (shouldn't happen)
+        Some((CauseOfDeath::OldAge, 1.0))
+    } else {
+        None
+    }
 }
 
 /// Simple bell curve centred arround 70 years
-fn deathrate_from_age(age: u8, dna: DNA) -> f64 {
+fn deathrate_from_age(age: u32, dna: DNA) -> f64 {
     f64::exp(
         -((age as f64
             - (60.0

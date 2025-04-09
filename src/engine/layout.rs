@@ -4,7 +4,7 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 use std::cmp::PartialEq;
-use std::{fmt::Display, str::FromStr};
+use std::fmt::Display;
 
 use super::{drawable::Drawable, keybinds::Clickable};
 
@@ -61,6 +61,10 @@ impl Building {
 
     pub fn get_district_id(&self) -> usize {
         self.district_id
+    }
+
+    pub fn get_building_type(&self) -> BuildingType {
+        self.b_type.clone()
     }
 }
 

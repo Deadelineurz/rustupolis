@@ -22,7 +22,7 @@ impl Population {
             districts: Vec::new(),
         };
 
-        pop.add_district(100, DistrictZone::Core);
+        pop.add_district(100, DistrictZone::Core, 1);
         pop.get_district_mut(0).unwrap().update_building_occupation();
 
         pop
@@ -84,10 +84,10 @@ impl Population {
 
     // ----- ADD -----
 
-    pub fn add_district(&mut self, starting_population: u8, district_zone: DistrictZone) -> usize {
+    pub fn add_district(&mut self, starting_population: u8, district_zone: DistrictZone, amount_of_witness: u8) -> usize {
         self.districts.push(self.setup_district(
             district_zone,
-            People::create_random_population(starting_population),
+            People::create_random_population(starting_population, amount_of_witness),
         ));
 
         self.num_districts += 1;
@@ -101,7 +101,7 @@ impl Population {
     pub fn add_peoples(&mut self, amount: u16, target_district: Option<usize>) {
         let mut vec = vec![];
         for _ in 0..amount {
-            vec.push(People::create_random_people(true, 1));
+            vec.push(People::create_random_people(true, 1, false));
         }
 
         match target_district {
