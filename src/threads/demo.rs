@@ -45,7 +45,7 @@ pub fn demo_scope<'scope, 'env>(
 
         let mut refresh = 0;
 	let mut witnesses_to_birth: u8 = 0;
-        for i in 0..1200 {
+        for i in 0..12000 {
             let _ = topbar.update_displayed_year(i / 12);
             update_time_population(
                 &engine,
