@@ -1,7 +1,7 @@
 FROM rust:bookworm AS build
 
 WORKDIR /home
-RUN ["git", "clone", "--depth", "1", "--branch", "1.2.0-dev", "https://github.com/Deadelineurz/rustupolis.git"]
+RUN ["git", "clone", "--depth", "1", "--branch", "2.0.0", "https://github.com/Deadelineurz/rustupolis.git"]
 WORKDIR /home/rustupolis
 RUN ["cargo", "build", "-r"]
 
