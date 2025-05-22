@@ -152,6 +152,21 @@ impl Building {
     pub fn get_building_type(&self) -> BuildingType {
         self.b_type.clone()
     }
+
+    pub fn new_at(x: i16, y: i16) -> Self {
+        Building {
+            name: "Roadside Building".to_string(),
+            id: LayoutId::random(),
+            district_id: 0,
+            pos_x: x,
+            pos_y: y,
+            b_type: BuildingType::Uniform,
+            width: Some(2),
+            height: Some(2),
+            texture: Some('#'),
+            content: None,
+        }
+    }
 }
 
 impl Clickable for Building {
@@ -286,12 +301,67 @@ pub struct Road {
     name: String,
     #[serde(deserialize_with = "deserialize_b64")]
     pub id: LayoutId,
-    start_x: i16,
-    start_y: i16,
+    pub start_x: i16,
+    pub start_y: i16,
     horizontal: bool,
     width: u8,
     length: u8,
     pavement: char,
+}
+
+impl Road {
+    pub fn new(
+        start: (i16, i16),
+        length: u8,
+        width: u8,
+        is_horizontal: bool,
+        pavement: char,
+    ) -> Self {
+        Road {
+            name: "New Road".to_string(),
+            id: LayoutId::random(),
+            start_x: start.0,
+            start_y: start.1,
+            horizontal: is_horizontal,
+            width: width,
+            length: length,
+            pavement: pavement,
+        }
+    }
+
+    pub fn create_branch(&self, length: u8, rng: &mut ThreadRng) -> Self {
+        let branch_point_offset = rng.random_range(1..self.get_length());
+        let (branch_x, branch_y) = if self.is_horizontal() {
+            (self.start_x + branch_point_offset as i16, self.start_y)
+        } else {
+            (self.start_x, self.start_y + branch_point_offset as i16)
+        };
+        Road::new(
+            (branch_x, branch_y),
+            length,
+            self.width(),
+            !self.horizontal,
+            self.pavement,
+        )
+    }
+
+    pub fn extend(&mut self, amount: u8) -> (i16, i16) {
+        self.length += amount;
+
+        if self.horizontal {
+            (self.start_x + self.length as i16 - 1, self.start_y)
+        } else {
+            (self.start_x, self.start_y + self.length as i16 - 1)
+        }
+    }
+
+    pub fn get_length(&self) -> u8 {
+        self.length
+    }
+
+    pub fn is_horizontal(&self) -> bool {
+        self.horizontal
+    }
 }
 
 impl Clickable for Road {
