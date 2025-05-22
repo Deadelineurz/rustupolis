@@ -1,4 +1,6 @@
-use crate::engine::drawable::{DynDrawable};
+use std::any::type_name;
+use std::cmp::PartialEq;
+use crate::engine::drawable::{DrawableType, DynDrawable};
 use crate::engine::keybinds::Tty;
 use crate::engine::viewport::{background, Viewport};
 use crate::threads::sidebar::SideBarMessage;
@@ -10,6 +12,7 @@ use std::sync::{Arc, RwLock};
 use termion::{cursor, terminal_size};
 use crate::engine::layout::{Layout};
 use crate::population::Population;
+use crate::threads::engine_loop::Selection;
 
 pub type LockableEngine<'a> = Arc<RwLock<Engine<'a>>>;
 
