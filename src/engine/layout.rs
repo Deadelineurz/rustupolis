@@ -6,10 +6,13 @@ use crate::threads::engine_loop::Selection;
 use crate::{population::people::BasePeopleInfo, ui::colors::*};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine as b64Engine;
+use rand::rngs::ThreadRng;
+use rand::{rng, Fill, Rng};
 use serde::de::Error;
 use serde::{de, Deserialize};
 use std::array::IntoIter;
 use std::cmp::PartialEq;
+use std::fmt::Display;
 use std::fmt::{Debug, Formatter};
 use std::slice::Iter;
 
@@ -96,17 +99,17 @@ impl Building {
     pub fn get_num_people_in_building(&self, population: &Population) -> usize {
         if population.get_district(self.district_id).is_some() {
             population
-            .get_district(self.district_id)
-            .unwrap()
-            .peoples
-            .iter()
-            .filter(|people| {
-                if let Some(uuid) = people.get_building_uuid() {
-                    *uuid == self.id
-                } else {
-                    false
-                }
-            })
+                .get_district(self.district_id)
+                .unwrap()
+                .peoples
+                .iter()
+                .filter(|people| {
+                    if let Some(uuid) = people.get_building_uuid() {
+                        *uuid == self.id
+                    } else {
+                        false
+                    }
+                })
                 .count()
         } else {
             0
@@ -266,13 +269,13 @@ impl Drawable for Building {
         match &self.b_type {
             s if s == &BuildingType::EmptySpace => A_SAND_COLOR,
             _ => {
-                if (self.get_num_people_in_building(population) > 20) {
+                if self.get_num_people_in_building(population) > 20 {
                     A_RUST_COLOR_1
-                } else if (self.get_num_people_in_building(population) > 15) {
+                } else if self.get_num_people_in_building(population) > 15 {
                     A_RUST_COLOR_2
-                } else if (self.get_num_people_in_building(population) > 10) {
+                } else if self.get_num_people_in_building(population) > 10 {
                     A_LIGHT_COLOR
-                } else if (self.get_num_people_in_building(population) > 10) {
+                } else if self.get_num_people_in_building(population) > 10 {
                     A_SAND_COLOR
                 } else {
                     A_DARKEST_COLOR
@@ -365,7 +368,7 @@ impl Road {
 }
 
 impl Clickable for Road {
-    fn infos(&self, engine: &Engine) -> Option<Vec<String>> {
+    fn infos(&self, _engine: &Engine) -> Option<Vec<String>> {
         Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.start_x, self.start_y)),
@@ -419,7 +422,7 @@ impl Drawable for Road {
         }
     }
 
-    fn color(&self, pop: &Population) -> ansi_term::Color {
+    fn color(&self, _pop: &Population) -> ansi_term::Color {
         A_GREY_COLOR
     }
 
@@ -505,7 +508,7 @@ impl Layout {
         filter: BuildingType,
     ) -> Option<&Building> {
         for bldg in &(self.buildings) {
-            if let Some(hei) = bldg.height {
+            if let Some(_hei) = bldg.height {
                 //debug!("{:} {:} {:} {:} {:}", bldg.name, bldg.x(), (x + bldg.width.unwrap() as i16) ,bldg.y(), (y + hei as i16));
             }
         }
