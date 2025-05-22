@@ -7,7 +7,8 @@ use crate::threads::engine_loop::Selection;
 use crate::{lock_read, lock_unlock, population::people::BasePeopleInfo, ui::colors::*};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine as b64Engine;
-use rand::{rng, Fill};
+use rand::rngs::ThreadRng;
+use rand::{rng, Fill, Rng};
 use serde::de::Error;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::array::IntoIter;
@@ -134,17 +135,17 @@ impl Building {
     pub fn get_num_people_in_building(&self, population: &Population) -> usize {
         if population.get_district(self.district_id).is_some() {
             population
-            .get_district(self.district_id)
-            .unwrap()
-            .peoples
-            .iter()
-            .filter(|people| {
-                if let Some(uuid) = people.get_building_uuid() {
-                    *uuid == self.id
-                } else {
-                    false
-                }
-            })
+                .get_district(self.district_id)
+                .unwrap()
+                .peoples
+                .iter()
+                .filter(|people| {
+                    if let Some(uuid) = people.get_building_uuid() {
+                        *uuid == self.id
+                    } else {
+                        false
+                    }
+                })
                 .count()
         } else {
             0
