@@ -1,6 +1,6 @@
 use engine::layout::Layout;
 use lazy_static::lazy_static;
-use population::Population;
+// use population::Population;
 use std::sync::{Arc, Mutex};
 
 pub mod terminal;
@@ -12,6 +12,7 @@ pub mod simulation;
 pub mod threads;
 pub mod utils;
 pub mod roads;
+pub mod procedural_generation;
 
 lazy_static! {
     pub static ref LAYOUT: Arc<Mutex<Layout>> = Arc::new(Mutex::new(Layout::load_default_layout()));
