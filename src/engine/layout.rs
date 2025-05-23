@@ -436,7 +436,7 @@ impl Drawable for Road {
 
 // ----- LAYOUT -----
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Debug, Clone)]
 pub struct Layout {
     pub buildings: Vec<Building>,
     pub roads: Vec<Road>,
