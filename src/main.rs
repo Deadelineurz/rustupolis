@@ -1,16 +1,17 @@
 use crate::logging::RemoteLoggerClient;
 use lazy_static::lazy_static;
-use log::{debug, LevelFilter};
+use log::LevelFilter;
 use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::KeyBindListener;
-use rustupolis::engine::layout::{Layout, LayoutId};
+use rustupolis::engine::layout::Layout;
 use rustupolis::engine::viewport::Viewport;
+use rustupolis::procedural_generation::generate_next_step;
 use rustupolis::roads::road_graph::Graph;
 use rustupolis::terminal::screen::CleanScreen;
 use rustupolis::threads::demo::demo_scope;
 use rustupolis::threads::engine_loop::engine_loop;
 use rustupolis::threads::sidebar::sidebar;
-use rustupolis::ui::sidebar::{LogColor, LogType};
+use rustupolis::threads::sidebar::SideBarMessage::Quit;
 use std::io::stdout;
 use std::ops::Deref;
 use std::sync::mpsc::channel;
@@ -19,7 +20,6 @@ use std::thread;
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
-use rustupolis::threads::sidebar::SideBarMessage::Quit;
 mod logging;
 
 lazy_static! {
@@ -42,7 +42,7 @@ fn main() {
 
     // ----- UI SETUP -----
     let mut vp = Viewport::default();
-    let (ter_x, ter_y) = terminal_size().unwrap();
+    let (_ter_x, ter_y) = terminal_size().unwrap();
 
     vp.width = (terminal_size().unwrap().0 as f32 * 0.75) as u16 - 1;
 
@@ -53,7 +53,6 @@ fn main() {
 
     let mut engine = Engine::new(vp, stdout.clone(), sidebar_chan.clone(), layout);
 
-
     engine.refresh();
 
     let e = Arc::new(RwLock::new(engine));
@@ -61,9 +60,21 @@ fn main() {
     thread::scope(|s| {
         let (click_sender, click_receiver) = channel();
         let (key_sender, key_receiver) = channel();
-        let kb = KeyBindListener::new(s, e.clone(), vec![click_sender], vec![key_sender], sidebar_chan.clone());
+        let kb = KeyBindListener::new(
+            s,
+            e.clone(),
+            vec![click_sender],
+            vec![key_sender],
+            sidebar_chan.clone(),
+        );
         let demo = demo_scope(s, e.clone(), kb.stop_var.clone());
-        let game_loop = engine_loop(s, e.clone(), kb.stop_var.clone(), click_receiver, key_receiver);
+        let game_loop = engine_loop(
+            s,
+            e.clone(),
+            kb.stop_var.clone(),
+            click_receiver,
+            key_receiver,
+        );
         let _ = kb.thread.join();
         let _ = demo.join();
         let _ = game_loop.join();
