@@ -148,6 +148,42 @@ impl<'a> Graph<'a> {
         }
     }
 
+    pub fn find_path_bfs(&self, start: &LayoutId, goal: &LayoutId) -> Option<Vec<LayoutId>> {
+        use std::collections::VecDeque;
+
+        let mut queue = VecDeque::new();
+        let mut visited = HashSet::new();
+        let mut came_from: HashMap<LayoutId, LayoutId> = HashMap::new();
+
+        queue.push_back(start.clone());
+        visited.insert(start.clone());
+
+        while let Some(current) = queue.pop_front() {
+            if &current == goal {
+                let mut path = vec![goal.clone()];
+                let mut current_id = goal;
+
+                while let Some(prev) = came_from.get(current_id) {
+                    path.push(prev.clone());
+                    current_id = prev;
+                }
+
+                path.reverse();
+                return Some(path);
+            }
+
+            for neighbor in self.connected_to(&current) {
+                if !visited.contains(neighbor) {
+                    visited.insert((*neighbor).clone());
+                    came_from.insert((*neighbor).clone(), current.clone());
+                    queue.push_back((*neighbor).clone());
+                }
+            }
+        }
+
+        None // Aucun chemin trouve
+    }
+
     fn connected_to(&self, start: &LayoutId) -> HashSet<&LayoutId> {
         self.edges.iter().filter(|x| x.has(start)).map(|x| x.other(start)).collect::<HashSet<&LayoutId>>()
     }
