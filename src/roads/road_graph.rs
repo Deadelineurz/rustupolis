@@ -3,6 +3,7 @@ use crate::engine::layout::{Building, Layout, LayoutId, Road};
 use crate::utils::pair::Pair;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
+use log::debug;
 
 struct Rect {
     x: i16,
@@ -101,7 +102,8 @@ pub struct Graph<'a> {
 }
 
 impl<'a> Graph<'a> {
-    pub fn new(layout: &Layout) -> Graph {
+    pub fn new(layout: &'a Layout) -> Graph<'a> {
+        debug!("Creating graph");
         let mut nodes: HashMap<LayoutId, Node> = HashMap::new();
         let mut edge_set: HashSet<Edge> = HashSet::new();
 

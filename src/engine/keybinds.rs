@@ -35,7 +35,7 @@ pub static RUNNING: AtomicBool = AtomicBool::new(true);
 
 impl<'scope> KeyBindListener<'scope> {
     pub fn new<'env>(
-        s: &'scope Scope<'scope, 'env>, e: Arc<RwLock<Engine>>,
+        s: &'scope Scope<'scope, 'env>, e: Arc<RwLock<Engine<'env>>>,
         click_subscribers: Vec<Sender<(i16, i16, (Option<MouseButton>, Option<Key>))>>,
         keys_subscribers: Vec<Sender<Key>>,
         sidebar: Sender<SideBarMessage>

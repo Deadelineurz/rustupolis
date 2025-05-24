@@ -16,14 +16,14 @@ pub struct Population {
 
 impl Population {
     /// Will also add an empty Core district.
-    pub fn new() -> Population {
+    pub fn new(layout: &mut Layout) -> Population {
         let mut pop = Population {
             num_districts: 0,
             districts: Vec::new(),
         };
 
         pop.add_district(100, DistrictZone::Core, 2);
-        pop.get_district_mut(0).unwrap().update_building_occupation();
+        pop.get_district_mut(0).unwrap().update_building_occupation(layout);
 
         pop
     }

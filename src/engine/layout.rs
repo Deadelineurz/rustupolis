@@ -14,6 +14,7 @@ use rand::{rng, Fill};
 use crate::engine::core::{Engine, LockableEngine};
 use crate::engine::drawable::DrawableType;
 use crate::population::Population;
+use crate::roads::road_graph::Graph;
 use crate::threads::engine_loop::Selection;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
@@ -368,13 +369,22 @@ impl Drawable for Road {
 // ----- LAYOUT -----
 
 #[derive(Deserialize, Debug)]
-pub struct Layout {
+pub struct Layout<'a> {
     pub buildings: Vec<Building>,
     pub roads: Vec<Road>,
-    pub selections : Vec<Selection>
+    pub selections : Vec<Selection>,
+    #[serde(skip)]
+    pub graph: Option<Graph<'a>>
 }
 
-impl Layout {
+impl Layout<'_> {
+    pub fn update_graph(&mut self) {
+        unsafe {
+            self.graph = Some(Graph::new((&raw const *self).as_ref().unwrap()))
+        }
+        
+    }
+    
     pub fn load_default_layout() -> Self {
         let layout = include_str!("../initial_data/layout.json");
 
@@ -401,10 +411,12 @@ impl Layout {
 
     pub fn add_building(&mut self, building: Building) {
         self.buildings.push(building);
+        self.update_graph();
     }
 
     pub fn add_road(&mut self, road: Road) {
         self.roads.push(road);
+        self.update_graph()
     }
 
     /// Clone the vec
@@ -455,7 +467,8 @@ impl Layout {
             texture : Some('█'),
             content : Some(vec![])
         };
-        self.buildings.push(new_bldg)
+        self.buildings.push(new_bldg);
+        self.update_graph();
     }
 
     pub fn add_road_from_coords(&mut self, x: i16, y: i16, width: u8, height: u8) {
@@ -470,6 +483,7 @@ impl Layout {
             pavement: '▓',
         };
         self.roads.push(new_road);
+        self.update_graph();
     }
 
     pub fn replace_empty_building(&mut self, building_id : LayoutId){
@@ -504,6 +518,8 @@ impl Layout {
             self.buildings.push(new_bldg);
             self.buildings.remove(i);
         }
+        
+        self.update_graph()
     }
 
 }

@@ -91,7 +91,7 @@ fn calculate_road_coords(start : (i16,i16), end: (i16,i16)) -> ((i16,i16),(i16,i
 
 pub fn engine_loop<'scope, 'env>(
     s: &'scope Scope<'scope, 'env>,
-    engine: LockableEngine,
+    engine: LockableEngine<'env>,
     stop_var: Arc<InterruptibleSleep>,
     click_receiver: Receiver<(i16, i16, (Option<MouseButton>, Option<Key>))>,
     key_receiver: Receiver<Key>

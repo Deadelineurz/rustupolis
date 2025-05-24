@@ -12,22 +12,23 @@ use std::sync::{Arc, RwLock};
 use termion::{cursor, terminal_size};
 use crate::engine::layout::{Layout};
 use crate::population::Population;
+use crate::roads::road_graph::Graph;
 use crate::threads::engine_loop::Selection;
 
-pub type LockableEngine =Arc<RwLock<Engine>>;
+pub type LockableEngine<'a> = Arc<RwLock<Engine<'a>>>;
 
-pub struct Engine {
+pub struct Engine<'a> {
     pub viewport: Viewport,
     pub side_bar_tx: Sender<SideBarMessage>,
     pub background: String,
     pub stdout: Arc<Tty>,
-    pub layout: Layout,
+    pub layout: Layout<'a>,
     pub population: Population,
-    pub drawables: Vec<Box<DynDrawable>>,
+    pub drawables: Vec<Box<DynDrawable>>
 }
 
 
-impl Engine {
+impl Engine<'_> {
     pub fn register_drawable(&mut self, drawable: Box<DynDrawable>) {
         self.drawables.push(drawable)
     }
@@ -104,16 +105,19 @@ impl Engine {
 
         self.stdout.lock().flush().unwrap()
     }
+}
 
-    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>, layout: Layout) -> Self {
+impl<'a> Engine<'a> {
+    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>, mut layout: Layout<'a>) -> Self {
         trace!("{:?}", terminal_size());
+        let pop = Population::new(&mut layout);
         Engine {
             viewport,
             stdout,
             layout,
             side_bar_tx: chan,
             drawables: vec![],
-            population: Population::new(),
+            population: pop,
             background: { background(viewport.output_y, viewport.width, viewport.height) },
         }
     }

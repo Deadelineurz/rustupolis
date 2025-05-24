@@ -15,7 +15,7 @@ use crate::threads::sidebar::SideBarMessage;
 
 pub fn demo_scope<'scope, 'env>(
     s: &'scope Scope<'scope, 'env>,
-    engine: LockableEngine,
+    engine: LockableEngine<'env>,
     stop_var: Arc<InterruptibleSleep>,
 ) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {

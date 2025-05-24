@@ -12,7 +12,3 @@ pub mod simulation;
 pub mod threads;
 pub mod utils;
 pub mod roads;
-
-lazy_static! {
-    pub static ref LAYOUT: Arc<Mutex<Layout>> = Arc::new(Mutex::new(Layout::load_default_layout()));
-}
