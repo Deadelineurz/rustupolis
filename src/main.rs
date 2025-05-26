@@ -29,10 +29,6 @@ fn main() {
     log::set_logger(LOGGER.deref())
         .map(|()| log::set_max_level(LevelFilter::Debug))
         .unwrap();
-    
-    let save_dir = env::current_dir().unwrap().join("saves");
-    
-    fs::create_dir(save_dir).unwrap();
 
     let _clear = CleanScreen::new();
 

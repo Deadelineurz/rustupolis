@@ -1,3 +1,4 @@
+use std::{env, fs};
 use crate::engine::core::{Engine};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
 use log::{debug, trace};
@@ -40,6 +41,10 @@ impl<'scope> KeyBindListener<'scope> {
         let arc = Arc::new(InterruptibleSleep::new());
         let sent = arc.clone();
 
+        let save_dir = env::current_dir().unwrap().join("saves");
+
+        let _ = fs::create_dir(&save_dir);
+
         let t = s.spawn(move || {
             let clicks = click_subscribers;
             let keys = keys_subscribers;
@@ -70,7 +75,24 @@ impl<'scope> KeyBindListener<'scope> {
                         for sender in &clicks {
                             let _ = sender.send((0,0, (None, Some(Key::Esc))));
                         }
-                    }
+                    },
+                    Event::Key(Key::Ctrl('s')) => {
+                        match cop.read() {
+                            Ok(ref engine) => {
+                                let time = chrono::offset::Local::now();
+                                
+                                let name = save_dir.join(time.format("layout-%Y-%m-%d-%H-%M-%S.json").to_string());
+                                
+                                match serde_json::to_string(&engine.layout) {
+                                    Ok(c) => {
+                                        let _ = fs::write(name, c);
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            _ => {}
+                        }
+                    },
                     Event::Mouse(mouse_event) => match mouse_event {
                         MouseEvent::Press(click_type, x, y) => {
                             debug!("Mouse click at x: {} y: {} | {:?}", x, y, click_type);
