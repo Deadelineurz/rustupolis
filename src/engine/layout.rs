@@ -1,21 +1,20 @@
 use super::{drawable::Drawable, keybinds::Clickable};
-use crate::{lock_read, lock_unlock, population::people::BasePeopleInfo, ui::colors::*};
-use base64::prelude::BASE64_STANDARD;
-use base64::Engine as b64Engine;
-use serde::de::Error;
-use serde::{de, Deserialize};
-use std::array::IntoIter;
-use std::cmp::PartialEq;
-use std::fmt::{Debug, Formatter};
-use std::slice::Iter;
-use std::fmt::Display;
-use log::debug;
-use rand::{rng, Fill};
-use crate::engine::core::{Engine, LockableEngine};
+use crate::engine::core::Engine;
 use crate::engine::drawable::DrawableType;
 use crate::population::Population;
 use crate::roads::road_graph::Graph;
 use crate::threads::engine_loop::Selection;
+use crate::{population::people::BasePeopleInfo, ui::colors::*};
+use base64::prelude::BASE64_STANDARD;
+use base64::Engine as b64Engine;
+use rand::{rng, Fill};
+use serde::de::Error;
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use std::array::IntoIter;
+use std::cmp::PartialEq;
+use std::fmt::Display;
+use std::fmt::{Debug, Formatter};
+use std::slice::Iter;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
 
@@ -46,6 +45,41 @@ impl LayoutId {
     }
 }
 
+impl Serialize for LayoutId {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer
+    {
+        serializer.serialize_str(&BASE64_STANDARD.encode(self.value))
+    }
+}
+
+impl<'de> Deserialize<'de> for LayoutId {
+    fn deserialize<D>(deserializer: D) -> Result<LayoutId, D::Error>
+    where
+        D: Deserializer<'de>
+    {
+        let s: &str = de::Deserialize::deserialize(deserializer)?;
+        let res = BASE64_STANDARD.decode(s);
+
+        if let Err(_) = res {
+            return Err(Error::custom("Invalid base64"))
+        }
+
+        let mut out = [0u8; LAYOUT_ID_LENGTH];
+
+        for (i, x) in res.unwrap().iter().enumerate() {
+            if i > LAYOUT_ID_LENGTH - 1 {
+                break
+            }
+
+            out[i] = x.clone()
+        }
+
+        Ok(LayoutId::new(out))
+    }
+}
+
 impl IntoIterator for &LayoutId {
     type Item = u8;
     type IntoIter = IntoIter<u8, LAYOUT_ID_LENGTH>;
@@ -70,7 +104,7 @@ impl Debug for LayoutId {
 }
 
 
-#[derive(Clone, Debug, Deserialize, PartialEq, Eq)]
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum BuildingType {
     Custom,
@@ -79,17 +113,16 @@ pub enum BuildingType {
 }
 
 impl Display for BuildingType {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
 // ----- BUILDINGS -----
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Building {
     name: String,
-    #[serde(deserialize_with = "deserialize_b64")]
     pub id: LayoutId,
     district_id: usize,
     pos_x: i16,
@@ -131,7 +164,7 @@ impl Building {
     fn width(&self) -> u8 {
         if self.b_type == BuildingType::Custom {
             let mut n: u8 = 0;
-            let lines = (self.content.as_ref()).unwrap();
+            let lines = self.content.as_ref().unwrap();
             for line in lines {
                 if n == 0 {
                     n = line.chars().count() as u8
@@ -142,10 +175,10 @@ impl Building {
             n
         } else {
             if let Some(width) = self.width {
-                return width
+                width
             }
             else {
-                return 0
+                0
             }
         }
     }
@@ -163,7 +196,7 @@ impl Building {
 }
 
 impl Clickable for Building {
-    fn infos(&self, engine: &crate::engine::core::Engine) -> Option<Vec<String>> {
+    fn infos(&self, engine: &Engine) -> Option<Vec<String>> {
         let x = Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.pos_x, self.pos_y)),
@@ -195,18 +228,18 @@ impl Drawable for Building {
         if self.b_type == BuildingType::Custom {
             return self.content.as_ref().unwrap().join("\n");
         } else if self.b_type == BuildingType::EmptySpace {
-            if self.width.unwrap() == 1 && self.height.unwrap() == 1 {
-                return "▢\n".parse().unwrap();
+            return if self.width.unwrap() == 1 && self.height.unwrap() == 1 {
+                "▢\n".parse().unwrap()
             } else if self.height.unwrap() == 1 {
                 let mut str: String = "╞".to_string();
                 str.push_str(&*"═".repeat(self.width.unwrap() as usize - 2));
                 str.push_str("╡\n");
-                return str;
+                str
             } else if self.width.unwrap() == 1 {
                 let mut str: String = "╦\n".to_string();
                 str.push_str(&*"║\n".repeat(self.height.unwrap() as usize - 2));
                 str.push_str("╩\n");
-                return str;
+                str
             } else {
                 let in_layers = self.height.unwrap() - 2;
                 let in_columns: u8 = self.width.unwrap() - 2;
@@ -227,7 +260,7 @@ impl Drawable for Building {
                 str.push_str("╚");
                 str.push_str(&*"═".repeat(in_columns as usize));
                 str.push_str("╝\n");
-                return str;
+                str
             }
         }
         let mut str: String = "".to_string();
@@ -254,16 +287,16 @@ impl Drawable for Building {
         match &self.b_type {
             s if s == &BuildingType::EmptySpace => A_SAND_COLOR,
             _ => {
-                if (self.get_num_people_in_building(population) > 20 ) {
+                if self.get_num_people_in_building(population) > 20 {
                     A_RUST_COLOR_1
                 }
-                else if (self.get_num_people_in_building(population) > 15 ){
+                else if self.get_num_people_in_building(population) > 15 {
                     A_RUST_COLOR_2
                     }
-                else if (self.get_num_people_in_building(population) > 10 ){
+                else if self.get_num_people_in_building(population) > 10 {
                     A_LIGHT_COLOR
                 }
-                else if (self.get_num_people_in_building(population) > 10 ){
+                else if self.get_num_people_in_building(population) > 10 {
                     A_SAND_COLOR
                 }
                 else {
@@ -284,10 +317,9 @@ impl Drawable for Building {
 
 // ----- ROADS -----
 
-#[derive(Deserialize, Clone, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Road {
     name: String,
-    #[serde(deserialize_with = "deserialize_b64")]
     pub id: LayoutId,
     start_x: i16,
     start_y: i16,
@@ -298,7 +330,7 @@ pub struct Road {
 }
 
 impl Clickable for Road {
-    fn infos(&self, engine: &Engine) -> Option<Vec<String>> {
+    fn infos(&self, _engine: &Engine) -> Option<Vec<String>> {
         Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.start_x, self.start_y)),
@@ -352,7 +384,7 @@ impl Drawable for Road {
         }
     }
 
-    fn color(&self, pop: &Population) -> ansi_term::Color {
+    fn color(&self, _pop: &Population) -> ansi_term::Color {
         A_GREY_COLOR
     }
 
@@ -368,10 +400,11 @@ impl Drawable for Road {
 
 // ----- LAYOUT -----
 
-#[derive(Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Layout<'a> {
     pub buildings: Vec<Building>,
     pub roads: Vec<Road>,
+    #[serde(skip)]
     pub selections : Vec<Selection>,
     #[serde(skip)]
     pub graph: Option<Graph<'a>>
@@ -400,7 +433,7 @@ impl Layout<'_> {
 
         layout_obj
     }
-
+    
     pub fn load_core_layout() -> Self {
         let layout = include_str!("../initial_data/starting_core.json");
 
@@ -443,7 +476,7 @@ impl Layout<'_> {
 
     pub fn get_building_for_coordinates(&self, x: i16, y: i16, filter : BuildingType) -> Option<&Building> {
         for bldg in &(self.buildings) {
-            if let Some(hei) = bldg.height{
+            if let Some(_hei) = bldg.height{
                 //debug!("{:} {:} {:} {:} {:}", bldg.name, bldg.x(), (x + bldg.width.unwrap() as i16) ,bldg.y(), (y + hei as i16));
 
             }
@@ -499,7 +532,7 @@ impl Layout<'_> {
             i += 1
         }
 
-        if !(building.is_none() ) {
+        if !building.is_none() {
             let bldg = building.unwrap();
             //debug!("{:?}", bldg);
 
@@ -522,28 +555,4 @@ impl Layout<'_> {
         self.update_graph()
     }
 
-}
-
-fn deserialize_b64<'de, D>(deserializer: D) -> Result<LayoutId, D::Error>
-where
-    D: de::Deserializer<'de>
-{
-    let s: &str = de::Deserialize::deserialize(deserializer)?;
-    let res = BASE64_STANDARD.decode(s);
-
-    if let Err(_) = res {
-        return Err(Error::custom("Invalid base64"))
-    }
-
-    let mut out = [0u8; LAYOUT_ID_LENGTH];
-
-    for (i, x) in res.unwrap().iter().enumerate() {
-        if i > LAYOUT_ID_LENGTH - 1 {
-            break
-        }
-
-        out[i] = x.clone()
-    }
-
-    Ok(LayoutId::new(out))
 }

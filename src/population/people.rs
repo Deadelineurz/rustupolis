@@ -273,8 +273,8 @@ impl People {
     /// Create a new alive people, will add a random number of DNA traits
     pub fn create_random_people(working_age: bool, max_dna_traits: u8, is_witness: bool) -> Self {
         let age = match working_age {
-            true => 18 + rand::random_range(0..=20),
-            false => rand::random_range(0..18),
+            true => 18 + random_range(0..=20),
+            false => random_range(0..18),
         };
 
         let mut dna_traits: u32 = 0;

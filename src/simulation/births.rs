@@ -74,7 +74,7 @@ fn fertility_bonus(dna: DNA) -> f64 {
 
 /// Simple bell curve centred arround 30 years
 fn fertility_from_age(age: u32) -> f64 {
-    f64::exp(-((age as f64 - 30.0) as f64 / 10.0).powf(2.0))
+    f64::exp(-((age as f64 - 30.0) / 10.0).powf(2.0))
 }
 
 fn happiness_bonus(percentage: f64) -> f64 {

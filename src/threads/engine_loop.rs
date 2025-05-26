@@ -1,24 +1,19 @@
 use crate::engine::core::{Engine, LockableEngine};
-use crate::engine::layout::{Building, BuildingType, LayoutId};
+use crate::engine::layout::{BuildingType, LayoutId};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
-use crate::{lock_read, lock_unlock, lock_write, return_on_cancel};
-use std::env;
+use crate::{lock_read, lock_unlock, lock_write};
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::thread::{Scope, ScopedJoinHandle};
-use std::time::Duration;
-use ansi_term::{Color, Colour};
 use log::{debug, trace};
 use serde::Deserialize;
-use termion::cursor::Right;
-use termion::event::Key::Left;
 use termion::event::{Key, MouseButton};
 use crate::engine::drawable::{Drawable, DrawableType};
 use crate::engine::drawable::DrawableType::{BuildingEmpty, Road};
 use crate::engine::keybinds::Clickable;
 use crate::population::Population;
 use crate::threads::engine_loop::SelectionType::Void;
-use crate::ui::colors::{A_RUST_COLOR_1, A_SAND_COLOR, A_UI_WHITE_DARK_COLOR};
+use crate::ui::colors::{A_UI_WHITE_DARK_COLOR};
 
 #[derive(Copy, Deserialize, Clone, Debug, PartialEq)]
 pub enum SelectionType {
@@ -99,7 +94,7 @@ pub fn engine_loop<'scope, 'env>(
     s.spawn(move || {
         let mut inputs = vec![];
 
-        fn check_inputs(inputs: &mut (Vec<(i16, i16, (Option<MouseButton>, Option<Key>))>), engine: &LockableEngine) {
+        fn check_inputs(inputs: &mut Vec<(i16, i16, (Option<MouseButton>, Option<Key>))>, engine: &LockableEngine) {
             let n = inputs.iter().count();
 
             if inputs[0].2.0.is_some() && inputs[0].2.0.unwrap() == MouseButton::Left && check_click_target((inputs[0].0, inputs[0].1), engine) == Option::from(BuildingEmpty) {
@@ -173,7 +168,7 @@ pub fn engine_loop<'scope, 'env>(
                     lock_unlock!(eng);
                     if sel.is_some() {
                         if inputs[0].2.1.unwrap() == Key::Char('\n') && inputs[1].2.0.unwrap() == MouseButton::Right && inputs[2].2.0.unwrap() == MouseButton::Left {
-                            if sel.unwrap().sel_type == SelectionType::Void{
+                            if sel.unwrap().sel_type == Void{
                                 add_building_from_coords(
                                     if inputs[2].0 > inputs[1].0 {inputs[1].0} else {inputs[2].0},
                                     if inputs[2].1 > inputs[1].1 {inputs[1].1} else {inputs[2].1},
@@ -204,7 +199,7 @@ pub fn engine_loop<'scope, 'env>(
                     Option::from(drwbl.id)
                 }
                 else {
-                    Option::None
+                    None
                 }
             };
             if let Some(to_del) = to_delete {

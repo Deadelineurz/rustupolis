@@ -8,7 +8,6 @@ use crate::engine::core::{Engine, LockableEngine};
 use crate::{engine::layout::Building, lock_read, lock_unlock, lock_write, population::{
     district::PopulationDistrict,
     people::{BasePeopleInfo, People, PeopleLegalState},
-    Population,
 }, send_to_side_bar_auto, ui::sidebar::{LogColor, LogType}};
 use crate::engine::layout::LayoutId;
 use crate::threads::sidebar::SideBarMessage;

@@ -71,7 +71,7 @@ fn deathrate_from_age(age: u32, dna: DNA) -> f64 {
                     25.0
                 } else {
                     0.0
-                })) as f64
+                }))
             / 15.0)
             .powf(2.0),
     )

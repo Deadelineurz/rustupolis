@@ -2,9 +2,8 @@ pub mod interruptible_sleep;
 pub mod pair;
 
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
-use crate::engine::core::{Engine, LockableEngine};
+use crate::engine::core::{Engine};
 use crate::threads::sidebar::SideBarMessage;
-use crate::ui::sidebar::SyncDisplay;
 
 #[macro_export]
 macro_rules! send_to_side_bar_auto {

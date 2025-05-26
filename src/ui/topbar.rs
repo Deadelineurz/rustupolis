@@ -114,7 +114,7 @@ impl TopBar {
 
     pub fn draw(&self) -> Result<(), Error> {
         if self.hide {
-            return Result::Ok(());
+            return Ok(());
         }
 
         draw_box(

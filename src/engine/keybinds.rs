@@ -1,5 +1,4 @@
-use std::any::Any;
-use crate::engine::core::{Engine, LockableEngine};
+use crate::engine::core::{Engine};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
 use log::{debug, trace};
 use std::io::{stdin, Stdout};
@@ -10,13 +9,11 @@ use std::sync::mpsc::Sender;
 use std::thread::{Scope, ScopedJoinHandle};
 use termion::cursor;
 use termion::event::{Event, Key, MouseButton, MouseEvent};
-use termion::event::Key::Insert;
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::RawTerminal;
-use crate::{lock_read, lock_unlock};
 use crate::threads::sidebar::SideBarMessage;
 use crate::ui::sidebar::SyncDisplay;
-use crate::utils::{send_to_side_bar_read, send_to_side_bar_write};
+use crate::utils::{send_to_side_bar_write};
 
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 
