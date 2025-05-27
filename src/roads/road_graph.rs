@@ -97,6 +97,7 @@ pub type Edge<'a> = Pair<'a, LayoutId>;
 
 #[derive(Debug)]
 pub struct Graph<'a> {
+    #[allow(dead_code)]
     nodes: HashMap<LayoutId, Node<'a>>,
     edges: HashSet<Edge<'a>>,
     building_connections: HashSet<Pair<'a, LayoutId>>

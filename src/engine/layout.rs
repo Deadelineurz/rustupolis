@@ -1,10 +1,10 @@
+use super::core::Engine;
+use super::drawable::DrawableType;
 use super::{drawable::Drawable, keybinds::Clickable};
-use crate::engine::core::Engine;
-use crate::engine::drawable::DrawableType;
 use crate::population::Population;
 use crate::roads::road_graph::{Graph, Rect};
 use crate::threads::engine_loop::Selection;
-use crate::{population::people::BasePeopleInfo, ui::colors::*};
+use crate::{lock_read, lock_unlock, population::people::BasePeopleInfo, ui::colors::*};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine as b64Engine;
 use rand::{rng, Fill};
@@ -18,17 +18,17 @@ use std::slice::Iter;
 use crate::utils::intersections::intersection;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
+pub const TERMINAL_RATIO: u8 = 2;
+pub const ROAD_WIDTH: i16 = 2;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct LayoutId {
-    value: [u8; LAYOUT_ID_LENGTH]
+    value: [u8; LAYOUT_ID_LENGTH],
 }
 
 impl LayoutId {
     pub fn new(value: [u8; LAYOUT_ID_LENGTH]) -> Self {
-        LayoutId {
-            value
-        }
+        LayoutId { value }
     }
 
     pub fn iter(&self) -> Iter<'_, u8> {
@@ -40,16 +40,14 @@ impl LayoutId {
 
         let mut x = [0u8; LAYOUT_ID_LENGTH];
         x.fill(&mut rng);
-        LayoutId {
-            value: x
-        }
+        LayoutId { value: x }
     }
 }
 
 impl Serialize for LayoutId {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
-        S: Serializer
+        S: Serializer,
     {
         serializer.serialize_str(&BASE64_STANDARD.encode(self.value))
     }
@@ -58,20 +56,20 @@ impl Serialize for LayoutId {
 impl<'de> Deserialize<'de> for LayoutId {
     fn deserialize<D>(deserializer: D) -> Result<LayoutId, D::Error>
     where
-        D: Deserializer<'de>
+        D: Deserializer<'de>,
     {
         let s: &str = de::Deserialize::deserialize(deserializer)?;
         let res = BASE64_STANDARD.decode(s);
 
         if let Err(_) = res {
-            return Err(Error::custom("Invalid base64"))
+            return Err(Error::custom("Invalid base64"));
         }
 
         let mut out = [0u8; LAYOUT_ID_LENGTH];
 
         for (i, x) in res.unwrap().iter().enumerate() {
             if i > LAYOUT_ID_LENGTH - 1 {
-                break
+                break;
             }
 
             out[i] = x.clone()
@@ -93,7 +91,7 @@ impl IntoIterator for &LayoutId {
 impl Default for LayoutId {
     fn default() -> Self {
         LayoutId {
-            value: [0u8; LAYOUT_ID_LENGTH]
+            value: [0u8; LAYOUT_ID_LENGTH],
         }
     }
 }
@@ -103,7 +101,6 @@ impl Debug for LayoutId {
         write!(f, "{}", BASE64_STANDARD.encode(self.value))
     }
 }
-
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -126,8 +123,8 @@ pub struct Building {
     name: String,
     pub id: LayoutId,
     district_id: usize,
-    pos_x: i16,
-    pos_y: i16,
+    pub pos_x: i16,
+    pub pos_y: i16,
     b_type: BuildingType,
     width: Option<u8>,
     height: Option<u8>,
@@ -139,19 +136,21 @@ impl Building {
     pub fn get_num_people_in_building(&self, population: &Population) -> usize {
         if population.get_district(self.district_id).is_some() {
             population
-            .get_district(self.district_id)
-            .unwrap()
-            .peoples
-            .iter()
-            .filter(|people| {
-                if let Some(uuid) = people.get_building_uuid() {
-                    *uuid == self.id
-                } else {
-                    false
-                }
-            })
-            .count()}
-        else { 0 }
+                .get_district(self.district_id)
+                .unwrap()
+                .peoples
+                .iter()
+                .filter(|people| {
+                    if let Some(uuid) = people.get_building_uuid() {
+                        *uuid == self.id
+                    } else {
+                        false
+                    }
+                })
+                .count()
+        } else {
+            0
+        }
     }
 
     pub fn get_building_uuid(&self) -> LayoutId {
@@ -177,8 +176,7 @@ impl Building {
         } else {
             if let Some(width) = self.width {
                 width
-            }
-            else {
+            } else {
                 0
             }
         }
@@ -194,6 +192,51 @@ impl Building {
     pub fn get_building_type(&self) -> BuildingType {
         self.b_type.clone()
     }
+
+    pub fn get_content(&self) -> Option<Vec<String>> {
+        self.content.clone()
+    }
+
+    pub fn new_at(x: i16, y: i16, width: u8, height: u8) -> Self {
+        Building {
+            name: "Roadside Building".to_string(),
+            id: LayoutId::random(),
+            district_id: 0,
+            pos_x: x,
+            pos_y: y,
+            b_type: BuildingType::Uniform,
+            width: Some(width),
+            height: Some(height),
+            texture: Some('█'),
+            content: None,
+        }
+    }
+
+    pub fn get_area(&self) -> Vec<(i16, i16)> {
+        let mut tiles = Vec::new();
+
+        if let Some(content) = &self.content {
+            for (dy, line) in content.iter().enumerate() {
+                for (dx, ch) in line.chars().enumerate() {
+                    if ch != ' ' {
+                        let x = self.pos_x + dx as i16;
+                        let y = self.pos_y + dy as i16;
+                        tiles.push((x, y));
+                    }
+                }
+            }
+        } else {
+            for h in 0..self.height() {
+                for w in 0..self.width() {
+                    let x = self.pos_x + w as i16;
+                    let y = self.pos_y + h as i16;
+                    tiles.push((x, y));
+                }
+            }
+        }
+
+        tiles
+    }
 }
 
 impl Clickable for Building {
@@ -201,7 +244,14 @@ impl Clickable for Building {
         let x = Some(vec![
             String::from(format!("Name: {}", self.name)),
             String::from(format!("Position: {}, {}", self.pos_x, self.pos_y)),
-            String::from(format!("Population: {}", self.get_num_people_in_building(&engine.population))),
+            String::from(format!(
+                "Population: {}",
+                self.get_num_people_in_building(&engine.population)
+            )),
+            String::from(format!(
+                "Population: {}",
+                self.get_num_people_in_building(&engine.population)
+            )),
             String::from(" ".to_string()), // act as a newline
         ]);
         x
@@ -262,24 +312,36 @@ impl Drawable for Building {
                 str.push_str(&*"═".repeat(in_columns as usize));
                 str.push_str("╝\n");
                 str
-            }
+            };
         }
+
         let mut str: String = "".to_string();
         for i in 0..self.height.unwrap() {
-            if i == 0 { // Just to test
-                str += &*(self.texture.unwrap()
-                    .to_string().repeat(self.width.unwrap() as usize));
-
-            }
-            else {
+            if i == 0 {
+                // Just to test
                 str += &*(self
                     .texture
                     .unwrap()
                     .to_string()
                     .repeat(self.width.unwrap() as usize));
-            }
+            } else {
+                if i == 0 {
+                    // Just to test
+                    str += &*(self
+                        .texture
+                        .unwrap()
+                        .to_string()
+                        .repeat(self.width.unwrap() as usize));
+                } else {
+                    str += &*(self
+                        .texture
+                        .unwrap()
+                        .to_string()
+                        .repeat(self.width.unwrap() as usize));
+                }
 
-            str += "\n";
+                str += "\n";
+            }
         }
         str
     }
@@ -290,20 +352,16 @@ impl Drawable for Building {
             _ => {
                 if self.get_num_people_in_building(population) > 20 {
                     A_RUST_COLOR_1
-                }
-                else if self.get_num_people_in_building(population) > 15 {
+                } else if self.get_num_people_in_building(population) > 15 {
                     A_RUST_COLOR_2
-                    }
-                else if self.get_num_people_in_building(population) > 10 {
+                } else if self.get_num_people_in_building(population) > 10 {
                     A_LIGHT_COLOR
-                }
-                else if self.get_num_people_in_building(population) > 10 {
+                } else if self.get_num_people_in_building(population) > 10 {
                     A_SAND_COLOR
-                }
-                else {
+                } else {
                     A_DARKEST_COLOR
                 }
-            },
+            }
         }
     }
 
@@ -312,7 +370,11 @@ impl Drawable for Building {
     }
 
     fn d_type(&self) -> DrawableType {
-        if self.b_type == BuildingType::EmptySpace {DrawableType::BuildingEmpty} else {DrawableType::Building}
+        if self.b_type == BuildingType::EmptySpace {
+            DrawableType::BuildingEmpty
+        } else {
+            DrawableType::Building
+        }
     }
 }
 
@@ -324,10 +386,79 @@ pub struct Road {
     pub id: LayoutId,
     pub start_x: i16,
     pub start_y: i16,
-    pub horizontal: bool,
-    pub width: u8,
-    pub length: u8,
-    pub pavement: char,
+
+    pub(crate) horizontal: bool,
+    pub(crate) width: u8,
+    pub(crate) length: u8,
+    pub(crate) pavement: char,
+}
+
+impl Road {
+    pub fn new(
+        start: (i16, i16),
+        length: u8,
+        width: u8,
+        is_horizontal: bool,
+        pavement: char,
+    ) -> Self {
+        Road {
+            name: "New Road".to_string(),
+            id: LayoutId::random(),
+            start_x: start.0,
+            start_y: start.1,
+            horizontal: is_horizontal,
+            width: width,
+            length: length,
+            pavement: pavement,
+        }
+    }
+
+    pub fn get_area(&self) -> Vec<(i16, i16)> {
+        let mut tiles = Vec::new();
+        for i in 0..self.length {
+            for w in 0..self.width {
+                let (x, y) = if self.horizontal {
+                    (self.start_x + i as i16, self.start_y + w as i16)
+                } else {
+                    (self.start_x + w as i16, self.start_y + i as i16)
+                };
+                tiles.push((x, y));
+            }
+        }
+        tiles
+    }
+
+    pub fn extend_down(&mut self, amount: u8) -> (i16, i16) {
+        self.length += if self.horizontal { amount * 2 } else { amount };
+
+        if self.horizontal {
+            (self.start_x + self.length as i16 - 1, self.start_y)
+        } else {
+            (self.start_x, self.start_y + self.length as i16 - 1)
+        }
+    }
+
+    pub fn extend_up(&mut self, amount: u8) -> (i16, i16) {
+        let amount = if self.horizontal { amount * 2 } else { amount };
+
+        if self.horizontal {
+            self.start_x -= amount as i16;
+        } else {
+            self.start_y -= amount as i16;
+        }
+
+        self.length += amount;
+
+        (self.start_x, self.start_y)
+    }
+
+    pub fn length(&self) -> u8 {
+        self.length
+    }
+
+    pub fn is_horizontal(&self) -> bool {
+        self.horizontal
+    }
 }
 
 impl Clickable for Road {
@@ -395,9 +526,7 @@ impl Drawable for Road {
     fn d_type(&self) -> DrawableType {
         DrawableType::Road
     }
-
 }
-
 
 // ----- LAYOUT -----
 
@@ -406,19 +535,16 @@ pub struct Layout<'a> {
     pub buildings: Vec<Building>,
     pub roads: Vec<Road>,
     #[serde(skip)]
-    pub selections : Vec<Selection>,
+    pub selections: Vec<Selection>,
     #[serde(skip)]
-    pub graph: Option<Graph<'a>>
+    pub graph: Option<Graph<'a>>,
 }
 
 impl Layout<'_> {
     pub fn update_graph(&mut self) {
-        unsafe {
-            self.graph = Some(Graph::new((&raw const *self).as_ref().unwrap()))
-        }
-        
+        unsafe { self.graph = Some(Graph::new((&raw const *self).as_ref().unwrap())) }
     }
-    
+
     pub fn load_default_layout() -> Self {
         let layout = include_str!("../initial_data/layout.json");
 
@@ -434,9 +560,17 @@ impl Layout<'_> {
 
         layout_obj
     }
-    
+
     pub fn load_core_layout() -> Self {
         let layout = include_str!("../initial_data/starting_core.json");
+
+        let layout_obj: Layout = serde_json::from_str(layout).unwrap();
+
+        layout_obj
+    }
+
+    pub fn load_empty_layout() -> Self {
+        let layout = include_str!("../initial_data/starting_empty.json");
 
         let layout_obj: Layout = serde_json::from_str(layout).unwrap();
 
@@ -463,7 +597,10 @@ impl Layout<'_> {
     }
 
     pub fn get_buildings_district_mut(&mut self, district_id: usize) -> Vec<&mut Building> {
-        self.buildings.iter_mut().filter(|b| b.district_id == district_id).collect()
+        self.buildings
+            .iter_mut()
+            .filter(|b| b.district_id == district_id)
+            .collect()
     }
 
     /// Clone the vec
@@ -475,31 +612,46 @@ impl Layout<'_> {
         self.selections.iter().map(|r| r.clone()).collect()
     }
 
-    pub fn get_building_for_coordinates(&self, x: i16, y: i16, filter : BuildingType) -> Option<&Building> {
+    pub fn get_building_for_coordinates(
+        &self,
+        x: i16,
+        y: i16,
+        filter: BuildingType,
+    ) -> Option<&Building> {
         for bldg in &(self.buildings) {
-            if let Some(_hei) = bldg.height{
+            if let Some(_hei) = bldg.height {
                 //debug!("{:} {:} {:} {:} {:}", bldg.name, bldg.x(), (x + bldg.width.unwrap() as i16) ,bldg.y(), (y + hei as i16));
-
             }
         }
-        let res = self.buildings
-            .iter()
-            .find(|it| it.b_type == filter && it.x() <= x && (it.x() + it.width() as i16) >= x && it.y() <= y && (it.y() + it.height() as i16) >= y);
+        let res = self.buildings.iter().find(|it| {
+            it.b_type == filter
+                && it.x() <= x
+                && (it.x() + it.width() as i16) >= x
+                && it.y() <= y
+                && (it.y() + it.height() as i16) >= y
+        });
+        let res = self.buildings.iter().find(|it| {
+            it.b_type == filter
+                && it.x() <= x
+                && (it.x() + it.width() as i16) >= x
+                && it.y() <= y
+                && (it.y() + it.height() as i16) >= y
+        });
         res
     }
 
     pub fn add_building_from_coords(&mut self, x: i16, y: i16, width: u8, height: u8) {
         let new_bldg = Building {
-            name : "Test12".to_string(),
-            id : LayoutId::random(),
-            pos_x : x,
+            name: "Test12".to_string(),
+            id: LayoutId::random(),
+            pos_x: x,
             pos_y: y,
             district_id: 1,
             b_type: BuildingType::Uniform,
-            width : Option::from(width),
-            height : Option::from(height),
-            texture : Some('█'),
-            content : Some(vec![])
+            width: Option::from(width),
+            height: Option::from(height),
+            texture: Some('█'),
+            content: Some(vec![]),
         };
         self.buildings.push(new_bldg);
         self.update_graph();
@@ -511,22 +663,24 @@ impl Layout<'_> {
             id: Default::default(),
             start_x: x,
             start_y: y,
-            horizontal: if width >= height {true} else {false} ,
-            width: if width >= height {1} else {2},
-            length: if width >= height {width} else {height},
-            pavement: '▓'};
+            horizontal: if width >= height { true } else { false },
+            width: if width >= height { 1 } else { 2 },
+            length: if width >= height { width } else { height },
+            pavement: '▓',
+        };
         self.roads.push(new_road);
         self.update_graph();
     }
 
-    pub fn replace_empty_building(&mut self, building_id : LayoutId){
+    pub fn replace_empty_building(&mut self, building_id: LayoutId) {
         let mut i = 0;
         let mut building: Option<&Building> = None;
 
         for bldg in &self.buildings {
             if bldg.id == building_id {
                 building = Some(bldg);
-                break
+                break;
+                break;
             }
 
             i += 1
@@ -537,21 +691,21 @@ impl Layout<'_> {
             //debug!("{:?}", bldg);
 
             let new_bldg = Building {
-                name : "Test12".to_string(),
-                id : LayoutId::random(),
-                pos_x : bldg.pos_x,
+                name: "Test12".to_string(),
+                id: LayoutId::random(),
+                pos_x: bldg.pos_x,
                 pos_y: bldg.pos_y,
                 district_id: bldg.district_id,
                 b_type: BuildingType::Uniform,
-                width : Option::from(bldg.width()),
-                height : Option::from(bldg.height()),
-                texture : Some('▓'),
-                content : Some(vec![])
+                width: Option::from(bldg.width()),
+                height: Option::from(bldg.height()),
+                texture: Some('▓'),
+                content: Some(vec![]),
             };
             self.buildings.push(new_bldg);
             self.buildings.remove(i);
         }
-        
+
         self.update_graph()
     }
 
