@@ -1,3 +1,6 @@
+extern crate core;
+
+use core::panic::PanicInfo;
 use crate::logging::RemoteLoggerClient;
 use lazy_static::lazy_static;
 use log::{LevelFilter};
@@ -5,7 +8,7 @@ use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::KeyBindListener;
 use rustupolis::engine::layout::{Layout};
 use rustupolis::engine::viewport::Viewport;
-use rustupolis::roads::road_graph::Graph;
+use rustupolis::roads::road_graph::{Graph, Rect};
 use rustupolis::terminal::screen::CleanScreen;
 use rustupolis::threads::demo::demo_scope;
 use rustupolis::threads::engine_loop::engine_loop;
@@ -14,16 +17,25 @@ use std::io::stdout;
 use std::ops::Deref;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, RwLock};
-use std::{env, fs, thread};
+use std::{panic, thread};
+use base64::Engine as EngineBase64;
+use base64::prelude::BASE64_STANDARD;
+use std::option::Option;
+use std::thread::sleep;
+use std::time::Duration;
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
+use rustupolis::engine::drawable::Drawable;
 use rustupolis::threads::sidebar::SideBarMessage::Quit;
 mod logging;
 
 lazy_static! {
     pub static ref LOGGER: RemoteLoggerClient = RemoteLoggerClient::new();
 }
+
+
+
 
 fn main() {
     log::set_logger(LOGGER.deref())
@@ -32,10 +44,15 @@ fn main() {
 
     let _clear = CleanScreen::new();
 
-    let layout = Layout::load_default_layout();
+    let mut layout = Layout::load_default_layout();
 
     let mut wonder_graph = Graph::new(&layout);
     wonder_graph.start_dfs(&layout);
+
+    //println!("{:?}",layout);
+    
+
+    //sleep(Duration::from_secs(2));
 
     let stdout = Arc::from(MouseTerminal::from(stdout().into_raw_mode().unwrap()));
 

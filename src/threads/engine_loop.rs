@@ -9,7 +9,7 @@ use log::{debug, trace};
 use serde::Deserialize;
 use termion::event::{Key, MouseButton};
 use crate::engine::drawable::{Drawable, DrawableType};
-use crate::engine::drawable::DrawableType::{BuildingEmpty, Road};
+use crate::engine::drawable::DrawableType::{Building, BuildingEmpty, Road};
 use crate::engine::keybinds::Clickable;
 use crate::population::Population;
 use crate::threads::engine_loop::SelectionType::Void;
@@ -69,6 +69,17 @@ fn check_click_target(input : (i16,i16), engine: &LockableEngine) -> Option<Draw
     dtype
 }
 
+fn get_click_target_id(input : (i16,i16), engine: &LockableEngine) -> Option<LayoutId> {
+    let mut id = Option::from(None);
+    lock_read!(engine |> eng);
+    let drwb = eng.get_drawable_for_coordinates(input.0, input.1);
+    if drwb.is_some() {
+        id = Option::from(drwb.unwrap().id());
+    }
+    lock_unlock!(eng);
+    id
+}
+
 fn calculate_road_coords(start : (i16,i16), end: (i16,i16)) -> ((i16,i16),(i16,i16)) {
     let x1 = start.0;
     let y1 = start.1;
@@ -114,8 +125,8 @@ pub fn engine_loop<'scope, 'env>(
                 lock_unlock!(eng);
                 return;
             }
-            if inputs.iter().count() >=2 { // 2 actions keybinds
-                if inputs[0].2.0.is_some()  && inputs[1].2.0.is_some() {
+            if inputs.iter().count() >=2 {
+                if inputs[0].2.0.is_some()  && inputs[1].2.0.is_some() { // 2 actions keybinds
                     if inputs[0].2.0.unwrap() == MouseButton::Right && inputs[1].2.0.unwrap() == MouseButton::Left {
                         // Cleaned the current selections
                         lock_write!(engine |> eng);
@@ -157,8 +168,67 @@ pub fn engine_loop<'scope, 'env>(
                             lock_unlock!(eng);
                         }
                     }
+
+                    if inputs[0].2.0.unwrap() == MouseButton::Middle && inputs[1].2.0.unwrap() == MouseButton::Middle {
+                        // GPS
+                        // Cleaned the current selections
+                        lock_write!(engine |> eng);
+
+                        let mut gps_roads_index = vec![];
+                        let mut i = 0;
+                        eng.layout.roads.iter().for_each(|r| {if r.name.contains("GPS") {gps_roads_index.push(i);} i+=1;});
+
+                        for index in gps_roads_index {
+                            eng.layout.roads.remove(index);
+                        }
+                        eng.refresh_drawables();
+                        eng.refresh();
+                        lock_unlock!(eng);
+
+                        let click_type_1 = check_click_target((inputs[0].0, inputs[0].1), engine);
+                        let click_type_2 = check_click_target((inputs[1].0, inputs[1].1), engine);
+
+                        let click_1 = get_click_target_id((inputs[0].0, inputs[0].1), engine);
+                        let click_2 = get_click_target_id((inputs[1].0, inputs[1].1), engine);
+
+                        println!("{:?}", inputs);
+
+                        if click_type_1 == Option::from(Building) && click_type_2 == Option::from(Building) && click_1.is_some() && click_2.is_some() {
+                            let mut to_highlight = vec![];
+                            lock_write!(engine |> eng);
+
+                            let intersections = eng.layout.calculate_path(&click_1.unwrap(), &click_2.unwrap());
+
+                            for (i, window) in intersections.windows(2).enumerate() {
+                                if let [Some(inter), Some(inter2)] = window {
+                                    let hori = !(inter.x == inter2.x || (inter.x - inter2.x).abs() <= 3);
+                                    //println!("GPS{:} horiz : {:}", i, hori);
+                                    to_highlight.push(crate::engine::layout::Road {
+                                        name: format!("GPS{}", i),
+                                        id: LayoutId::random(),
+                                        start_x: if inter.x > inter2.x {inter2.x} else { inter.x },
+                                        start_y: if inter.y > inter2.y {inter2.y} else { inter.y },
+                                        horizontal: if hori {true} else { false },
+                                        width: if hori {inter.height -1 } else { inter.width },
+                                        length: if hori {
+                                            (inter2.x - inter.x).abs() as u8
+                                        } else {
+                                            (inter2.y - inter.y).abs() as u8
+                                        },
+                                        pavement: '░',
+                                    });
+                                }
+                            }
+
+                            to_highlight.iter().for_each(|x| eng.layout.add_road(x.clone()));
+                            eng.refresh_drawables();
+                            eng.refresh();
+                            lock_unlock!(eng);
+                        }
+                        *inputs = vec![];
+                    }
                 }
-                if inputs[0].2.1.is_some() && inputs[1].2.0.is_some()  && inputs[2].2.0.is_some() {
+                if inputs.len() >= 3 && inputs[0].2.1.is_some() && inputs[1].2.0.is_some()  && inputs[2].2.0.is_some() {
                     let mut sel = Option::from(None);
                     lock_write!(engine |> eng);
                     sel = Option::from((eng.layout.selections[0].clone()));

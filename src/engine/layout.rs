@@ -2,7 +2,7 @@ use super::{drawable::Drawable, keybinds::Clickable};
 use crate::engine::core::Engine;
 use crate::engine::drawable::DrawableType;
 use crate::population::Population;
-use crate::roads::road_graph::Graph;
+use crate::roads::road_graph::{Graph, Rect};
 use crate::threads::engine_loop::Selection;
 use crate::{population::people::BasePeopleInfo, ui::colors::*};
 use base64::prelude::BASE64_STANDARD;
@@ -15,6 +15,7 @@ use std::cmp::PartialEq;
 use std::fmt::Display;
 use std::fmt::{Debug, Formatter};
 use std::slice::Iter;
+use crate::utils::intersections::intersection;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
 
@@ -319,14 +320,14 @@ impl Drawable for Building {
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct Road {
-    name: String,
+    pub name: String,
     pub id: LayoutId,
-    start_x: i16,
-    start_y: i16,
-    horizontal: bool,
-    width: u8,
-    length: u8,
-    pavement: char,
+    pub start_x: i16,
+    pub start_y: i16,
+    pub horizontal: bool,
+    pub width: u8,
+    pub length: u8,
+    pub pavement: char,
 }
 
 impl Clickable for Road {
@@ -384,8 +385,8 @@ impl Drawable for Road {
         }
     }
 
-    fn color(&self, _pop: &Population) -> ansi_term::Color {
-        A_GREY_COLOR
+    fn color(&self, pop: &Population) -> ansi_term::Color {
+        if self.pavement == '░' {A_LIGHT_COLOR} else {A_GREY_COLOR}
     }
 
     fn id(&self) -> LayoutId {
@@ -513,8 +514,7 @@ impl Layout<'_> {
             horizontal: if width >= height {true} else {false} ,
             width: if width >= height {1} else {2},
             length: if width >= height {width} else {height},
-            pavement: '▓',
-        };
+            pavement: '▓'};
         self.roads.push(new_road);
         self.update_graph();
     }
@@ -553,6 +553,44 @@ impl Layout<'_> {
         }
         
         self.update_graph()
+    }
+
+    pub fn calculate_path(&mut self, start: &LayoutId, goal: &LayoutId) -> Vec<Option<Rect>>{
+        let mut wonder_graph = Graph::new(&self);
+        wonder_graph.start_dfs(&self);
+        let path = wonder_graph.find_path_bfs(start, goal);
+
+        let mut last_drawable : Option<Box<dyn Drawable>> = None;
+        let mut intersections = vec![];
+        if let Some(chemin) = path {
+            //println!("Itinéraire trouvé:");
+            for id in chemin {
+                for bldg in self.buildings.iter().filter(|x| x.id == id){
+                    //println!("{:?}", bldg.name);
+                    /*if last_drawable.is_some(){
+                        println!("{:?}", intersection(&*last_drawable.unwrap(), &*Box::new(bldg.clone())))
+                    }*/
+                    if last_drawable.is_some() {
+                        intersections.push(intersection(&*last_drawable.unwrap(), &*Box::new(bldg.clone())));
+                    }
+                    last_drawable = Some(Box::new(bldg.clone()))
+                }
+                for rdg in self.roads.iter().filter(|x| x.id == id){
+                    //println!("{:?}", rdg.name);
+
+                    /*if last_drawable.is_some(){
+                        println!("{:?}", intersection(&*last_drawable.unwrap(), &*Box::new(rdg.clone())))
+                    }*/
+                    if last_drawable.is_some() {
+                        intersections.push(intersection(&*last_drawable.unwrap(), &*Box::new(rdg.clone())));
+                    }
+                    last_drawable = Some(Box::new(rdg.clone()))
+                }
+            }
+        } else {
+            return intersections;
+        }
+        intersections
     }
 
 }
