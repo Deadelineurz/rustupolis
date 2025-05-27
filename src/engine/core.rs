@@ -1,3 +1,4 @@
+use std::cmp::min;
 // use std::any::type_name;
 // use std::cmp::PartialEq;
 use crate::engine::drawable::DynDrawable;
@@ -62,7 +63,7 @@ impl Engine<'_> {
             trace!("blit at: {:?}", coordinates);
 
             for line in &d.shape().lines().collect::<Vec<&str>>()
-                [coordinates.crop_top..(d.height() as usize - coordinates.crop_bottom)]
+                [coordinates.crop_top..min((d.height() as usize - coordinates.crop_bottom), d.shape().lines().count())]
             {
                 let _ = write!(
                     self.stdout.lock(),
