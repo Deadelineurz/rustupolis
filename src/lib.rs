@@ -9,3 +9,4 @@ pub mod simulation;
 pub mod threads;
 pub mod utils;
 pub mod roads;
+pub mod procedural_generation;
