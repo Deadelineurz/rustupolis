@@ -1,5 +1,7 @@
 use crate::engine::core::LockableEngine;
+use crate::procedural_generation::{generate_next_step};
 use crate::simulation::update_time_population;
+use crate::threads::sidebar::SideBarMessage;
 use crate::ui::sidebar::{LogColor, LogType};
 use crate::ui::topbar::TopBar;
 use crate::utils::interruptible_sleep::InterruptibleSleep;
@@ -9,7 +11,6 @@ use std::sync::Arc;
 use std::thread::{Scope, ScopedJoinHandle};
 use std::time::Duration;
 use termion::terminal_size;
-use crate::threads::sidebar::SideBarMessage;
 
 pub fn demo_scope<'scope, 'env>(
     s: &'scope Scope<'scope, 'env>,
@@ -29,20 +30,21 @@ pub fn demo_scope<'scope, 'env>(
         );
         topbar.draw().unwrap();
 
-        send_to_side_bar_auto!(e, engine,
-            "Begin...",
-            LogType::Debug,
-            LogColor::Unusual);
+        send_to_side_bar_auto!(e, engine, "Begin...", LogType::Debug, LogColor::Unusual);
 
         return_on_cancel!(stop_var, Duration::from_millis(500));
 
-        send_to_side_bar_auto!(e, engine,
+        send_to_side_bar_auto!(
+            e,
+            engine,
             "Generating starting population...",
             LogType::Debug,
-            LogColor::Normal);
+            LogColor::Normal
+        );
 
         let mut refresh = 0;
-	let mut witnesses_to_birth: u8 = 0;
+        let mut witnesses_to_birth: u8 = 0;
+
         for i in 0..12000 {
             let _ = topbar.update_displayed_year(i / 12);
             update_time_population(
@@ -84,23 +86,6 @@ pub fn demo_scope<'scope, 'env>(
 
             return_on_cancel!(stop_var, Duration::from_millis(50));
             refresh += 1;
-
-            //     let people = POPULATION.lock().unwrap().get_core_district().peoples[0].clone();
-
-            //     if people.as_alive() == None {
-            //         witness_dead = true;
-            //     }
-
-            //     let debug: String = format!("{:#?}", people);
-            //     let lines = debug
-            //         .lines()
-            //         .map(|s| Box::new(s.to_string()) as Box<SyncDisplay>)
-            //         .collect();
-
-            //     send_to_side_bar(&engine, (lines, LogType::None, LogColor::Normal));
-
-            //     return_on_cancel!(stop_var, Duration::from_secs(2));
-            // }
         }
     })
 }
