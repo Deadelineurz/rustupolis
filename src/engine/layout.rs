@@ -7,8 +7,7 @@ use crate::threads::engine_loop::Selection;
 use crate::{lock_read, lock_unlock, population::people::BasePeopleInfo, ui::colors::*};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine as b64Engine;
-use rand::rngs::ThreadRng;
-use rand::{rng, Fill, Rng};
+use rand::{rng, Fill};
 use serde::de::Error;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 use std::array::IntoIter;
@@ -18,6 +17,8 @@ use std::fmt::{Debug, Formatter};
 use std::slice::Iter;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
+pub const TERMINAL_RATIO: u8 = 2;
+pub const ROAD_WIDTH: i16 = 2;
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash)]
 pub struct LayoutId {
@@ -122,8 +123,8 @@ pub struct Building {
     name: String,
     pub id: LayoutId,
     district_id: usize,
-    pos_x: i16,
-    pos_y: i16,
+    pub pos_x: i16,
+    pub pos_y: i16,
     b_type: BuildingType,
     width: Option<u8>,
     height: Option<u8>,
@@ -407,9 +408,9 @@ impl Road {
             for w in 0..self.width {
                 let (x, y) = if self.horizontal {
                     (self.start_x + i as i16, self.start_y + w as i16)
-        } else {
+                } else {
                     (self.start_x + w as i16, self.start_y + i as i16)
-        };
+                };
                 tiles.push((x, y));
             }
         }
