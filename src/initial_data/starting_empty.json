@@ -1,0 +1,25 @@
+{
+    "buildings": [
+        {
+            "name": "QG",
+            "id": "UUc=",
+            "district_id": 0,
+            "pos_x": 20,
+            "pos_y": 20,
+            "b_type": "custom",
+            "width": null,
+            "height": null,
+            "texture": null,
+            "content": [
+                "██████████████",
+                "██████████████",
+                "██████QG██████",
+                "██████████████",
+                "██████████████"
+            ]
+        }
+    ],
+    "roads": [
+    ],
+    "selections": []
+}
