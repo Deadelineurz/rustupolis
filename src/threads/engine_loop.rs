@@ -174,7 +174,7 @@ pub fn engine_loop<'scope, 'env>(
                         }
                     }
 
-                    if inputs[0].2.0.unwrap() == MouseButton::Middle && inputs[1].2.0.unwrap() == MouseButton::Middle {
+                    if inputs[0].2.0.unwrap() == MouseButton::Left && inputs[1].2.0.unwrap() == MouseButton::Left {
                         // GPS
                         // Cleaned the current selections
                         lock_write!(engine |> eng);
