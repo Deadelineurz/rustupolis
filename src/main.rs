@@ -1,6 +1,9 @@
+extern crate core;
+
+use core::panic::PanicInfo;
 use crate::logging::RemoteLoggerClient;
 use lazy_static::lazy_static;
-use log::{debug, LevelFilter};
+use log::{debug, error, LevelFilter};
 use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::{Clickable, KeyBindListener};
 use rustupolis::engine::layout::{Layout, LayoutId, Road};
@@ -15,7 +18,7 @@ use std::io::stdout;
 use std::ops::Deref;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, RwLock};
-use std::thread;
+use std::{panic, thread};
 use base64::Engine as EngineBase64;
 use base64::prelude::BASE64_STANDARD;
 use std::option::Option;
@@ -48,10 +51,7 @@ fn main() {
     wonder_graph.start_dfs(&layout);
 
     //println!("{:?}",layout);
-
-
-
-
+    
 
     //sleep(Duration::from_secs(2));
 

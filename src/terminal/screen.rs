@@ -18,7 +18,7 @@ impl CleanScreen {
 
         panic::set_hook(Box::new(|pan| {
             PANICKING.store(true, Ordering::SeqCst);
-            print!("{}{}{}{}{}", Fg(color::LightRed), Bg(color::Reset), clear::All, cursor::Goto(4, 1), cursor::Show);
+            print!("{}{}{}", Fg(color::LightRed), Bg(color::Reset), cursor::Show);
             println!("{}", pan);
             print!("{}", Fg(color::Reset))
         }));
