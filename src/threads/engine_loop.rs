@@ -1,24 +1,19 @@
 use crate::engine::core::{Engine, LockableEngine};
-use crate::engine::layout::{Building, BuildingType, LayoutId};
+use crate::engine::layout::{BuildingType, LayoutId};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
-use crate::{lock_read, lock_unlock, lock_write, return_on_cancel};
-use std::env;
+use crate::{lock_read, lock_unlock, lock_write};
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::thread::{Scope, ScopedJoinHandle};
-use std::time::Duration;
-use ansi_term::{Color, Colour};
 use log::{debug, trace};
 use serde::Deserialize;
-use termion::cursor::Right;
-use termion::event::Key::Left;
 use termion::event::{Key, MouseButton};
 use crate::engine::drawable::{Drawable, DrawableType};
 use crate::engine::drawable::DrawableType::{BuildingEmpty, Road};
 use crate::engine::keybinds::Clickable;
 use crate::population::Population;
 use crate::threads::engine_loop::SelectionType::Void;
-use crate::ui::colors::{A_RUST_COLOR_1, A_SAND_COLOR, A_UI_WHITE_DARK_COLOR};
+use crate::ui::colors::A_UI_WHITE_DARK_COLOR;
 
 #[derive(Copy, Deserialize, Clone, Debug, PartialEq)]
 pub enum SelectionType {
@@ -42,7 +37,7 @@ impl Drawable for Selection {
     fn height(&self) -> u8 { self.height }
     fn shape(&self) -> String {
         let mut str: String = "".to_string();
-        for i in 0..self.height {
+        for _i in 0..self.height {
 
             str += &*(
                 ("␥").to_string()
@@ -51,12 +46,12 @@ impl Drawable for Selection {
         }
         str
     }
-    fn color(&self, pop: &Population) -> ansi_term::Color {A_UI_WHITE_DARK_COLOR}
+    fn color(&self, _pop: &Population) -> ansi_term::Color {A_UI_WHITE_DARK_COLOR}
     fn id(&self) -> LayoutId {LayoutId::random()}
     fn d_type(&self) -> DrawableType {DrawableType::Selection}
 }
 impl Clickable for Selection {
-    fn infos(&self, engine: &Engine) -> Option<Vec<String>> {
+    fn infos(&self, _engine: &Engine) -> Option<Vec<String>> {
         Some(vec![
             String::from("".to_string()),
         ])
@@ -92,15 +87,15 @@ fn calculate_road_coords(start : (i16,i16), end: (i16,i16)) -> ((i16,i16),(i16,i
 pub fn engine_loop<'scope, 'env>(
     s: &'scope Scope<'scope, 'env>,
     engine: LockableEngine,
-    stop_var: Arc<InterruptibleSleep>,
+    _stop_var: Arc<InterruptibleSleep>,
     click_receiver: Receiver<(i16, i16, (Option<MouseButton>, Option<Key>))>,
-    key_receiver: Receiver<Key>
+    _key_receiver: Receiver<Key>
 ) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
         let mut inputs = vec![];
 
-        fn check_inputs(inputs: &mut (Vec<(i16, i16, (Option<MouseButton>, Option<Key>))>), engine: &LockableEngine) {
-            let n = inputs.iter().count();
+        fn check_inputs(inputs: &mut Vec<(i16, i16, (Option<MouseButton>, Option<Key>))>, engine: &LockableEngine) {
+            let _n = inputs.iter().count();
 
             if inputs[0].2.0.is_some() && inputs[0].2.0.unwrap() == MouseButton::Left && check_click_target((inputs[0].0, inputs[0].1), engine) == Option::from(BuildingEmpty) {
                 let boolean = replace_building_from_coords(inputs[0].0, inputs[0].1, engine, BuildingType::EmptySpace);
