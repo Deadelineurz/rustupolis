@@ -49,7 +49,6 @@ fn main() {
             exit(1)
         }
 
-        info!("{:?}", fs::read_to_string(&pb).unwrap());
         serde_json::from_str(&fs::read_to_string(pb).unwrap()).unwrap()
     } else {
         Layout::load_default_layout()
