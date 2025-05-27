@@ -3,7 +3,7 @@ extern crate core;
 use core::panic::PanicInfo;
 use crate::logging::RemoteLoggerClient;
 use lazy_static::lazy_static;
-use log::LevelFilter;
+use log::{info, LevelFilter};
 use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::KeyBindListener;
 use rustupolis::engine::layout::Layout;
@@ -18,7 +18,10 @@ use std::io::stdout;
 use std::ops::Deref;
 use std::sync::mpsc::channel;
 use std::sync::{Arc, RwLock};
-use std::thread;
+use std::{env, fs, thread};
+use std::fs::File;
+use std::path::PathBuf;
+use std::process::exit;
 use termion::input::MouseTerminal;
 use termion::raw::IntoRawMode;
 use termion::terminal_size;
@@ -36,9 +39,23 @@ fn main() {
         .map(|()| log::set_max_level(LevelFilter::Debug))
         .unwrap();
 
-    let _clear = CleanScreen::new();
+    let args: Vec<String> = env::args().collect();
 
-    let mut layout = Layout::load_default_layout();
+    let mut layout = if let Some(path) = args.get(1) {
+        let pb = PathBuf::from(path);
+
+        if !pb.exists() || !pb.is_file() {
+            eprintln!("Not a file");
+            exit(1)
+        }
+
+        info!("{:?}", fs::read_to_string(&pb).unwrap());
+        serde_json::from_str(&fs::read_to_string(pb).unwrap()).unwrap()
+    } else {
+        Layout::load_default_layout()
+    };
+
+    let _clear = CleanScreen::new();
 
     let mut wonder_graph = Graph::new(&layout);
     wonder_graph.start_dfs(&layout);
