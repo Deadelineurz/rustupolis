@@ -95,7 +95,7 @@ pub fn engine_loop<'scope, 'env>(
         let mut inputs = vec![];
 
         fn check_inputs(inputs: &mut Vec<(i16, i16, (Option<MouseButton>, Option<Key>))>, engine: &LockableEngine) {
-            let n = inputs.iter().count();
+            let _n = inputs.iter().count();
 
             if inputs[0].2.0.is_some() && inputs[0].2.0.unwrap() == MouseButton::Left && check_click_target((inputs[0].0, inputs[0].1), engine) == Option::from(BuildingEmpty) {
                 let boolean = replace_building_from_coords(inputs[0].0, inputs[0].1, engine, BuildingType::EmptySpace);
