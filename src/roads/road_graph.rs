@@ -95,6 +95,7 @@ pub type Edge<'a> = Pair<'a, LayoutId>;
 
 #[derive(Debug)]
 pub struct Graph<'a> {
+    #[allow(dead_code)]
     nodes: HashMap<LayoutId, Node<'a>>,
     edges: HashSet<Edge<'a>>,
     building_connections: HashSet<Pair<'a, LayoutId>>
@@ -148,7 +149,7 @@ impl<'a> Graph<'a> {
         }
     }
 
-    fn connected_to(&self, start: &LayoutId) -> HashSet<&LayoutId> {
+    pub fn connected_to(&self, start: &LayoutId) -> HashSet<&LayoutId> {
         self.edges.iter().filter(|x| x.has(start)).map(|x| x.other(start)).collect::<HashSet<&LayoutId>>()
     }
 
