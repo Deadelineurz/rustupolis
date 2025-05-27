@@ -156,7 +156,11 @@ impl Building {
         self.b_type.clone()
     }
 
-    pub fn new_at(x: i16, y: i16) -> Self {
+    pub fn get_content(&self) -> Option<Vec<String>> {
+        self.content.clone()
+    }
+
+    pub fn new_at(x: i16, y: i16, width: u8, height: u8) -> Self {
         Building {
             name: "Roadside Building".to_string(),
             id: LayoutId::random(),
@@ -164,11 +168,37 @@ impl Building {
             pos_x: x,
             pos_y: y,
             b_type: BuildingType::Uniform,
-            width: Some(2),
-            height: Some(2),
-            texture: Some('#'),
+            width: Some(width),
+            height: Some(height),
+            texture: Some('█'),
             content: None,
         }
+    }
+
+    pub fn get_area(&self) -> Vec<(i16, i16)> {
+        let mut tiles = Vec::new();
+
+        if let Some(content) = &self.content {
+            for (dy, line) in content.iter().enumerate() {
+                for (dx, ch) in line.chars().enumerate() {
+                    if ch != ' ' {
+                        let x = self.pos_x + dx as i16;
+                        let y = self.pos_y + dy as i16;
+                        tiles.push((x, y));
+                    }
+                }
+            }
+        } else {
+            for h in 0..self.height() {
+                for w in 0..self.width() {
+                    let x = self.pos_x + w as i16;
+                    let y = self.pos_y + h as i16;
+                    tiles.push((x, y));
+                }
+            }
+        }
+
+        tiles
     }
 }
 
@@ -332,24 +362,23 @@ impl Road {
         }
     }
 
-    pub fn create_branch(&self, length: u8, rng: &mut ThreadRng) -> Self {
-        let branch_point_offset = rng.random_range(1..self.get_length());
-        let (branch_x, branch_y) = if self.is_horizontal() {
-            (self.start_x + branch_point_offset as i16, self.start_y)
+    pub fn get_area(&self) -> Vec<(i16, i16)> {
+        let mut tiles = Vec::new();
+        for i in 0..self.length {
+            for w in 0..self.width {
+                let (x, y) = if self.horizontal {
+                    (self.start_x + i as i16, self.start_y + w as i16)
         } else {
-            (self.start_x, self.start_y + branch_point_offset as i16)
+                    (self.start_x + w as i16, self.start_y + i as i16)
         };
-        Road::new(
-            (branch_x, branch_y),
-            length,
-            self.width(),
-            !self.horizontal,
-            self.pavement,
-        )
+                tiles.push((x, y));
+            }
+        }
+        tiles
     }
 
-    pub fn extend(&mut self, amount: u8) -> (i16, i16) {
-        self.length += amount;
+    pub fn extend_down(&mut self, amount: u8) -> (i16, i16) {
+        self.length += if self.horizontal { amount * 2 } else { amount };
 
         if self.horizontal {
             (self.start_x + self.length as i16 - 1, self.start_y)
@@ -358,7 +387,21 @@ impl Road {
         }
     }
 
-    pub fn get_length(&self) -> u8 {
+    pub fn extend_up(&mut self, amount: u8) -> (i16, i16) {
+        let amount = if self.horizontal { amount * 2 } else { amount };
+
+        if self.horizontal {
+            self.start_x -= amount as i16;
+        } else {
+            self.start_y -= amount as i16;
+        }
+
+        self.length += amount;
+
+        (self.start_x, self.start_y)
+    }
+
+    pub fn length(&self) -> u8 {
         self.length
     }
 
