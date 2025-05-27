@@ -1,5 +1,6 @@
 pub mod interruptible_sleep;
 pub mod pair;
+pub mod intersections;
 
 use std::sync::{RwLockReadGuard, RwLockWriteGuard};
 use crate::engine::core::{Engine, LockableEngine};

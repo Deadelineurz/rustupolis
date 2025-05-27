@@ -13,7 +13,9 @@ use rand::{rng, Fill};
 use crate::engine::core::{Engine, LockableEngine};
 use crate::engine::drawable::DrawableType;
 use crate::population::Population;
+use crate::roads::road_graph::{Graph, Rect};
 use crate::threads::engine_loop::Selection;
+use crate::utils::intersections::intersection;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
 
@@ -502,6 +504,44 @@ impl Layout {
             self.buildings.push(new_bldg);
             self.buildings.remove(i);
         }
+    }
+
+    pub fn calculate_path(&mut self, start: &LayoutId, goal: &LayoutId) -> Vec<Option<Rect>>{
+        let mut wonder_graph = Graph::new(&self);
+        wonder_graph.start_dfs(&self);
+        let path = wonder_graph.find_path_bfs(start, goal);
+
+        let mut last_drawable : Option<Box<dyn Drawable>> = None;
+        let mut intersections = vec![];
+        if let Some(chemin) = path {
+            //println!("Itinéraire trouvé:");
+            for id in chemin {
+                for bldg in self.buildings.iter().filter(|x| x.id == id){
+                    //println!("{:?}", bldg.name);
+                    /*if last_drawable.is_some(){
+                        println!("{:?}", intersection(&*last_drawable.unwrap(), &*Box::new(bldg.clone())))
+                    }*/
+                    if last_drawable.is_some() {
+                        intersections.push(intersection(&*last_drawable.unwrap(), &*Box::new(bldg.clone())));
+                    }
+                    last_drawable = Some(Box::new(bldg.clone()))
+                }
+                for rdg in self.roads.iter().filter(|x| x.id == id){
+                    //println!("{:?}", rdg.name);
+
+                    /*if last_drawable.is_some(){
+                        println!("{:?}", intersection(&*last_drawable.unwrap(), &*Box::new(rdg.clone())))
+                    }*/
+                    if last_drawable.is_some() {
+                        intersections.push(intersection(&*last_drawable.unwrap(), &*Box::new(rdg.clone())));
+                    }
+                    last_drawable = Some(Box::new(rdg.clone()))
+                }
+            }
+        } else {
+            return intersections;
+        }
+        intersections
     }
 
 }

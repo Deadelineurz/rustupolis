@@ -32,26 +32,7 @@ lazy_static! {
     pub static ref LOGGER: RemoteLoggerClient = RemoteLoggerClient::new();
 }
 
-fn intersection(r1: &dyn Drawable, r2: &dyn Drawable) -> Option<Rect> {
-    let tolerance: i16 = 1;
 
-    let x1 = r1.x().max(r2.x());
-    let y1 = r1.y().max(r2.y());
-    let x2 = (r1.x() + r1.width() as i16).min(r2.x() + r2.width() as i16);
-    let y2 = (r1.y() + r1.height() as i16).min(r2.y() + r2.height() as i16);
-
-    // Allow for tolerance of 1 pixel in both x and y directions
-    if x1 < x2 + tolerance && y1 < y2 + tolerance {
-        Some(Rect {
-            x: x1,
-            y: y1,
-            width: ((x2 - x1).max(0) + tolerance) as u8, // ensure non-negative, add tolerance
-            height: ((y2 - y1).max(0) + tolerance) as u8,
-        })
-    } else {
-        None
-    }
-}
 
 
 fn main() {
@@ -68,63 +49,9 @@ fn main() {
 
     //println!("{:?}",layout);
 
-    let path = wonder_graph.find_path_bfs(&layout.buildings[0].id, &layout.buildings[18].id);
 
-    let mut last_drawable : Option<Box<dyn Drawable>> = None;
-    let mut intersections = vec![];
-    if let Some(chemin) = path {
-        println!("Itinéraire trouvé:");
-        for id in chemin {
-            for bldg in layout.buildings.iter().filter(|x| x.id == id){
-                println!("{:?}", bldg.name);
-                /*if last_drawable.is_some(){
-                    println!("{:?}", intersection(&*last_drawable.unwrap(), &*Box::new(bldg.clone())))
-                }*/
-                if last_drawable.is_some() {
-                    intersections.push(intersection(&*last_drawable.unwrap(), &*Box::new(bldg.clone())));
-                }
-                last_drawable = Some(Box::new(bldg.clone()))
-            }
-            for rdg in layout.roads.iter().filter(|x| x.id == id){
-                println!("{:?}", rdg.name);
 
-                /*if last_drawable.is_some(){
-                    println!("{:?}", intersection(&*last_drawable.unwrap(), &*Box::new(rdg.clone())))
-                }*/
-                if last_drawable.is_some() {
-                    intersections.push(intersection(&*last_drawable.unwrap(), &*Box::new(rdg.clone())));
-                }
-                last_drawable = Some(Box::new(rdg.clone()))
-            }
-        }
-    } else {
-        println!("Aucun itinéraire trouvé.");
-    }
 
-    let mut to_highlight = vec![];
-    for (i, window) in intersections.windows(2).enumerate() {
-        if let [Some(inter), Some(inter2)] = window {
-            let hori = !(inter.x == inter2.x || (inter.x - inter2.x).abs() <= 3);
-            println!("GPS{:} horiz : {:}", i, hori);
-            to_highlight.push(Road {
-                name: format!("GPS{}", i),
-                id: LayoutId::random(),
-                start_x: if inter.x > inter2.x {inter2.x} else { inter.x },
-                start_y: if inter.y > inter2.y {inter2.y} else { inter.y },
-                horizontal: if hori {true} else { false },
-                width: if hori {inter.height -1 } else { inter.width },
-                length: if hori {
-                    (inter2.x - inter.x).abs() as u8
-                } else {
-                    (inter2.y - inter.y).abs() as u8
-                },
-                pavement: '░',
-            });
-        }
-    }
-    println!("{:?}", intersections);
-    println!("{:?}", to_highlight);
-    layout.roads.extend(to_highlight);
 
     //sleep(Duration::from_secs(2));
 
