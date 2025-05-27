@@ -5,7 +5,6 @@ use rustupolis::engine::core::Engine;
 use rustupolis::engine::keybinds::KeyBindListener;
 use rustupolis::engine::layout::Layout;
 use rustupolis::engine::viewport::Viewport;
-use rustupolis::procedural_generation::generate_next_step;
 use rustupolis::roads::road_graph::Graph;
 use rustupolis::terminal::screen::CleanScreen;
 use rustupolis::threads::demo::demo_scope;
@@ -33,7 +32,7 @@ fn main() {
 
     let _clear = CleanScreen::new();
 
-    let layout = Layout::load_default_layout();
+    let layout = Layout::load_empty_layout();
 
     let mut wonder_graph = Graph::new(&layout);
     wonder_graph.start_dfs(&layout);
