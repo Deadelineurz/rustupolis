@@ -9,7 +9,6 @@ use std::cmp::PartialEq;
 use std::fmt::{Debug, Formatter};
 use std::slice::Iter;
 use std::fmt::Display;
-use log::debug;
 use rand::{rng, Fill};
 use crate::engine::core::{Engine, LockableEngine};
 use crate::engine::drawable::DrawableType;
@@ -87,7 +86,7 @@ impl Display for BuildingType {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Building {
-    name: String,
+    pub name: String,
     #[serde(deserialize_with = "deserialize_b64")]
     pub id: LayoutId,
     district_id: usize,
@@ -285,15 +284,15 @@ impl Drawable for Building {
 
 #[derive(Deserialize, Clone, Debug)]
 pub struct Road {
-    name: String,
+    pub name: String,
     #[serde(deserialize_with = "deserialize_b64")]
     pub id: LayoutId,
-    start_x: i16,
-    start_y: i16,
-    horizontal: bool,
-    width: u8,
-    length: u8,
-    pavement: char,
+    pub start_x: i16,
+    pub start_y: i16,
+    pub horizontal: bool,
+    pub width: u8,
+    pub length: u8,
+    pub pavement: char,
 }
 
 impl Clickable for Road {
@@ -352,7 +351,7 @@ impl Drawable for Road {
     }
 
     fn color(&self, pop: &Population) -> ansi_term::Color {
-        A_GREY_COLOR
+        if self.pavement == '░' {A_LIGHT_COLOR} else {A_GREY_COLOR}
     }
 
     fn id(&self) -> LayoutId {
@@ -467,8 +466,7 @@ impl Layout {
             horizontal: if width >= height {true} else {false} ,
             width: if width >= height {1} else {2},
             length: if width >= height {width} else {height},
-            pavement: '▓',
-        };
+            pavement: '▓'};
         self.roads.push(new_road);
     }
 

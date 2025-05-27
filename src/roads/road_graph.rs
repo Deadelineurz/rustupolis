@@ -4,11 +4,12 @@ use crate::utils::pair::Pair;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
 
-struct Rect {
-    x: i16,
-    y: i16,
-    width: u8,
-    height: u8
+#[derive(Debug)]
+pub struct Rect {
+    pub x: i16,
+    pub y: i16,
+    pub width: u8,
+    pub height: u8
 }
 
 impl Rect {
@@ -144,7 +145,7 @@ impl<'a> Graph<'a> {
         Graph {
             nodes: nodes.clone(),
             edges: edge_set,
-            building_connections: HashSet::new()
+            building_connections: HashSet::new(),
         }
     }
 
