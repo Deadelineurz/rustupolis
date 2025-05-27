@@ -13,7 +13,7 @@ use crate::engine::drawable::DrawableType::{BuildingEmpty, Road};
 use crate::engine::keybinds::Clickable;
 use crate::population::Population;
 use crate::threads::engine_loop::SelectionType::Void;
-use crate::ui::colors::{A_UI_WHITE_DARK_COLOR};
+use crate::ui::colors::A_UI_WHITE_DARK_COLOR;
 
 #[derive(Copy, Deserialize, Clone, Debug, PartialEq)]
 pub enum SelectionType {
@@ -37,7 +37,7 @@ impl Drawable for Selection {
     fn height(&self) -> u8 { self.height }
     fn shape(&self) -> String {
         let mut str: String = "".to_string();
-        for i in 0..self.height {
+        for _i in 0..self.height {
 
             str += &*(
                 ("␥").to_string()
@@ -46,12 +46,12 @@ impl Drawable for Selection {
         }
         str
     }
-    fn color(&self, pop: &Population) -> ansi_term::Color {A_UI_WHITE_DARK_COLOR}
+    fn color(&self, _pop: &Population) -> ansi_term::Color {A_UI_WHITE_DARK_COLOR}
     fn id(&self) -> LayoutId {LayoutId::random()}
     fn d_type(&self) -> DrawableType {DrawableType::Selection}
 }
 impl Clickable for Selection {
-    fn infos(&self, engine: &Engine) -> Option<Vec<String>> {
+    fn infos(&self, _engine: &Engine) -> Option<Vec<String>> {
         Some(vec![
             String::from("".to_string()),
         ])
@@ -89,7 +89,7 @@ pub fn engine_loop<'scope, 'env>(
     engine: LockableEngine<'env>,
     stop_var: Arc<InterruptibleSleep>,
     click_receiver: Receiver<(i16, i16, (Option<MouseButton>, Option<Key>))>,
-    key_receiver: Receiver<Key>
+    _key_receiver: Receiver<Key>
 ) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
         let mut inputs = vec![];
