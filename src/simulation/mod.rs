@@ -222,10 +222,18 @@ fn make_pairs(people: Vec<&People>, rng: &mut ThreadRng) -> Vec<(People, People)
     pairs
 }
 
-fn _update_people_in_building(
-    _peoples: Vec<&People>,
-    _rng: &mut ThreadRng,
-    _buildings: &mut Building,
+fn update_people_in_building(
+    peoples: &mut Vec<AlivePerson>,
+    buildings: Vec<&Building>,
+    population: &Population,
+    rng: &mut ThreadRng,
 ) {
-    todo!();
+    for people in peoples.iter_mut().filter(|p| p.building_uuid.is_none()) {
+        for &building in buildings
+            .iter()
+            .filter(|&&b| b.get_area().len() < b.get_num_people_in_building(population))
+        {
+            people.building_uuid = Some(building.id);
+        }
+    }
 }
