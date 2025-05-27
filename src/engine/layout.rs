@@ -517,6 +517,14 @@ impl Layout<'_> {
         layout_obj
     }
 
+        pub fn load_empty_layout() -> Self {
+        let layout = include_str!("../initial_data/starting_empty.json");
+
+        let layout_obj: Layout = serde_json::from_str(layout).unwrap();
+
+        layout_obj
+    }
+
     pub fn add_building(&mut self, building: Building) {
         self.buildings.push(building);
         self.update_graph();
