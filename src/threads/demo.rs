@@ -67,6 +67,14 @@ pub fn demo_scope<'scope, 'env>(
 
             lock_unlock!(pop);
 
+            if i % 36 == 0 {
+                lock_write!(engine |> generator);
+
+                generate_next_step(&mut generator.layout, &mut rng);
+
+                lock_unlock!(generator);
+            }
+
             if refresh == 20 {
                 lock_write!(engine |> e);
                 refresh = 0;
