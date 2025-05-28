@@ -1,6 +1,7 @@
-use std::any::type_name;
-use std::cmp::PartialEq;
-use crate::engine::drawable::{DrawableType, DynDrawable};
+use std::cmp::min;
+// use std::any::type_name;
+// use std::cmp::PartialEq;
+use crate::engine::drawable::DynDrawable;
 use crate::engine::keybinds::Tty;
 use crate::engine::viewport::{background, Viewport};
 use crate::threads::sidebar::SideBarMessage;
@@ -12,22 +13,22 @@ use std::sync::{Arc, RwLock};
 use termion::{cursor, terminal_size};
 use crate::engine::layout::{Layout};
 use crate::population::Population;
-use crate::threads::engine_loop::Selection;
+// use crate::threads::engine_loop::Selection;
 
-pub type LockableEngine =Arc<RwLock<Engine>>;
+pub type LockableEngine<'a> = Arc<RwLock<Engine<'a>>>;
 
-pub struct Engine {
+pub struct Engine<'a> {
     pub viewport: Viewport,
     pub side_bar_tx: Sender<SideBarMessage>,
     pub background: String,
     pub stdout: Arc<Tty>,
-    pub layout: Layout,
+    pub layout: Layout<'a>,
     pub population: Population,
-    pub drawables: Vec<Box<DynDrawable>>,
+    pub drawables: Vec<Box<DynDrawable>>
 }
 
 
-impl Engine {
+impl Engine<'_> {
     pub fn register_drawable(&mut self, drawable: Box<DynDrawable>) {
         self.drawables.push(drawable)
     }
@@ -62,7 +63,7 @@ impl Engine {
             trace!("blit at: {:?}", coordinates);
 
             for line in &d.shape().lines().collect::<Vec<&str>>()
-                [coordinates.crop_top..(d.height() as usize - coordinates.crop_bottom)]
+                [coordinates.crop_top..min((d.height() as usize - coordinates.crop_bottom), d.shape().lines().count())]
             {
                 let _ = write!(
                     self.stdout.lock(),
@@ -104,16 +105,19 @@ impl Engine {
 
         self.stdout.lock().flush().unwrap()
     }
+}
 
-    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>, layout: Layout) -> Self {
+impl<'a> Engine<'a> {
+    pub fn new(viewport: Viewport, stdout: Arc<Tty>, chan: Sender<SideBarMessage>, mut layout: Layout<'a>) -> Self {
         trace!("{:?}", terminal_size());
+        let pop = Population::new(&mut layout);
         Engine {
             viewport,
             stdout,
             layout,
             side_bar_tx: chan,
             drawables: vec![],
-            population: Population::new(),
+            population: pop,
             background: { background(viewport.output_y, viewport.width, viewport.height) },
         }
     }

@@ -3,12 +3,14 @@ use crate::engine::layout::{Building, Layout, LayoutId, Road};
 use crate::utils::pair::Pair;
 use std::collections::{HashMap, HashSet};
 use std::fmt::{Debug, Formatter};
+use log::debug;
 
-struct Rect {
-    x: i16,
-    y: i16,
-    width: u8,
-    height: u8
+#[derive(Debug)]
+pub struct Rect {
+    pub x: i16,
+    pub y: i16,
+    pub width: u8,
+    pub height: u8
 }
 
 impl Rect {
@@ -93,15 +95,23 @@ impl<'a> Node<'a> {
 
 pub type Edge<'a> = Pair<'a, LayoutId>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Graph<'a> {
+    #[allow(dead_code)]
     nodes: HashMap<LayoutId, Node<'a>>,
     edges: HashSet<Edge<'a>>,
     building_connections: HashSet<Pair<'a, LayoutId>>
 }
 
 impl<'a> Graph<'a> {
-    pub fn new(layout: &Layout) -> Graph {
+    pub fn get_buildings_connections(&self, id: LayoutId) -> Vec<LayoutId> {
+        let res: Vec<&LayoutId> = self.building_connections.iter().filter(|pair| pair.has(&id)).map(|pair| pair.other(&id)).collect();
+        res.into_iter().cloned().collect()
+    }
+
+
+    pub fn new(layout: &'a Layout) -> Graph<'a> {
+        debug!("Creating graph");
         let mut nodes: HashMap<LayoutId, Node> = HashMap::new();
         let mut edge_set: HashSet<Edge> = HashSet::new();
 
@@ -144,11 +154,47 @@ impl<'a> Graph<'a> {
         Graph {
             nodes: nodes.clone(),
             edges: edge_set,
-            building_connections: HashSet::new()
+            building_connections: HashSet::new(),
         }
     }
 
-    fn connected_to(&self, start: &LayoutId) -> HashSet<&LayoutId> {
+    pub fn find_path_bfs(&self, start: &LayoutId, goal: &LayoutId) -> Option<Vec<LayoutId>> {
+        use std::collections::VecDeque;
+
+        let mut queue = VecDeque::new();
+        let mut visited = HashSet::new();
+        let mut came_from: HashMap<LayoutId, LayoutId> = HashMap::new();
+
+        queue.push_back(start.clone());
+        visited.insert(start.clone());
+
+        while let Some(current) = queue.pop_front() {
+            if &current == goal {
+                let mut path = vec![goal.clone()];
+                let mut current_id = goal;
+
+                while let Some(prev) = came_from.get(current_id) {
+                    path.push(prev.clone());
+                    current_id = prev;
+                }
+
+                path.reverse();
+                return Some(path);
+            }
+
+            for neighbor in self.connected_to(&current) {
+                if !visited.contains(neighbor) {
+                    visited.insert((*neighbor).clone());
+                    came_from.insert((*neighbor).clone(), current.clone());
+                    queue.push_back((*neighbor).clone());
+                }
+            }
+        }
+
+        None // Aucun chemin trouve
+    }
+
+    pub fn connected_to(&self, start: &LayoutId) -> HashSet<&LayoutId> {
         self.edges.iter().filter(|x| x.has(start)).map(|x| x.other(start)).collect::<HashSet<&LayoutId>>()
     }
 

@@ -1,5 +1,5 @@
-use std::any::Any;
-use crate::engine::core::{Engine, LockableEngine};
+use std::{env, fs};
+use crate::engine::core::{Engine};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
 use log::{debug, trace};
 use std::io::{stdin, Stdout};
@@ -10,13 +10,11 @@ use std::sync::mpsc::Sender;
 use std::thread::{Scope, ScopedJoinHandle};
 use termion::cursor;
 use termion::event::{Event, Key, MouseButton, MouseEvent};
-use termion::event::Key::Insert;
 use termion::input::{MouseTerminal, TermRead};
 use termion::raw::RawTerminal;
-use crate::{lock_read, lock_unlock};
 use crate::threads::sidebar::SideBarMessage;
 use crate::ui::sidebar::SyncDisplay;
-use crate::utils::{send_to_side_bar_read, send_to_side_bar_write};
+use crate::utils::{send_to_side_bar_write};
 
 pub type Tty = MouseTerminal<RawTerminal<Stdout>>;
 
@@ -35,13 +33,17 @@ pub static RUNNING: AtomicBool = AtomicBool::new(true);
 
 impl<'scope> KeyBindListener<'scope> {
     pub fn new<'env>(
-        s: &'scope Scope<'scope, 'env>, e: Arc<RwLock<Engine>>,
+        s: &'scope Scope<'scope, 'env>, e: Arc<RwLock<Engine<'env>>>,
         click_subscribers: Vec<Sender<(i16, i16, (Option<MouseButton>, Option<Key>))>>,
         keys_subscribers: Vec<Sender<Key>>,
         sidebar: Sender<SideBarMessage>
     ) -> Self {
         let arc = Arc::new(InterruptibleSleep::new());
         let sent = arc.clone();
+
+        let save_dir = env::current_dir().unwrap().join("saves");
+
+        let _ = fs::create_dir(&save_dir);
 
         let t = s.spawn(move || {
             let clicks = click_subscribers;
@@ -73,7 +75,24 @@ impl<'scope> KeyBindListener<'scope> {
                         for sender in &clicks {
                             let _ = sender.send((0,0, (None, Some(Key::Esc))));
                         }
-                    }
+                    },
+                    Event::Key(Key::Ctrl('s')) => {
+                        match cop.read() {
+                            Ok(ref engine) => {
+                                let time = chrono::offset::Local::now();
+                                
+                                let name = save_dir.join(time.format("layout-%Y-%m-%d-%H-%M-%S.json").to_string());
+                                
+                                match serde_json::to_string(&engine.layout) {
+                                    Ok(c) => {
+                                        let _ = fs::write(name, c);
+                                    }
+                                    _ => {}
+                                }
+                            }
+                            _ => {}
+                        }
+                    },
                     Event::Mouse(mouse_event) => match mouse_event {
                         MouseEvent::Press(click_type, x, y) => {
                             debug!("Mouse click at x: {} y: {} | {:?}", x, y, click_type);

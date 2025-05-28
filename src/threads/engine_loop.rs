@@ -1,24 +1,19 @@
 use crate::engine::core::{Engine, LockableEngine};
-use crate::engine::layout::{Building, BuildingType, LayoutId};
+use crate::engine::layout::{BuildingType, LayoutId};
 use crate::utils::interruptible_sleep::InterruptibleSleep;
-use crate::{lock_read, lock_unlock, lock_write, return_on_cancel};
-use std::env;
+use crate::{lock_read, lock_unlock, lock_write};
 use std::sync::mpsc::Receiver;
 use std::sync::Arc;
 use std::thread::{Scope, ScopedJoinHandle};
-use std::time::Duration;
-use ansi_term::{Color, Colour};
 use log::{debug, trace};
 use serde::Deserialize;
-use termion::cursor::Right;
-use termion::event::Key::Left;
 use termion::event::{Key, MouseButton};
 use crate::engine::drawable::{Drawable, DrawableType};
-use crate::engine::drawable::DrawableType::{BuildingEmpty, Road};
+use crate::engine::drawable::DrawableType::{Building, BuildingEmpty, Road};
 use crate::engine::keybinds::Clickable;
 use crate::population::Population;
 use crate::threads::engine_loop::SelectionType::Void;
-use crate::ui::colors::{A_RUST_COLOR_1, A_SAND_COLOR, A_UI_WHITE_DARK_COLOR};
+use crate::ui::colors::A_UI_WHITE_DARK_COLOR;
 
 #[derive(Copy, Deserialize, Clone, Debug, PartialEq)]
 pub enum SelectionType {
@@ -42,7 +37,7 @@ impl Drawable for Selection {
     fn height(&self) -> u8 { self.height }
     fn shape(&self) -> String {
         let mut str: String = "".to_string();
-        for i in 0..self.height {
+        for _i in 0..self.height {
 
             str += &*(
                 ("␥").to_string()
@@ -51,12 +46,12 @@ impl Drawable for Selection {
         }
         str
     }
-    fn color(&self, pop: &Population) -> ansi_term::Color {A_UI_WHITE_DARK_COLOR}
+    fn color(&self, _pop: &Population) -> ansi_term::Color {A_UI_WHITE_DARK_COLOR}
     fn id(&self) -> LayoutId {LayoutId::random()}
     fn d_type(&self) -> DrawableType {DrawableType::Selection}
 }
 impl Clickable for Selection {
-    fn infos(&self, engine: &Engine) -> Option<Vec<String>> {
+    fn infos(&self, _engine: &Engine) -> Option<Vec<String>> {
         Some(vec![
             String::from("".to_string()),
         ])
@@ -72,6 +67,17 @@ fn check_click_target(input : (i16,i16), engine: &LockableEngine) -> Option<Draw
     }
     lock_unlock!(eng);
     dtype
+}
+
+fn get_click_target_id(input : (i16,i16), engine: &LockableEngine) -> Option<LayoutId> {
+    let mut id = Option::from(None);
+    lock_read!(engine |> eng);
+    let drwb = eng.get_drawable_for_coordinates(input.0, input.1);
+    if drwb.is_some() {
+        id = Option::from(drwb.unwrap().id());
+    }
+    lock_unlock!(eng);
+    id
 }
 
 fn calculate_road_coords(start : (i16,i16), end: (i16,i16)) -> ((i16,i16),(i16,i16)) {
@@ -91,16 +97,16 @@ fn calculate_road_coords(start : (i16,i16), end: (i16,i16)) -> ((i16,i16),(i16,i
 
 pub fn engine_loop<'scope, 'env>(
     s: &'scope Scope<'scope, 'env>,
-    engine: LockableEngine,
+    engine: LockableEngine<'env>,
     stop_var: Arc<InterruptibleSleep>,
     click_receiver: Receiver<(i16, i16, (Option<MouseButton>, Option<Key>))>,
-    key_receiver: Receiver<Key>
+    _key_receiver: Receiver<Key>
 ) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
         let mut inputs = vec![];
 
-        fn check_inputs(inputs: &mut (Vec<(i16, i16, (Option<MouseButton>, Option<Key>))>), engine: &LockableEngine) {
-            let n = inputs.iter().count();
+        fn check_inputs(inputs: &mut Vec<(i16, i16, (Option<MouseButton>, Option<Key>))>, engine: &LockableEngine) {
+            let _n = inputs.iter().count();
 
             if inputs[0].2.0.is_some() && inputs[0].2.0.unwrap() == MouseButton::Left && check_click_target((inputs[0].0, inputs[0].1), engine) == Option::from(BuildingEmpty) {
                 let boolean = replace_building_from_coords(inputs[0].0, inputs[0].1, engine, BuildingType::EmptySpace);
@@ -119,8 +125,8 @@ pub fn engine_loop<'scope, 'env>(
                 lock_unlock!(eng);
                 return;
             }
-            if inputs.iter().count() >=2 { // 2 actions keybinds
-                if inputs[0].2.0.is_some()  && inputs[1].2.0.is_some() {
+            if inputs.iter().count() >=2 {
+                if inputs[0].2.0.is_some()  && inputs[1].2.0.is_some() { // 2 actions keybinds
                     if inputs[0].2.0.unwrap() == MouseButton::Right && inputs[1].2.0.unwrap() == MouseButton::Left {
                         // Cleaned the current selections
                         lock_write!(engine |> eng);
@@ -162,8 +168,62 @@ pub fn engine_loop<'scope, 'env>(
                             lock_unlock!(eng);
                         }
                     }
+
+                    if inputs[0].2.0.unwrap() == MouseButton::Left && inputs[1].2.0.unwrap() == MouseButton::Left {
+                        // GPS
+                        // Cleaned the current selections
+                        lock_write!(engine |> eng);
+
+                        let mut i = 0;
+                        eng.layout.roads = eng.layout.roads.clone().into_iter().filter(|r| !r.name.contains("GPS")).collect();
+                        eng.refresh_drawables();
+                        eng.refresh();
+                        lock_unlock!(eng);
+
+                        let click_type_1 = check_click_target((inputs[0].0, inputs[0].1), engine);
+                        let click_type_2 = check_click_target((inputs[1].0, inputs[1].1), engine);
+
+                        let click_1 = get_click_target_id((inputs[0].0, inputs[0].1), engine);
+                        let click_2 = get_click_target_id((inputs[1].0, inputs[1].1), engine);
+
+                        //println!("{:?}", inputs);
+
+                        if click_type_1 == Option::from(Building) && click_type_2 == Option::from(Building) && click_1.is_some() && click_2.is_some() {
+                            let mut to_highlight = vec![];
+                            lock_write!(engine |> eng);
+
+                            let intersections = eng.layout.calculate_path(&click_1.unwrap(), &click_2.unwrap());
+
+                            for (i, window) in intersections.windows(2).enumerate() {
+                                if let [Some(inter), Some(inter2)] = window {
+                                    let hori = !(inter.x == inter2.x || (inter.x - inter2.x).abs() <= 3);
+                                    //println!("GPS{:} horiz : {:}", i, hori);
+                                    to_highlight.push(crate::engine::layout::Road {
+                                        name: format!("GPS{}", i),
+                                        id: LayoutId::random(),
+                                        start_x: if inter.x > inter2.x {inter2.x} else { inter.x },
+                                        start_y: if inter.y > inter2.y {inter2.y} else { inter.y },
+                                        horizontal: if hori {true} else { false },
+                                        width: if hori {inter.height -1 } else { inter.width },
+                                        length: if hori {
+                                            (inter2.x - inter.x).abs() as u8
+                                        } else {
+                                            (inter2.y - inter.y).abs() as u8
+                                        },
+                                        pavement: '#',
+                                    });
+                                }
+                            }
+
+                            to_highlight.iter().for_each(|x| eng.layout.add_road(x.clone()));
+                            eng.refresh_drawables();
+                            eng.refresh();
+                            lock_unlock!(eng);
+                        }
+                        *inputs = vec![];
+                    }
                 }
-                if inputs[0].2.1.is_some() && inputs[1].2.0.is_some()  && inputs[2].2.0.is_some() {
+                if inputs.len() >= 3 && inputs[0].2.1.is_some() && inputs[1].2.0.is_some()  && inputs[2].2.0.is_some() {
                     let mut sel = Option::from(None);
                     lock_write!(engine |> eng);
                     sel = Option::from((eng.layout.selections[0].clone()));
@@ -173,7 +233,7 @@ pub fn engine_loop<'scope, 'env>(
                     lock_unlock!(eng);
                     if sel.is_some() {
                         if inputs[0].2.1.unwrap() == Key::Char('\n') && inputs[1].2.0.unwrap() == MouseButton::Right && inputs[2].2.0.unwrap() == MouseButton::Left {
-                            if sel.unwrap().sel_type == SelectionType::Void{
+                            if sel.unwrap().sel_type == Void{
                                 add_building_from_coords(
                                     if inputs[2].0 > inputs[1].0 {inputs[1].0} else {inputs[2].0},
                                     if inputs[2].1 > inputs[1].1 {inputs[1].1} else {inputs[2].1},
@@ -204,7 +264,7 @@ pub fn engine_loop<'scope, 'env>(
                     Option::from(drwbl.id)
                 }
                 else {
-                    Option::None
+                    None
                 }
             };
             if let Some(to_del) = to_delete {

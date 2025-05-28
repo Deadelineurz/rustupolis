@@ -1,4 +1,4 @@
-use crate::{engine::layout::BuildingType, population::*, LAYOUT};
+use crate::{engine::layout::BuildingType, population::*};
 use rand::{rng, seq::IndexedRandom};
 use strum_macros::EnumString;
 
@@ -83,8 +83,8 @@ impl PopulationDistrict {
         self.peoples.append(peoples);
     }
 
-    pub fn update_building_occupation(&mut self) {
-        let mut binding = LAYOUT.lock().unwrap();
+    /// Called once to put all peoples in random buildings
+    pub fn update_building_occupation(&mut self, binding: &mut Layout) {
         let buildings: Vec<&mut Building> = binding.get_buildings_district_mut(self.id);
 
         let mut rng = rng();

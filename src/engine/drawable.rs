@@ -1,5 +1,4 @@
 use std::fmt::Debug;
-use crate::engine::core::LockableEngine;
 use crate::engine::keybinds::Clickable;
 use crate::engine::layout::LayoutId;
 use crate::population::Population;

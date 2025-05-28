@@ -85,7 +85,7 @@ impl DNA {
     }
 
     pub fn add_flag(&mut self, flag: u32) {
-        self.traits |= flag as u32;
+        self.traits |= flag;
     }
 
     pub fn remove(&mut self, flags: DNAFlags) {
