@@ -1,6 +1,6 @@
 use crate::engine::core::LockableEngine;
 use crate::procedural_generation::{generate_next_step};
-use crate::simulation::update_time_population;
+use crate::simulation::*;
 use crate::threads::sidebar::SideBarMessage;
 use crate::ui::sidebar::{LogColor, LogType};
 use crate::ui::topbar::TopBar;
@@ -54,11 +54,15 @@ pub fn demo_scope<'scope, 'env>(
                 &mut rng,
                 false,
             );
-            lock_read!(engine |> pop);
 
+            update_people_in_building(&engine, &mut rng);
+    
+            
+            lock_read!(engine |> pop);
+            
             let core_district = pop.population.get_core_district();
 
-            let peoples = core_district.num_people;
+            let peoples = core_district.peoples.iter().filter(|p| p.as_alive().is_some()).count();
             let workers = core_district.working_poulation;
 
             let _ = topbar.update_displayed_population(peoples);
@@ -69,12 +73,8 @@ pub fn demo_scope<'scope, 'env>(
 
             lock_unlock!(pop);
 
-            if i % 36 == 0 {
-                lock_write!(engine |> generator);
-
-                generate_next_step(&mut generator.layout, &mut rng);
-
-                lock_unlock!(generator);
+            if i % 24 == 0 {
+                generate_next_step(&engine, &mut rng);
             }
 
             if refresh == 20 {

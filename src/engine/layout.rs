@@ -4,9 +4,11 @@ use super::{drawable::Drawable, keybinds::Clickable};
 use crate::population::Population;
 use crate::roads::road_graph::{Graph, Rect};
 use crate::threads::engine_loop::Selection;
+use crate::utils::intersections::intersection;
 use crate::{lock_read, lock_unlock, population::people::BasePeopleInfo, ui::colors::*};
 use base64::prelude::BASE64_STANDARD;
 use base64::Engine as b64Engine;
+use log::{debug, trace};
 use rand::{rng, Fill};
 use serde::de::Error;
 use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
@@ -15,7 +17,6 @@ use std::cmp::PartialEq;
 use std::fmt::Display;
 use std::fmt::{Debug, Formatter};
 use std::slice::Iter;
-use crate::utils::intersections::intersection;
 
 pub const LAYOUT_ID_LENGTH: usize = 12;
 pub const TERMINAL_RATIO: u8 = 2;
@@ -134,11 +135,8 @@ pub struct Building {
 
 impl Building {
     pub fn get_num_people_in_building(&self, population: &Population) -> usize {
-        if population.get_district(self.district_id).is_some() {
-            population
-                .get_district(self.district_id)
-                .unwrap()
-                .peoples
+        if let Some(pop) = population.get_district(self.district_id) {
+            pop.peoples
                 .iter()
                 .filter(|people| {
                     if let Some(uuid) = people.get_building_uuid() {
@@ -151,6 +149,10 @@ impl Building {
         } else {
             0
         }
+    }
+
+    pub fn is_overcrowded(&self, population: &Population) -> bool {
+        self.get_num_people_in_building(population) > self.get_area().len() * 3
     }
 
     pub fn get_building_uuid(&self) -> LayoutId {
@@ -350,13 +352,13 @@ impl Drawable for Building {
         match &self.b_type {
             s if s == &BuildingType::EmptySpace => A_SAND_COLOR,
             _ => {
-                if self.get_num_people_in_building(population) > 20 {
+                if self.get_num_people_in_building(population) > 200 {
                     A_RUST_COLOR_1
-                } else if self.get_num_people_in_building(population) > 15 {
+                } else if self.get_num_people_in_building(population) > 150 {
                     A_RUST_COLOR_2
-                } else if self.get_num_people_in_building(population) > 10 {
+                } else if self.get_num_people_in_building(population) > 100 {
                     A_LIGHT_COLOR
-                } else if self.get_num_people_in_building(population) > 10 {
+                } else if self.get_num_people_in_building(population) > 50 {
                     A_SAND_COLOR
                 } else {
                     A_DARKEST_COLOR
@@ -517,7 +519,11 @@ impl Drawable for Road {
     }
 
     fn color(&self, pop: &Population) -> ansi_term::Color {
-        if self.pavement == '░' {A_LIGHT_COLOR} else {A_GREY_COLOR}
+        if self.pavement == '░' {
+            A_LIGHT_COLOR
+        } else {
+            A_GREY_COLOR
+        }
     }
 
     fn id(&self) -> LayoutId {
@@ -709,34 +715,40 @@ impl Layout<'_> {
         self.update_graph()
     }
 
-    pub fn calculate_path(&mut self, start: &LayoutId, goal: &LayoutId) -> Vec<Option<Rect>>{
+    pub fn calculate_path(&mut self, start: &LayoutId, goal: &LayoutId) -> Vec<Option<Rect>> {
         let mut wonder_graph = Graph::new(&self);
         wonder_graph.start_dfs(&self);
         let path = wonder_graph.find_path_bfs(start, goal);
 
-        let mut last_drawable : Option<Box<dyn Drawable>> = None;
+        let mut last_drawable: Option<Box<dyn Drawable>> = None;
         let mut intersections = vec![];
         if let Some(chemin) = path {
             //println!("Itinéraire trouvé:");
             for id in chemin {
-                for bldg in self.buildings.iter().filter(|x| x.id == id){
+                for bldg in self.buildings.iter().filter(|x| x.id == id) {
                     //println!("{:?}", bldg.name);
                     /*if last_drawable.is_some(){
                         println!("{:?}", intersection(&*last_drawable.unwrap(), &*Box::new(bldg.clone())))
                     }*/
                     if last_drawable.is_some() {
-                        intersections.push(intersection(&*last_drawable.unwrap(), &*Box::new(bldg.clone())));
+                        intersections.push(intersection(
+                            &*last_drawable.unwrap(),
+                            &*Box::new(bldg.clone()),
+                        ));
                     }
                     last_drawable = Some(Box::new(bldg.clone()))
                 }
-                for rdg in self.roads.iter().filter(|x| x.id == id){
+                for rdg in self.roads.iter().filter(|x| x.id == id) {
                     //println!("{:?}", rdg.name);
 
                     /*if last_drawable.is_some(){
                         println!("{:?}", intersection(&*last_drawable.unwrap(), &*Box::new(rdg.clone())))
                     }*/
                     if last_drawable.is_some() {
-                        intersections.push(intersection(&*last_drawable.unwrap(), &*Box::new(rdg.clone())));
+                        intersections.push(intersection(
+                            &*last_drawable.unwrap(),
+                            &*Box::new(rdg.clone()),
+                        ));
                     }
                     last_drawable = Some(Box::new(rdg.clone()))
                 }
@@ -746,5 +758,4 @@ impl Layout<'_> {
         }
         intersections
     }
-
 }

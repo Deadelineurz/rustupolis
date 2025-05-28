@@ -38,7 +38,7 @@ fn main() {
 
     let _clear = CleanScreen::new();
 
-    let mut layout = Layout::load_default_layout();
+    let mut layout = Layout::load_empty_layout();
 
     let mut wonder_graph = Graph::new(&layout);
     wonder_graph.start_dfs(&layout);

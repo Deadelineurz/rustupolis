@@ -1,5 +1,5 @@
 use crate::engine::core::{Engine, LockableEngine};
-use crate::engine::layout::LayoutId;
+use crate::engine::layout::{Layout, LayoutId};
 use crate::population::people::AlivePerson;
 use crate::population::{self, Population};
 use crate::threads::sidebar::SideBarMessage;
@@ -15,6 +15,8 @@ use crate::{
 };
 use births::{number_of_children_to_make, spawn_childs};
 use deaths::check_death;
+use log::debug;
+use rand::Rng;
 use rand::{rng, rngs::ThreadRng, seq::SliceRandom};
 use std::collections::HashMap;
 use std::sync::mpsc::Sender;
@@ -276,18 +278,33 @@ fn make_pairs(people: Vec<&People>, rng: &mut ThreadRng) -> Vec<(People, People)
     pairs
 }
 
-fn update_people_in_building(
-    peoples: &mut Vec<AlivePerson>,
-    buildings: Vec<&Building>,
-    population: &Population,
-    rng: &mut ThreadRng,
-) {
-    for people in peoples.iter_mut().filter(|p| p.building_uuid.is_none()) {
-        for &building in buildings
-            .iter()
-            .filter(|&&b| b.get_area().len() < b.get_num_people_in_building(population))
-        {
+pub fn update_people_in_building(engine: &LockableEngine, rng: &mut ThreadRng) {
+    lock_read!(engine |> read);
+    let buildings = read.layout.get_buildings();
+    let (full_buildings, mut empty_buildings): (Vec<_>, Vec<_>) = buildings
+        .iter()
+        .partition(|&b| b.is_overcrowded(&read.population));
+    lock_unlock!(read);
+
+    lock_write!(engine |> write);
+    for people in write
+        .population
+        .get_core_district_mut()
+        .peoples
+        .iter_mut()
+        .filter_map(|p| p.as_alive_mut())
+        .filter(|p| {
+            p.building_uuid.is_none()
+                || full_buildings
+                    .iter()
+                    .any(|b| b.get_building_uuid() == p.building_uuid.unwrap())
+                    && rng.random_bool(0.2)
+        })
+    {
+        for building in &empty_buildings {
             people.building_uuid = Some(building.id);
         }
     }
+
+    lock_unlock!(write);
 }

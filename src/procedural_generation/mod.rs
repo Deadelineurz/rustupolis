@@ -1,31 +1,36 @@
 pub mod buildings;
 pub mod roads;
 
-use crate::engine::{drawable::Drawable, layout::Layout};
+use crate::{engine::{core::LockableEngine, drawable::Drawable, layout::Layout}, lock_read, lock_write, population::{self, Population}};
 
 use buildings::create_building_next_to_road;
 use rand::{rngs::*, seq::*, Rng};
-use roads::{create_road_adj_to_building, create_road_next_to_road};
+use roads::*;
 
-pub fn generate_next_step<'a>(layout: &mut Layout, rng: &mut ThreadRng) {
-    layout.roads.shuffle(rng);
-    layout.buildings.shuffle(rng);
+pub fn generate_next_step<'a>(engine: &LockableEngine, rng: &mut ThreadRng) {
 
-    let buildings: Vec<_> = layout.buildings.clone();
-    // if graph.connected_to(&building.get_building_uuid()).len() == 0 {
+    lock_write!(engine |> w);
+    w.layout.roads.shuffle(rng);
+    w.layout.buildings.shuffle(rng);
 
-    // }
+    let graph = w.layout.graph.as_ref();
+    let population = &w.population;
 
-    for building in buildings {
-        create_road_adj_to_building(&building, layout, rng, (4, 10));
+    let binding = w.layout.buildings.clone();
+    let full_buildings: Vec<_> = binding.iter().filter(|&b| b.is_overcrowded(population) || rng.random_bool(0.2) ).collect();
+    // graph.connected_to(&building.get_building_uuid()).len() == 0
 
-        let road = layout.roads.iter().choose(rng).unwrap().clone();
+    for building in full_buildings.iter() {
 
-        create_road_next_to_road(&road, layout, rng);
+        create_road_adj_to_building(&building, &mut w.layout, rng, (6, 10));
 
-        if rng.random_bool(0.4) {
-            create_building_next_to_road(&road, layout, rng);
-        }
+        let mut road = w.layout.roads.iter().choose(rng).unwrap().clone();
+
+        create_extension_road_toward_building(&mut road, &mut w.layout, 20, '░');
+
+        create_road_next_to_road(&road, &mut w.layout, rng);
+
+        create_building_next_to_road(&road, &mut w.layout, rng);
     }
 }
 

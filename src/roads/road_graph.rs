@@ -188,7 +188,7 @@ impl<'a> Graph<'a> {
         None // Aucun chemin trouve
     }
 
-    fn connected_to(&self, start: &LayoutId) -> HashSet<&LayoutId> {
+    pub fn connected_to(&self, start: &LayoutId) -> HashSet<&LayoutId> {
         self.edges.iter().filter(|x| x.has(start)).map(|x| x.other(start)).collect::<HashSet<&LayoutId>>()
     }
 
