@@ -18,14 +18,14 @@ pub fn create_building_next_to_road(road: &Road, layout: &mut Layout, rng: &mut 
     candidates.shuffle(rng);
 
     for (mut bx, mut by) in candidates {
-        let width: u8 = 5 * TERMINAL_RATIO;
-        let height: u8 = 5;
+        let width: u8 = rng.random_range(4.. 10) * TERMINAL_RATIO;
+        let height: u8 = rng.random_range(4.. 10);
 
         if rng.random_bool(0.5) {
             bx -= (width - 1) as i16
         }
         if rng.random_bool(0.5) {
-            by -= (height - 1) as i16
+            by -= (height - TERMINAL_RATIO) as i16
         }
 
         if is_area_free(bx, by, width, height, layout, AreaPartition::All) {

@@ -83,6 +83,7 @@ impl PopulationDistrict {
         self.peoples.append(peoples);
     }
 
+    /// Called once to put all peoples in random buildings
     pub fn update_building_occupation(&mut self, binding: &mut Layout) {
         let buildings: Vec<&mut Building> = binding.get_buildings_district_mut(self.id);
 

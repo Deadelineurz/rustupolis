@@ -95,7 +95,7 @@ impl<'a> Node<'a> {
 
 pub type Edge<'a> = Pair<'a, LayoutId>;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Graph<'a> {
     #[allow(dead_code)]
     nodes: HashMap<LayoutId, Node<'a>>,
@@ -104,6 +104,12 @@ pub struct Graph<'a> {
 }
 
 impl<'a> Graph<'a> {
+    pub fn get_buildings_connections(&self, id: LayoutId) -> Vec<LayoutId> {
+        let res: Vec<&LayoutId> = self.building_connections.iter().filter(|pair| pair.has(&id)).map(|pair| pair.other(&id)).collect();
+        res.into_iter().cloned().collect()
+    }
+
+
     pub fn new(layout: &'a Layout) -> Graph<'a> {
         debug!("Creating graph");
         let mut nodes: HashMap<LayoutId, Node> = HashMap::new();
@@ -188,7 +194,7 @@ impl<'a> Graph<'a> {
         None // Aucun chemin trouve
     }
 
-    fn connected_to(&self, start: &LayoutId) -> HashSet<&LayoutId> {
+    pub fn connected_to(&self, start: &LayoutId) -> HashSet<&LayoutId> {
         self.edges.iter().filter(|x| x.has(start)).map(|x| x.other(start)).collect::<HashSet<&LayoutId>>()
     }
 

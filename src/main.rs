@@ -51,7 +51,7 @@ fn main() {
 
         serde_json::from_str(&fs::read_to_string(pb).unwrap()).unwrap()
     } else {
-        Layout::load_default_layout()
+        Layout::load_empty_layout()
     };
 
     let _clear = CleanScreen::new();
