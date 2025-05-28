@@ -521,7 +521,11 @@ impl Drawable for Road {
     fn color(&self, pop: &Population) -> ansi_term::Color {
         if self.pavement == '░' {
             A_LIGHT_COLOR
-        } else {
+        }
+        else if self.pavement == '#' {
+            A_SAND_COLOR
+        }
+        else {
             A_GREY_COLOR
         }
     }

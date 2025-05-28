@@ -191,7 +191,7 @@ pub fn engine_loop<'scope, 'env>(
                         let click_1 = get_click_target_id((inputs[0].0, inputs[0].1), engine);
                         let click_2 = get_click_target_id((inputs[1].0, inputs[1].1), engine);
 
-                        println!("{:?}", inputs);
+                        //println!("{:?}", inputs);
 
                         if click_type_1 == Option::from(Building) && click_type_2 == Option::from(Building) && click_1.is_some() && click_2.is_some() {
                             let mut to_highlight = vec![];
@@ -215,7 +215,7 @@ pub fn engine_loop<'scope, 'env>(
                                         } else {
                                             (inter2.y - inter.y).abs() as u8
                                         },
-                                        pavement: '░',
+                                        pavement: '#',
                                     });
                                 }
                             }
