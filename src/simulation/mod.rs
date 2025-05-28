@@ -317,10 +317,10 @@ pub fn update_people_in_building(engine: &LockableEngine, rng: &mut ThreadRng) {
                 {
                     people.building_uuid = Some(building.id);
                 }
-            }
-            else {
-                let id = empty_buildings.choose(&mut rand::rng()).unwrap().get_building_uuid();
-                people.building_uuid = Some(id);
+            } else {
+                if let Some(building) = empty_buildings.choose(&mut rand::rng()) {
+                    people.building_uuid = Some(building.get_building_uuid());
+                }
             }
         }
     }

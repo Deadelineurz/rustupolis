@@ -358,7 +358,7 @@ impl Drawable for Building {
                     A_RUST_COLOR_2
                 } else if self.get_num_people_in_building(population) > 100 {
                     A_LIGHT_COLOR
-                } else if self.get_num_people_in_building(population) > 50 {
+                } else if self.get_num_people_in_building(population) > 20 {
                     A_SAND_COLOR
                 } else {
                     A_DARKEST_COLOR
