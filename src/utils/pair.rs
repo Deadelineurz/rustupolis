@@ -2,6 +2,7 @@ use std::fmt::{Debug, Formatter};
 use std::hash::{Hash, Hasher};
 use std::ops::BitXor;
 
+#[derive(Clone, Copy)]
 pub struct Pair<'a, T>
 where T: PartialEq + Eq
 {

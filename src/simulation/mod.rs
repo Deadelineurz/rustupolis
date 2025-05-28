@@ -16,6 +16,7 @@ use crate::{
 use births::{number_of_children_to_make, spawn_childs};
 use deaths::check_death;
 use log::debug;
+use rand::seq::IndexedRandom;
 use rand::Rng;
 use rand::{rng, rngs::ThreadRng, seq::SliceRandom};
 use std::collections::HashMap;
@@ -281,9 +282,11 @@ fn make_pairs(people: Vec<&People>, rng: &mut ThreadRng) -> Vec<(People, People)
 pub fn update_people_in_building(engine: &LockableEngine, rng: &mut ThreadRng) {
     lock_read!(engine |> read);
     let buildings = read.layout.get_buildings();
-    let (full_buildings, mut empty_buildings): (Vec<_>, Vec<_>) = buildings
+    let (full_buildings, empty_buildings): (Vec<_>, Vec<_>) = buildings
         .iter()
         .partition(|&b| b.is_overcrowded(&read.population));
+
+    let graph = read.layout.graph.clone();
     lock_unlock!(read);
 
     lock_write!(engine |> write);
@@ -301,8 +304,24 @@ pub fn update_people_in_building(engine: &LockableEngine, rng: &mut ThreadRng) {
                     && rng.random_bool(0.2)
         })
     {
-        for building in &empty_buildings {
-            people.building_uuid = Some(building.id);
+        if let Some(ref g) = graph {
+            let conexions = g.get_buildings_connections(people.building_uuid.unwrap());
+            debug!("NUMBER of conex: {}", conexions.len());
+
+            let target = conexions.get(0);
+
+            if let Some(building_id) = target {
+                for building in empty_buildings
+                    .iter()
+                    .filter(|b| b.get_building_uuid() == *building_id)
+                {
+                    people.building_uuid = Some(building.id);
+                }
+            }
+            else {
+                let id = empty_buildings.choose(&mut rand::rng()).unwrap().get_building_uuid();
+                people.building_uuid = Some(id);
+            }
         }
     }
 
