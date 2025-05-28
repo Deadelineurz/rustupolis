@@ -11,6 +11,7 @@ use std::sync::Arc;
 use std::thread::{Scope, ScopedJoinHandle};
 use std::time::Duration;
 use termion::terminal_size;
+use crate::population::people::PeopleLegalState::{Child, Elder};
 
 pub fn demo_scope<'scope, 'env>(
     s: &'scope Scope<'scope, 'env>,
@@ -64,13 +65,13 @@ pub fn demo_scope<'scope, 'env>(
             let core_district = pop.population.get_core_district();
 
             let peoples = core_district.peoples.iter().filter(|p| p.as_alive().is_some()).count();
-            let workers = core_district.working_poulation;
+            let workers = core_district.peoples.iter().filter(|p| p.get_legal_state() != Child && p.get_legal_state() != Elder).count();
 
             let _ = topbar.update_displayed_population(peoples);
 
             let _ = topbar.update_displayed_happiness(core_district.get_happiness_percentage());
 
-            let _ = topbar.update_displayed_workers(workers, peoples);
+            let _ = topbar.update_displayed_workers(workers as u16, peoples);
 
             lock_unlock!(pop);
 

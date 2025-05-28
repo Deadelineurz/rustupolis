@@ -104,7 +104,7 @@ impl TopBar {
         )?;
         draw_text(
             &self.stdout,
-            &(((amount as f32 / population as f32) as u8).to_string().to_owned() + "%" + &" ".repeat(1)),
+            &*(format!("{:.0}%", (amount as f32 / population as f32) * 100.0) + &" ".repeat(1)),
             44,
             4,
             UI_WHITE_COLOR,
