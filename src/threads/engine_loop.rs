@@ -174,13 +174,8 @@ pub fn engine_loop<'scope, 'env>(
                         // Cleaned the current selections
                         lock_write!(engine |> eng);
 
-                        let mut gps_roads_index = vec![];
                         let mut i = 0;
-                        eng.layout.roads.iter().for_each(|r| {if r.name.contains("GPS") {gps_roads_index.push(i);} i+=1;});
-
-                        for index in gps_roads_index {
-                            eng.layout.roads.remove(index);
-                        }
+                        eng.layout.roads = eng.layout.roads.clone().into_iter().filter(|r| !r.name.contains("GPS")).collect();
                         eng.refresh_drawables();
                         eng.refresh();
                         lock_unlock!(eng);

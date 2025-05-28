@@ -41,7 +41,7 @@ fn main() {
 
     let args: Vec<String> = env::args().collect();
 
-    let mut layout = if let Some(path) = args.get(1) {
+    let (mut layout, is_empty) = if let Some(path) = args.get(1) {
         let pb = PathBuf::from(path);
 
         if !pb.exists() || !pb.is_file() {
@@ -49,9 +49,9 @@ fn main() {
             exit(1)
         }
 
-        serde_json::from_str(&fs::read_to_string(pb).unwrap()).unwrap()
+        (serde_json::from_str(&fs::read_to_string(pb).unwrap()).unwrap(), false)
     } else {
-        Layout::load_empty_layout()
+        (Layout::load_empty_layout(), true)
     };
 
     let _clear = CleanScreen::new();
@@ -93,7 +93,7 @@ fn main() {
             vec![key_sender],
             sidebar_chan.clone(),
         );
-        let demo = demo_scope(s, e.clone(), kb.stop_var.clone());
+        let demo = demo_scope(s, e.clone(), kb.stop_var.clone(), is_empty);
         let game_loop = engine_loop(
             s,
             e.clone(),

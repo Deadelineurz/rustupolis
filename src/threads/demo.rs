@@ -16,6 +16,7 @@ pub fn demo_scope<'scope, 'env>(
     s: &'scope Scope<'scope, 'env>,
     engine: LockableEngine<'env>,
     stop_var: Arc<InterruptibleSleep>,
+    is_empty : bool
 ) -> ScopedJoinHandle<'scope, ()> {
     s.spawn(move || {
         let engine = engine;
@@ -73,8 +74,16 @@ pub fn demo_scope<'scope, 'env>(
 
             lock_unlock!(pop);
 
-            if i % 24 == 0 {
-                generate_next_step(&engine, &mut rng);
+            if is_empty {
+                if i >= 120 && i % 6 == 0 {
+                    generate_next_step(&engine, &mut rng);
+                }
+                else if i >= 240 && i % 24 == 0 {
+                    generate_next_step(&engine, &mut rng);
+                }
+                else if i > 240 && i % 120 == 0 {
+                    generate_next_step(&engine, &mut rng);
+                }
             }
 
             if refresh == 20 {
